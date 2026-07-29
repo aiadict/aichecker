@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { getSettings, setSettings, getAuthToken, setAuthToken, type ExtensionSettings } from "../../lib/storage";
+import { getSettings, setSettings, getAuthToken, setAuthSession, type ExtensionSettings } from "../../lib/storage";
 import { API_BASE_URL } from "../../lib/config";
 
 export default function SettingsTab() {
@@ -19,7 +19,7 @@ export default function SettingsTab() {
   }
 
   async function handleLogout() {
-    await setAuthToken(null);
+    await setAuthSession(null);
     setSignedIn(false);
   }
 
@@ -71,7 +71,7 @@ export default function SettingsTab() {
           Go to werida.io
         </a>
       </p>
-      <p className="muted">v0.1.0 (mocked — no Pangram API key configured)</p>
+      <p className="muted">v0.1.0</p>
     </div>
   );
 }

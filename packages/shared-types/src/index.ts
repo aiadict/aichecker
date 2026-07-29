@@ -74,3 +74,15 @@ export type CreateCheckResponse =
   | { ok: false; error: "unauthorized" }
   | { ok: false; error: "text_too_short" | "text_too_long" }
   | { ok: false; error: "upstream_error"; message: string };
+
+export interface MeResponse {
+  email: string;
+  plan: {
+    key: PlanKey;
+    name: string;
+    monthlyCredits: number;
+    dailyCap: number | null;
+  };
+  creditsRemaining: number;
+  checksToday: number;
+}

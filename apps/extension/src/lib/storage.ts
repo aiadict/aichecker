@@ -12,21 +12,33 @@ export const DEFAULT_SETTINGS: ExtensionSettings = {
 };
 
 const KEYS = {
-  authToken: "authToken",
+  authSession: "authSession",
   settings: "settings",
   pendingSelection: "pendingSelection",
 } as const;
 
-export async function getAuthToken(): Promise<string | null> {
-  const { [KEYS.authToken]: token } = await chrome.storage.local.get(KEYS.authToken);
-  return (token as string | undefined) ?? null;
+export interface AuthSession {
+  accessToken: string;
+  refreshToken: string;
 }
 
-export async function setAuthToken(token: string | null): Promise<void> {
-  if (token) {
-    await chrome.storage.local.set({ [KEYS.authToken]: token });
+/** The Supabase access token, used as the Bearer token against apps/web's API. */
+export async function getAuthToken(): Promise<string | null> {
+  const session = await getAuthSession();
+  return session?.accessToken ?? null;
+}
+
+export async function getAuthSession(): Promise<AuthSession | null> {
+  const { [KEYS.authSession]: session } = await chrome.storage.local.get(KEYS.authSession);
+  return (session as AuthSession | undefined) ?? null;
+}
+
+/** Stored by the background worker after the /login page hands off a session — see src/content/index.ts. */
+export async function setAuthSession(session: AuthSession | null): Promise<void> {
+  if (session) {
+    await chrome.storage.local.set({ [KEYS.authSession]: session });
   } else {
-    await chrome.storage.local.remove(KEYS.authToken);
+    await chrome.storage.local.remove(KEYS.authSession);
   }
 }
 

@@ -7,6 +7,7 @@
 // script context; the background service worker does it instead).
 
 import { getSettings } from "../lib/storage";
+import { API_BASE_URL } from "../lib/config";
 
 const MIN_SELECTION_LENGTH = 20;
 const HOST_ID = "ai-checker-floating-icon-host";
@@ -106,3 +107,22 @@ document.addEventListener("selectionchange", () => {
 document.addEventListener("mousedown", (e) => {
   if (hostEl && !hostEl.contains(e.target as Node)) hideIcon();
 });
+
+// Auth handoff: only relevant on our own web app's origin, where /login
+// posts the Supabase session to this same window after a successful
+// sign-in (see apps/web/src/app/login/page.tsx). A content script can't
+// read the page's localStorage directly (separate JS "isolated world"),
+// but it does share the DOM/window, so window.postMessage crosses that
+// boundary — postMessage isn't subject to CORS, only the origin check below.
+if (window.location.origin === API_BASE_URL) {
+  window.addEventListener("message", (event) => {
+    if (event.origin !== API_BASE_URL) return;
+    if (event.data?.type !== "ai-checker/auth-success") return;
+
+    chrome.runtime.sendMessage({
+      type: "ai-checker/store-auth-session",
+      accessToken: event.data.accessToken,
+      refreshToken: event.data.refreshToken,
+    });
+  });
+}

@@ -1,10 +1,13 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  // The extension runs on a different origin during local dev (Vite on
-  // :5175) and needs to call /api/checks — loosen CORS only in dev.
+  // The extension calls these routes from a chrome-extension:// origin, in
+  // both dev and production — always allow it. Safe to allow any origin
+  // here because auth is a Bearer token (verified per-request against
+  // Supabase in src/lib/auth.ts), not a cookie/origin-trust model, so an
+  // unrelated website reflecting these headers gains nothing it didn't
+  // already have.
   async headers() {
-    if (process.env.NODE_ENV !== "development") return [];
     return [
       {
         source: "/api/:path*",

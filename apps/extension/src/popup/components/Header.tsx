@@ -1,13 +1,17 @@
 import { useEffect, useState } from "react";
 import { getAuthToken } from "../../lib/storage";
+import { getMe } from "../../lib/api";
+import type { MeResponse } from "@ai-checker/shared-types";
 
-// TODO: replace the static 10/10 with a real GET /api/me call against
-// apps/web once auth is wired end to end (see docs/architecture.md).
 export default function Header() {
   const [signedIn, setSignedIn] = useState<boolean | null>(null);
+  const [me, setMe] = useState<MeResponse | null>(null);
 
   useEffect(() => {
-    getAuthToken().then((token) => setSignedIn(Boolean(token)));
+    getAuthToken().then(async (token) => {
+      setSignedIn(Boolean(token));
+      if (token) setMe(await getMe());
+    });
   }, []);
 
   return (
@@ -17,10 +21,15 @@ export default function Header() {
         AI Checker
       </div>
       <div className="credits">
-        {signedIn ? (
+        {signedIn && me ? (
           <>
-            Credits <strong>10/10</strong>
+            Credits{" "}
+            <strong>
+              {me.creditsRemaining}/{me.plan.monthlyCredits}
+            </strong>
           </>
+        ) : signedIn ? (
+          <span className="muted">Loading…</span>
         ) : (
           <span className="muted">Not signed in</span>
         )}

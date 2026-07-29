@@ -1,29 +1,27 @@
 import { NextRequest, NextResponse } from "next/server";
 import { PangramApiError, PangramClient } from "@ai-checker/pangram-client";
 import type { CreateCheckRequest, CreateCheckResponse } from "@ai-checker/shared-types";
-import { randomUUID } from "node:crypto";
-import {
-  addCheck,
-  deductMockCredits,
-  getMockCreditsRemaining,
-  listChecks,
-  MOCK_FREE_PLAN,
-} from "@/lib/mock-store";
-
-// TODO: once Supabase exists, replace the mock-store calls here with:
-//   1. Verify the Authorization bearer token against Supabase Auth.
-//   2. Look up the user's `plans` + `credit_balances` row.
-//   3. Enforce daily_cap / credits_remaining from THAT row, not the mock.
-//   4. Insert into `checks` + `check_windows`, decrement `credit_balances`,
-//      and insert into `api_usage_log` for cost tracking (service-role only).
-// See docs/architecture.md for the full data flow this stubs out.
+import { getAuthenticatedUser } from "@/lib/auth";
+import { getSupabaseAdmin } from "@/lib/supabase/admin";
+import { insertCheck, listChecksForUser } from "@/lib/checks-repo";
 
 const pangram = new PangramClient();
 
 const MIN_CHARS = 20;
 const MAX_CHARS = 50_000;
 
+interface ConsumeCreditResult {
+  allowed: boolean;
+  reason: string | null;
+  credits_remaining: number;
+}
+
 export async function POST(req: NextRequest) {
+  const user = await getAuthenticatedUser(req);
+  if (!user) {
+    return NextResponse.json<CreateCheckResponse>({ ok: false, error: "unauthorized" });
+  }
+
   const body = (await req.json()) as CreateCheckRequest;
   const text = body.text?.trim() ?? "";
 
@@ -32,15 +30,6 @@ export async function POST(req: NextRequest) {
   }
   if (text.length > MAX_CHARS) {
     return NextResponse.json<CreateCheckResponse>({ ok: false, error: "text_too_long" });
-  }
-
-  const remaining = getMockCreditsRemaining();
-  if (remaining <= 0) {
-    return NextResponse.json<CreateCheckResponse>({
-      ok: false,
-      error: "insufficient_credits",
-      creditsRemaining: remaining,
-    });
   }
 
   let prediction;
@@ -52,13 +41,9 @@ export async function POST(req: NextRequest) {
     // from any other upstream failure, so ops can tell them apart in logs.
     if (err instanceof PangramApiError && err.status === 402) {
       console.error("Pangram account is out of prepaid API credits — top up at pangram.com.", err.body);
-      return NextResponse.json<CreateCheckResponse>({
-        ok: false,
-        error: "upstream_error",
-        message: "AI Checker is temporarily unable to process checks. Please try again shortly.",
-      });
+    } else {
+      console.error("Pangram request failed", err);
     }
-    console.error("Pangram request failed", err);
     return NextResponse.json<CreateCheckResponse>({
       ok: false,
       error: "upstream_error",
@@ -67,9 +52,40 @@ export async function POST(req: NextRequest) {
   }
 
   const creditsUsed = pangram.creditsForWordCount(prediction.wordCount);
-  deductMockCredits(creditsUsed);
+  const admin = getSupabaseAdmin();
 
-  const result = addCheck({
+  // Atomic: locks the user's credit_balances row, resets daily/monthly
+  // counters if expired, checks daily_cap + credits_remaining, and
+  // decrements — all in one transaction (see supabase/migrations'
+  // consume_credit function) so concurrent requests can't double-spend.
+  const { data: consumeResult, error: consumeError } = await admin
+    .rpc("consume_credit", { p_user_id: user.id, p_credits_needed: creditsUsed })
+    .single<ConsumeCreditResult>();
+
+  if (consumeError || !consumeResult) {
+    console.error("consume_credit RPC failed", consumeError);
+    return NextResponse.json<CreateCheckResponse>({
+      ok: false,
+      error: "upstream_error",
+      message: "Could not verify your credit balance. Please try again.",
+    });
+  }
+
+  if (!consumeResult.allowed) {
+    if (consumeResult.reason === "daily_cap_reached") {
+      return NextResponse.json<CreateCheckResponse>({ ok: false, error: "daily_cap_reached" });
+    }
+    // Covers both "insufficient_credits" and the defensive "no_credit_balance"
+    // edge case (shouldn't happen — the signup trigger always creates one).
+    return NextResponse.json<CreateCheckResponse>({
+      ok: false,
+      error: "insufficient_credits",
+      creditsRemaining: consumeResult.credits_remaining,
+    });
+  }
+
+  const result = await insertCheck({
+    userId: user.id,
     textSnippet: text.slice(0, 200),
     wordCount: prediction.wordCount,
     creditsUsed,
@@ -79,21 +95,32 @@ export async function POST(req: NextRequest) {
     fractionHuman: prediction.fractionHuman,
     fractionAiAssisted: prediction.fractionAiAssisted,
     sourceUrl: body.sourceUrl ?? null,
-    isPublic: false,
-    shareSlug: randomUUID(),
     windows: prediction.windows,
+  });
+
+  // Our own cost tracking against Pangram — independent of what we charge
+  // the user, never exposed to any client (service-role only, no RLS policy).
+  await admin.from("api_usage_log").insert({
+    check_id: result.id,
+    pangram_credits_billed: creditsUsed,
+    cost_usd_estimate: creditsUsed * pangram.costPerCredit,
   });
 
   return NextResponse.json<CreateCheckResponse>({
     ok: true,
     result,
-    creditsRemaining: getMockCreditsRemaining(),
+    creditsRemaining: consumeResult.credits_remaining,
   });
 }
 
 export async function GET(req: NextRequest) {
-  const limit = Number(req.nextUrl.searchParams.get("limit") ?? MOCK_FREE_PLAN.dailyCap ?? 5);
-  return NextResponse.json({ results: listChecks(limit) });
+  const user = await getAuthenticatedUser(req);
+  if (!user) {
+    return NextResponse.json({ results: [] }, { status: 401 });
+  }
+  const limit = Number(req.nextUrl.searchParams.get("limit") ?? 5);
+  const results = await listChecksForUser(user.id, limit);
+  return NextResponse.json({ results });
 }
 
 export async function OPTIONS() {

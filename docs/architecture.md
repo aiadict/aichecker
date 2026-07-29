@@ -33,24 +33,58 @@ MV3 extension code is fully readable by any user via `chrome://extensions` → "
   backend (`apps/web`'s `/api/*` routes), authenticated with a Supabase session token cached in
   `chrome.storage.local`.
 
+## Auth flow: extension sign-in
+
+The extension never implements its own OAuth/password UI. Instead:
+
+1. Extension's Settings tab "Sign in" opens `apps/web`'s `/login?source=extension` in a new tab.
+2. `/login` (`apps/web/src/app/login/page.tsx`) is a client component that calls Supabase Auth
+   directly (email/password today; the same handoff works for any provider added later) using
+   the browser client (`lib/supabase/client.ts`, public anon/publishable key — safe to ship).
+3. On success, if `source=extension`, the page does `window.postMessage({ type:
+   "ai-checker/auth-success", accessToken, refreshToken }, origin)` **on itself** — not a
+   redirect, not localStorage.
+4. `apps/extension`'s content script (`src/content/index.ts`) is injected on `<all_urls>`
+   already; when its own `window.location.origin` matches our web app's origin, it adds a
+   `message` listener for exactly this event and relays it to the background worker via
+   `chrome.runtime.sendMessage`, which persists it (`lib/storage.ts`'s `setAuthSession`).
+   Content scripts run in an "isolated world" and can't read the page's `localStorage`, but they
+   do share the DOM/window, so same-window `postMessage` crosses that boundary cleanly.
+5. Every subsequent extension → `apps/web` API call sends the stored `accessToken` as
+   `Authorization: Bearer <token>`; `apps/web/src/lib/auth.ts`'s `getAuthenticatedUser` verifies
+   it against Supabase Auth (`supabase.auth.getUser(token)`) on every request.
+
+**Known limitation:** no token-refresh flow yet — the extension stores the `refreshToken` but
+doesn't use it. Supabase access tokens expire (default ~1 hour), so users will need to re-sign-in
+periodically until that's wired up. Fine for this dev stage; flagged as a fast-follow.
+
 ## Data flow: a "Check for AI" action
+
+**Verified end-to-end live** (2026-07-29): real signup → bootstrap trigger → real Pangram
+prediction → real atomic credit deduction → real DB rows, including daily-cap enforcement
+kicking in exactly at the 5th check of the day despite monthly credits remaining. Test user and
+all its data were deleted afterward (`on delete cascade` from `auth.users` down through
+`subscriptions`/`credit_balances`/`checks`).
 
 1. User pastes text, selects text (floating icon), or right-clicks (context menu) in
    `apps/extension`.
-2. Extension sends `{ text, sourceUrl }` to `POST /api/checks` on `apps/web`, with the cached
-   Supabase session token as a Bearer header.
-3. API route (`apps/web/src/app/api/checks/route.ts`, currently backed by an in-memory mock
-   store — see TODOs inline):
-   - Verifies auth.
-   - Looks up the user's plan + `credit_balances` row.
-   - Rejects with `insufficient_credits` / `daily_cap_reached` if the user is over their limit.
-   - Calls `PangramClient.predict()` (mocked until `PANGRAM_API_KEY` is set).
-   - Records `credits_used = ceil(word_count / 1000)`, inserts into `checks` (+`check_windows`),
-     decrements `credit_balances`, and logs real cost into `api_usage_log` (service-role only —
-     this is how we watch for the "losing money on API usage" risk).
-4. Response returned to the extension; also visible in the web dashboard's History
-   (`/dashboard/history`) and via the check's public share link (`/history/[slug]`) if the user
-   opts to share it.
+2. Extension sends `{ text, sourceUrl }` to `POST /api/checks` on `apps/web`, with the stored
+   Supabase access token as a Bearer header.
+3. API route (`apps/web/src/app/api/checks/route.ts`):
+   - Verifies auth via `getAuthenticatedUser` — returns `unauthorized` if missing/invalid.
+   - Calls `PangramClient.predict()`.
+   - Calls the `consume_credit` Postgres function (`supabase/migrations/..._consume_credit_fn.sql`)
+     via RPC — atomically resets expired daily/monthly counters, checks `daily_cap` and
+     `credits_remaining`, and decrements, all under a row lock (`SELECT ... FOR UPDATE`) so two
+     concurrent requests can't double-spend. Maps its `reason` to `daily_cap_reached` /
+     `insufficient_credits`.
+   - Inserts into `checks` (+ `check_windows`) and `api_usage_log` via `lib/checks-repo.ts` and
+     the service-role client directly (already-verified user, trusted server context).
+4. Response returned to the extension; also queryable via `GET /api/checks` (used by the
+   extension's History tab) and `GET /api/me` (credits header). **Not yet wired**: the
+   `/dashboard` pages still read `lib/mock-store.ts`, not these real tables — same visual
+   layout, different (fake) backing data. Wiring the dashboard to real auth/DB is separate,
+   later work.
 
 ## Database schema (Supabase Postgres)
 
@@ -81,6 +115,18 @@ Confirmed live: querying `plans` returned `permission denied` until the GRANT mi
 though the public-read RLS policy was already in place. **Any future table needs both** an RLS
 policy (which rows) **and** an explicit `GRANT` in a migration (whether the role can touch the
 table at all) — `api_usage_log` intentionally gets neither beyond service-role.
+
+**This applies to `service_role` too** (`20260729000006_service_role_grants.sql`) — `BYPASSRLS`
+only skips row-level policies, it does not imply table-level GRANTs. Confirmed live: `apps/web`'s
+admin client got `permission denied for table users` on a plain SELECT until this ran. `service_role`
+gets full access on every table (it's our trusted server-only role — the narrow, RLS-shaped
+grants in migration 3 are specifically for `anon`/`authenticated`).
+
+Two more migrations add behavior, not just access:
+- `20260729000004_user_signup_bootstrap.sql` — `security definer` trigger on `auth.users` insert
+  that creates the matching `public.users` + `subscriptions` (free plan) + `credit_balances`
+  rows automatically, so the app never lazily creates them on first API call.
+- `20260729000005_consume_credit_fn.sql` — see "Data flow" below.
 
 ## Live environment
 

@@ -1,4 +1,4 @@
-import type { CreateCheckRequest, CreateCheckResponse, CheckResult } from "@ai-checker/shared-types";
+import type { CreateCheckRequest, CreateCheckResponse, CheckResult, MeResponse } from "@ai-checker/shared-types";
 import { API_BASE_URL } from "./config";
 import { getAuthToken } from "./storage";
 
@@ -27,4 +27,10 @@ export async function listRecentChecks(limit = 5): Promise<CheckResult[]> {
   if (!res.ok) return [];
   const data = await res.json();
   return data.results ?? [];
+}
+
+export async function getMe(): Promise<MeResponse | null> {
+  const res = await authedFetch("/api/me");
+  if (!res.ok) return null;
+  return res.json();
 }

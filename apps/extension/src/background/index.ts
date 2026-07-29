@@ -1,7 +1,7 @@
 // MV3 service worker. Owns the right-click context menu and is the message
 // hub between the content script (floating icon) and the popup.
 
-import { setPendingSelection } from "../lib/storage";
+import { setPendingSelection, setAuthSession } from "../lib/storage";
 
 const CONTEXT_MENU_ID = "ai-checker-check-selection";
 
@@ -21,7 +21,9 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
   await chrome.action.openPopup();
 });
 
-// Messages from the content script's floating icon (see src/content/index.ts).
+// Messages from the content script (see src/content/index.ts): either the
+// floating icon's "check this selection" click, or a session handoff after
+// signing in on the /login page.
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   if (message?.type === "ai-checker/open-popup-with-selection") {
     (async () => {
@@ -31,5 +33,17 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
     })();
     return true; // keep the message channel open for the async response
   }
+
+  if (message?.type === "ai-checker/store-auth-session") {
+    (async () => {
+      await setAuthSession({
+        accessToken: message.accessToken,
+        refreshToken: message.refreshToken,
+      });
+      sendResponse({ ok: true });
+    })();
+    return true;
+  }
+
   return false;
 });
