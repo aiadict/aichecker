@@ -1,0 +1,32 @@
+node_modules/
+.DS_Store
+dist/
+build/
+.next/
+out/
+*.log
+npm-debug.log*
+*.tsbuildinfo
+
+# Env secrets - never commit
+.env
+.env.local
+.env.*.local
+
+# Extension build artifacts
+apps/extension/dist/
+apps/extension/*.zip
+
+# Supabase local
+supabase/.branches/
+supabase/.temp/
+
+# Editor
+.vscode/*
+!.vscode/extensions.json
+.idea/
+
+# Reference material: screenshots of Pangram's (third-party) proprietary UI,
+# used only as internal design reference. Repo is public — do not publish
+# competitor screenshots. Keep locally only.
+content/

@@ -1,0 +1,26 @@
+{
+  "name": "ai-checker",
+  "private": true,
+  "version": "0.1.0",
+  "description": "AI Checker monorepo: Chrome extension + web dashboard powered by the Pangram AI detection API.",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "npm run build --workspaces --if-present",
+    "dev:web": "npm run dev --workspace=apps/web",
+    "dev:extension": "npm run dev --workspace=apps/extension",
+    "lint": "npm run lint --workspaces --if-present",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
+    "estimate-margin": "tsx scripts/estimate-margin.ts"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.3",
+    "tsx": "^4.19.2"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

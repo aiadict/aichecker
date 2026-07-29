@@ -1,0 +1,74 @@
+:root {
+  --brand: #ea580c;
+  --brand-dark: #c2410c;
+  --bg: #ffffff;
+  --fg: #111827;
+  --muted: #6b7280;
+  --border: #e5e7eb;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color: var(--fg);
+  background: var(--bg);
+}
+
+a { color: var(--brand); }
+
+.container {
+  max-width: 880px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+nav.site-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 0;
+  border-bottom: 1px solid var(--border);
+}
+nav.site-nav .brand { font-weight: 800; font-size: 18px; text-decoration: none; color: var(--fg); }
+
+.hero { padding: 72px 0; }
+.hero h1 { font-size: 40px; line-height: 1.15; margin-bottom: 16px; }
+.hero p { color: var(--muted); font-size: 18px; max-width: 560px; }
+
+.cta-button {
+  display: inline-block;
+  margin-top: 24px;
+  padding: 12px 24px;
+  background: var(--brand);
+  color: white;
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: 600;
+}
+.cta-button:hover { background: var(--brand-dark); }
+
+.card {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 16px;
+}
+
+.pill {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+}
+.pill.ai { background: #fee2e2; color: #b91c1c; }
+.pill.human { background: #dcfce7; color: #166534; }
+.pill.mixed { background: #fef3c7; color: #92400e; }
+
+table { width: 100%; border-collapse: collapse; }
+th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid var(--border); font-size: 14px; }
+
+.muted { color: var(--muted); }
+footer.site-footer { padding: 40px 0; color: var(--muted); font-size: 13px; }
