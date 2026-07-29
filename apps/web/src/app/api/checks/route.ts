@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { PangramClient } from "@ai-checker/pangram-client";
+import { PangramApiError, PangramClient } from "@ai-checker/pangram-client";
 import type { CreateCheckRequest, CreateCheckResponse } from "@ai-checker/shared-types";
 import { randomUUID } from "node:crypto";
 import {
@@ -43,7 +43,29 @@ export async function POST(req: NextRequest) {
     });
   }
 
-  const prediction = await pangram.predict(text);
+  let prediction;
+  try {
+    prediction = await pangram.predict(text);
+  } catch (err) {
+    // Distinguish "our Pangram account itself is out of prepaid credits"
+    // (402 — top up at pangram.com, nothing to do with THIS user's plan)
+    // from any other upstream failure, so ops can tell them apart in logs.
+    if (err instanceof PangramApiError && err.status === 402) {
+      console.error("Pangram account is out of prepaid API credits — top up at pangram.com.", err.body);
+      return NextResponse.json<CreateCheckResponse>({
+        ok: false,
+        error: "upstream_error",
+        message: "AI Checker is temporarily unable to process checks. Please try again shortly.",
+      });
+    }
+    console.error("Pangram request failed", err);
+    return NextResponse.json<CreateCheckResponse>({
+      ok: false,
+      error: "upstream_error",
+      message: "Something went wrong while checking this text. Please try again.",
+    });
+  }
+
   const creditsUsed = pangram.creditsForWordCount(prediction.wordCount);
   deductMockCredits(creditsUsed);
 
