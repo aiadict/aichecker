@@ -3,18 +3,27 @@ import type Stripe from "stripe";
 import { getStripe } from "@/lib/stripe";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 
+const KNOWN_SUBSCRIPTION_STATUSES = ["active", "past_due", "canceled", "trialing", "unpaid"] as const;
+type KnownSubscriptionStatus = (typeof KNOWN_SUBSCRIPTION_STATUSES)[number];
+
+function isKnownStatus(status: string): status is KnownSubscriptionStatus {
+  return (KNOWN_SUBSCRIPTION_STATUSES as readonly string[]).includes(status);
+}
+
 /**
  * Source of truth for "what plan is a user actually on" after any Stripe
  * event: `invoice.paid`. This single event covers the initial subscription
  * purchase, every renewal, AND plan upgrades/downgrades made through the
  * Customer Portal (Stripe generates a proration invoice for those too) —
  * so one handler keeps subscriptions + credit_balances in sync for all
- * three cases without separately reasoning about customer.subscription.updated.
- *
- * Known gap (acceptable for this stage, not dunning/enforcement): a failed
- * renewal charge fires `invoice.payment_failed`, not `invoice.paid` — we
- * don't currently mark the subscription past_due or restrict access on
- * that. Revisit before relying on this for real revenue at scale.
+ * three cases without separately reasoning about customer.subscription.updated
+ * for plan changes. Status changes (past_due, unpaid, recovery) are handled
+ * separately below by handleInvoicePaymentFailed / handleSubscriptionUpdated
+ * — deliberately not folded into this function, since a failed payment
+ * should NOT touch plan_id or credits at all (see supabase/migrations/
+ * ..._consume_credit_no_paid_autotopup.sql for the other half of this: paid
+ * plans are only ever topped up here, never by a time-based fallback, so
+ * simply not calling this on failure is what makes dunning enforcement work).
  */
 async function handleInvoicePaid(admin: ReturnType<typeof getSupabaseAdmin>, invoice: Stripe.Invoice) {
   const customerId = typeof invoice.customer === "string" ? invoice.customer : invoice.customer?.id;
@@ -89,6 +98,57 @@ async function handleCheckoutSessionCompleted(
     .eq("user_id", userId);
 }
 
+/**
+ * A renewal charge failed. Marks the subscription past_due — deliberately
+ * does NOT touch plan_id or credit_balances. Whatever credits the user has
+ * left keep working (a natural grace period); they simply won't get a
+ * fresh batch until invoice.paid fires for a successful retry (Stripe's
+ * Smart Retries keep trying automatically over the following days).
+ */
+async function handleInvoicePaymentFailed(admin: ReturnType<typeof getSupabaseAdmin>, invoice: Stripe.Invoice) {
+  const customerId = typeof invoice.customer === "string" ? invoice.customer : invoice.customer?.id;
+  if (!customerId) return;
+
+  const { error } = await admin
+    .from("subscriptions")
+    .update({ status: "past_due" })
+    .eq("stripe_customer_id", customerId);
+
+  if (error) {
+    console.error(`invoice.payment_failed: failed to mark customer ${customerId} past_due`, error);
+  } else {
+    console.warn(`Payment failed for Stripe customer ${customerId} — marked past_due.`);
+  }
+}
+
+/**
+ * Keeps subscriptions.status truthful for any status Stripe reports that
+ * isn't already covered by a more specific handler — e.g. recovering from
+ * past_due back to active (invoice.paid already handles the credit/plan
+ * side of that), or reaching unpaid if the account's dunning settings are
+ * configured to not auto-cancel after exhausting retries. Unrecognized
+ * statuses (e.g. incomplete, paused) are logged and left alone rather than
+ * risking a constraint violation on an update we didn't anticipate.
+ */
+async function handleSubscriptionUpdated(admin: ReturnType<typeof getSupabaseAdmin>, subscription: Stripe.Subscription) {
+  const customerId = typeof subscription.customer === "string" ? subscription.customer : subscription.customer?.id;
+  if (!customerId) return;
+
+  if (!isKnownStatus(subscription.status)) {
+    console.warn(`customer.subscription.updated: unhandled status "${subscription.status}" for customer ${customerId}`);
+    return;
+  }
+
+  const { error } = await admin
+    .from("subscriptions")
+    .update({ status: subscription.status })
+    .eq("stripe_customer_id", customerId);
+
+  if (error) {
+    console.error(`customer.subscription.updated: failed to sync status for customer ${customerId}`, error);
+  }
+}
+
 async function handleSubscriptionDeleted(admin: ReturnType<typeof getSupabaseAdmin>, subscription: Stripe.Subscription) {
   const customerId = typeof subscription.customer === "string" ? subscription.customer : subscription.customer?.id;
   if (!customerId) return;
@@ -145,6 +205,12 @@ export async function POST(req: NextRequest) {
         break;
       case "invoice.paid":
         await handleInvoicePaid(admin, event.data.object as Stripe.Invoice);
+        break;
+      case "invoice.payment_failed":
+        await handleInvoicePaymentFailed(admin, event.data.object as Stripe.Invoice);
+        break;
+      case "customer.subscription.updated":
+        await handleSubscriptionUpdated(admin, event.data.object as Stripe.Subscription);
         break;
       case "customer.subscription.deleted":
         await handleSubscriptionDeleted(admin, event.data.object as Stripe.Subscription);

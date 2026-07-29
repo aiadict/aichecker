@@ -2,9 +2,7 @@ export default function TermsPage() {
   return (
     <div className="container">
       <h1>Terms of Service</h1>
-      <p className="muted">
-        Draft placeholder — have this reviewed by counsel before publishing. Last updated: TODO.
-      </p>
+      <p className="muted">Last updated: July 29, 2026.</p>
 
       <h2>The service</h2>
       <p>
@@ -27,7 +25,24 @@ export default function TermsPage() {
       </p>
 
       <h2>Cancellation &amp; refunds</h2>
-      <p>Cancel anytime from Account Settings. Refund policy: TODO.</p>
+      <p>
+        You can cancel your subscription at any time from the dashboard (Manage billing). When
+        you cancel, your plan remains active through the end of the current billing period —
+        access doesn&apos;t stop immediately, and you won&apos;t be billed again after that period
+        ends.
+      </p>
+      <p>
+        We don&apos;t provide partial refunds for unused time within a billing period. If a
+        payment is charged in error, or you believe you have another legitimate reason for a
+        refund, contact <a href="mailto:support@werida.io">support@werida.io</a> — we review these
+        case by case and may issue a refund at our discretion.
+      </p>
+      <p>
+        If a renewal payment fails, we&apos;ll retry it automatically over the following days.
+        Credits you&apos;ve already been given still work during that time, but you won&apos;t
+        receive a new batch until the payment succeeds. If it&apos;s never resolved, your account
+        moves back to the Free plan.
+      </p>
 
       <h2>Contact</h2>
       <p>

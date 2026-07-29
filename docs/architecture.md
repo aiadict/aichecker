@@ -177,25 +177,55 @@ Two more migrations add behavior, not just access:
   `payment_method_types` (Stripe's own anti-pattern warning — it locks out payment methods that
   would otherwise be dynamically offered).
 - **`POST /api/billing/portal`**: creates a Customer Portal session so users manage/cancel
-  their own subscription without any custom UI.
+  their own subscription without any custom UI. Confirmed live via the Portal's default
+  configuration (`bpc_1TybisRouUhCdZVMuTSswHOG`, auto-created by Stripe the first time it was
+  used): `subscription_cancel.mode = "at_period_end"` (matches `/terms` — canceling keeps access
+  through the current period, doesn't cut it off immediately), but
+  `subscription_update.enabled = false` — **customers can't self-serve upgrade/downgrade via the
+  Portal today, only cancel.** Changing plans currently only happens through `/pricing`'s
+  Checkout flow. Revisit the Portal configuration (`stripe billing_portal configurations`) if
+  self-serve plan switching is wanted later.
 - **`POST /api/billing/webhook`**: verifies the Stripe-Signature header before doing anything
   (confirmed live: missing or invalid signatures get a `400`, not processed). `invoice.paid` is
   the single source of truth for "what plan is this user actually on" — it covers the initial
-  purchase, every renewal, *and* Portal-driven upgrades/downgrades (Stripe generates a proration
-  invoice for those too), so there's no separate `customer.subscription.updated` handler. Every
-  plan-affecting event updates **both** `subscriptions.plan_id` and `credit_balances.plan_id` (+
-  resets `credits_remaining` to the new plan's `monthly_credits`) — these two tables are
-  otherwise independent, and `consume_credit`'s limits come from `credit_balances.plan_id`, not
-  `subscriptions.plan_id`.
-  - Known gap, acceptable at this stage: a failed renewal fires `invoice.payment_failed`, not
-    `invoice.paid` — there's no dunning/past-due enforcement yet.
-- **Verified live** (2026-07-29) with real Stripe objects (a real customer, a real subscription
-  against the real Pro price, a real invoice) and hand-signed webhook events (HMAC-SHA256 per
-  Stripe's documented scheme, using the real signing secret) POSTed to the running endpoint:
-  `checkout.session.completed` correctly linked `stripe_customer_id`/`stripe_subscription_id`;
-  `invoice.paid` correctly set `plan_id` to Pro and topped credits up to 500 with the right
-  `current_period_end`; `customer.subscription.deleted` correctly downgraded both tables back to
-  Free (10 credits). All test objects deleted afterward.
+  purchase and every renewal (and *would* cover Portal-driven plan changes too, once
+  `subscription_update` is enabled — Stripe generates a proration invoice for those the same
+  way). Every plan-affecting event updates **both** `subscriptions.plan_id` and
+  `credit_balances.plan_id` (+ resets `credits_remaining` to the new plan's `monthly_credits`) —
+  these two tables are otherwise independent, and `consume_credit`'s limits come from
+  `credit_balances.plan_id`, not `subscriptions.plan_id`.
+  - **Dunning (done):** `invoice.payment_failed` marks the subscription `past_due` without
+    touching `plan_id` or credits — existing credits keep working (a grace period), but no fresh
+    batch arrives until a retry succeeds. This only works because of a companion fix in
+    `consume_credit` (`..._consume_credit_no_paid_autotopup.sql`): the function's time-based
+    monthly reset now only applies to the Free plan. Before that fix, a paid user whose renewal
+    failed would still get a full fresh batch of credits the moment their old period ended,
+    regardless of payment status — worth remembering if `consume_credit` is ever touched again.
+    `customer.subscription.updated` separately keeps `subscriptions.status` synced for any status
+    Stripe reports (recovery back to `active`, `unpaid`, etc.), ignoring statuses outside
+    `active/past_due/canceled/trialing/unpaid` (e.g. `incomplete`, `paused`) rather than risking
+    a check-constraint violation on an update we didn't anticipate.
+- **Verified live** (2026-07-29, in two passes) with real Stripe objects (a real customer, a
+  real subscription against the real Pro price, a real invoice) and hand-signed webhook events
+  (HMAC-SHA256 per Stripe's documented scheme, using the real signing secret) POSTed to the
+  running endpoint:
+  - First pass, via an actual browser completing Stripe's hosted Checkout with a test card:
+    confirmed the full real flow (not just synthetic events) — real customer, real subscription,
+    Pro plan, 500 credits, all correct in the database afterward.
+  - `checkout.session.completed` correctly linked `stripe_customer_id`/`stripe_subscription_id`;
+    `invoice.paid` correctly set `plan_id` to Pro and topped credits up to 500 with the right
+    `current_period_end`; `customer.subscription.deleted` correctly downgraded both tables back
+    to Free (10 credits).
+  - Dunning pass: manually lapsed a Pro user's `period_end` with 50 credits remaining, fired
+    `invoice.payment_failed` — confirmed `status` became `past_due` while `credit_balances` was
+    left untouched (still 50, still lapsed). Then called `consume_credit` directly and confirmed
+    it decremented normally (50→49) **without** resetting to a fresh 500 — proving the
+    `consume_credit_no_paid_autotopup` fix actually closes the gap, not just in theory. As a
+    regression check, did the same lapsed-period setup on the Free plan and confirmed it *does*
+    still auto-refresh (2→10 credits, then −1). Also confirmed `customer.subscription.updated`
+    syncs a recovery to `active`, and safely ignores/logs an unrecognized status (`incomplete`)
+    rather than erroring.
+  - All test objects (Stripe customers/subscriptions, Supabase users) deleted afterward.
 - **Local webhook testing:** `stripe listen --forward-to localhost:<port>/api/billing/webhook`
   prints a `whsec_...` signing secret — different from production's, which comes from a real
   webhook endpoint registered against `https://werida.io/api/billing/webhook` once deployed.

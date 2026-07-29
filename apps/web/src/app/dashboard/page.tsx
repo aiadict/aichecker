@@ -30,7 +30,14 @@ export default async function DashboardPage() {
     .eq("user_id", user.id)
     .single<CreditBalanceWithPlanRow>();
 
+  const { data: subscriptionRow } = await supabase
+    .from("subscriptions")
+    .select("status")
+    .eq("user_id", user.id)
+    .single<{ status: string }>();
+
   const plan = data ? (Array.isArray(data.plans) ? data.plans[0] : data.plans) : null;
+  const paymentIssue = subscriptionRow?.status === "past_due" || subscriptionRow?.status === "unpaid";
 
   return (
     <div className="container">
@@ -39,6 +46,16 @@ export default async function DashboardPage() {
         <SignOutButton />
       </div>
       <p className="muted">{user.email}</p>
+
+      {paymentIssue && (
+        <div className="card" style={{ borderColor: "#b91c1c", background: "#fef2f2" }}>
+          <p style={{ margin: 0 }}>
+            <strong>Your last payment didn&apos;t go through.</strong> Your remaining credits still
+            work, but you won&apos;t get a new batch until this is fixed.
+          </p>
+          <ManageBillingButton />
+        </div>
+      )}
 
       {plan && data ? (
         <div className="card">
