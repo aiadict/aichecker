@@ -32,12 +32,13 @@ export default async function DashboardPage() {
 
   const { data: subscriptionRow } = await supabase
     .from("subscriptions")
-    .select("status")
+    .select("status, cancel_at_period_end, current_period_end")
     .eq("user_id", user.id)
-    .single<{ status: string }>();
+    .single<{ status: string; cancel_at_period_end: boolean; current_period_end: string | null }>();
 
   const plan = data ? (Array.isArray(data.plans) ? data.plans[0] : data.plans) : null;
   const paymentIssue = subscriptionRow?.status === "past_due" || subscriptionRow?.status === "unpaid";
+  const endingSoon = subscriptionRow?.status === "active" && subscriptionRow.cancel_at_period_end;
 
   return (
     <div className="container">
@@ -52,6 +53,20 @@ export default async function DashboardPage() {
           <p style={{ margin: 0 }}>
             <strong>Your last payment didn&apos;t go through.</strong> Your remaining credits still
             work, but you won&apos;t get a new batch until this is fixed.
+          </p>
+          <ManageBillingButton />
+        </div>
+      )}
+
+      {endingSoon && (
+        <div className="card" style={{ borderColor: "#b45309", background: "#fffbeb" }}>
+          <p style={{ margin: 0 }}>
+            <strong>Your subscription is set to end</strong>
+            {subscriptionRow?.current_period_end
+              ? ` on ${new Date(subscriptionRow.current_period_end).toLocaleDateString()}`
+              : ""}
+            . You&apos;ll keep your plan and credits until then, after which you&apos;ll move to
+            the Free plan. Changed your mind? You can resume from Manage billing.
           </p>
           <ManageBillingButton />
         </div>

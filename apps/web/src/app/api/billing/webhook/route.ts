@@ -61,7 +61,10 @@ async function handleInvoicePaid(admin: ReturnType<typeof getSupabaseAdmin>, inv
 
   await admin
     .from("subscriptions")
-    .update({ plan_id: plan.id, status: "active", current_period_end: periodEnd })
+    // A successful invoice always means the subscription is in good
+    // standing going forward — clear cancel_at_period_end in case this is a
+    // renewal after the user changed their mind and resumed via the Portal.
+    .update({ plan_id: plan.id, status: "active", current_period_end: periodEnd, cancel_at_period_end: false })
     .eq("user_id", sub.user_id);
 
   await admin
@@ -141,7 +144,7 @@ async function handleSubscriptionUpdated(admin: ReturnType<typeof getSupabaseAdm
 
   const { error } = await admin
     .from("subscriptions")
-    .update({ status: subscription.status })
+    .update({ status: subscription.status, cancel_at_period_end: subscription.cancel_at_period_end })
     .eq("stripe_customer_id", customerId);
 
   if (error) {
@@ -165,7 +168,10 @@ async function handleSubscriptionDeleted(admin: ReturnType<typeof getSupabaseAdm
     .single<{ user_id: string }>();
   if (!sub || !freePlan) return;
 
-  await admin.from("subscriptions").update({ plan_id: freePlan.id, status: "canceled" }).eq("user_id", sub.user_id);
+  await admin
+    .from("subscriptions")
+    .update({ plan_id: freePlan.id, status: "canceled", cancel_at_period_end: false })
+    .eq("user_id", sub.user_id);
   await admin
     .from("credit_balances")
     .update({

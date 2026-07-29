@@ -226,6 +226,19 @@ Two more migrations add behavior, not just access:
     syncs a recovery to `active`, and safely ignores/logs an unrecognized status (`incomplete`)
     rather than erroring.
   - All test objects (Stripe customers/subscriptions, Supabase users) deleted afterward.
+  - **Cancellation keeps what was paid for:** a common subscription expectation, verified live
+    rather than assumed. Took a real Pro subscription (used down to 495/500 credits, simulating
+    real usage), then called the actual Stripe API `subscriptions.update(cancel_at_period_end:
+    true)` — the same call the Customer Portal's Cancel button makes. The real
+    `customer.subscription.updated` event that fired left `status` at `active` and `plan_id`,
+    `credits_remaining` completely untouched; a further `consume_credit` call right after
+    confirmed the account still worked normally (494 remaining). Only once the simulated
+    period-end `customer.subscription.deleted` event fired did the downgrade to Free actually
+    happen. `subscriptions.cancel_at_period_end` (new column,
+    `20260729000010_subscriptions_cancel_at_period_end.sql`) is synced from this same event so
+    the dashboard can tell the user plainly "you keep this plan until `<date>`" instead of that
+    fact only being true and invisible in Stripe — confirmed live that a real cancel-at-period-end
+    call correctly sets it to `true` in the database.
 - **Local webhook testing:** `stripe listen --forward-to localhost:<port>/api/billing/webhook`
   prints a `whsec_...` signing secret — different from production's, which comes from a real
   webhook endpoint registered against `https://werida.io/api/billing/webhook` once deployed.
