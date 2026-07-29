@@ -37,7 +37,7 @@ export default function PrivacyPage() {
       <h2>Your rights</h2>
       <p>
         You can access, export, or delete your data from Account Settings, or by contacting{" "}
-        <a href="mailto:privacy@aichecker.app">privacy@aichecker.app</a>.
+        <a href="mailto:support@werida.io">support@werida.io</a>.
       </p>
     </div>
   );

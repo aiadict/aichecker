@@ -68,7 +68,7 @@ export default function SettingsTab() {
 
       <p className="muted" style={{ marginTop: 16 }}>
         <a href={`${API_BASE_URL}`} target="_blank" rel="noreferrer">
-          Go to aichecker.app
+          Go to werida.io
         </a>
       </p>
       <p className="muted">v0.1.0 (mocked — no Pangram API key configured)</p>

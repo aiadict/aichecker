@@ -3,6 +3,14 @@
 Tracks compliance items that are easy to miss until a Chrome Web Store or OAuth submission
 bounces. Not legal advice — have an actual lawyer review the policies before publishing.
 
+## Domain & contact addresses (confirmed)
+
+- **Production domain:** `werida.io` (already purchased). `NEXT_PUBLIC_APP_URL` should be set to
+  `https://werida.io` in the Vercel production environment.
+- **Contact emails:** `hello@werida.io` (general/marketing) and `support@werida.io` (support,
+  privacy/data requests, account issues) — both are live aliases. `/privacy` and `/terms` link to
+  `support@werida.io`.
+
 ## Where policies live
 
 - `/privacy` and `/terms` on the marketing site (`apps/web/src/app/privacy`,
@@ -14,7 +22,7 @@ bounces. Not legal advice — have an actual lawyer review the policies before p
 
 ## Chrome Web Store submission checklist
 
-- [ ] Privacy policy URL live at final domain.
+- [ ] Privacy policy URL live at `https://werida.io/privacy`.
 - [ ] Single-purpose description matches what the extension actually does.
 - [ ] Justify every permission explicitly in the listing:
   - `contextMenus` — powers "Check for AI Content" on selected text.
@@ -34,8 +42,10 @@ bounces. Not legal advice — have an actual lawyer review the policies before p
 
 ## Google OAuth verification checklist
 
-- [ ] Verified domain ownership in Google Cloud Console.
-- [ ] Privacy policy + terms URLs filled into the OAuth consent screen config.
+- [ ] Verify domain ownership of `werida.io` in Google Cloud Console (Search Console TXT/DNS
+  record) once Supabase Auth's Google provider is set up.
+- [ ] Privacy policy + terms URLs (`https://werida.io/privacy`, `https://werida.io/terms`) filled
+  into the OAuth consent screen config.
 - [ ] Scopes requested kept minimal (email + basic profile only, unless a feature needs more).
 
 ## Data handling commitments to make good on
@@ -58,7 +68,7 @@ bounces. Not legal advice — have an actual lawyer review the policies before p
 
 ## Still open / needs a decision
 
-- [ ] Production domain name.
+- [x] ~~Production domain name.~~ Resolved: `werida.io`.
 - [ ] Refund policy specifics (`/terms` currently says "TODO").
 - [ ] Whether institutional/FERPA-style commitments are needed if the education segment is
   pursued later (Pangram makes explicit FERPA commitments; we don't target that segment in

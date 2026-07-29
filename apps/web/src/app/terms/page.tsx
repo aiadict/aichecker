@@ -31,7 +31,7 @@ export default function TermsPage() {
 
       <h2>Contact</h2>
       <p>
-        <a href="mailto:support@aichecker.app">support@aichecker.app</a>
+        <a href="mailto:support@werida.io">support@werida.io</a>
       </p>
     </div>
   );

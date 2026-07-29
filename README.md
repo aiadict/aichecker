@@ -6,13 +6,11 @@ A Chrome extension + web dashboard that detects AI-generated text, powered by th
 
 ## ⚠️ Required before this does anything real
 
-This is scaffolding built against **mocked** Pangram responses. Nothing will call the real API, create a real user, or charge a real card until the following are filled in:
-
-1. **`PANGRAM_API_KEY`** — TODO, to be provided later in development. See `.env.example`. Do not skip wiring this in once received — `packages/pangram-client` is the only place it should ever be read, and it must never end up in `apps/extension`'s bundle.
+1. ~~**`PANGRAM_API_KEY`**~~ ✅ Done — real key wired into `packages/pangram-client` (submit-then-poll against Pangram's REST API). Auth verified live; full happy-path verification is pending prepaid credits on the Pangram account (currently $0 — top up at pangram.com's Developer API tab).
 2. **Supabase project** — create one at supabase.com, run `supabase/migrations`, then `supabase/seed.sql`.
 3. **Stripe account** (test mode) — for `apps/web`'s billing routes.
-4. **Domain name** — needed for the privacy policy URL (Chrome Web Store listing + Google OAuth verification both require it).
-5. **GitHub repo** — this monorepo gets pushed once credentials are provided.
+4. ~~**Domain name**~~ ✅ Done — `werida.io`, contact aliases `hello@werida.io` / `support@werida.io`. `NEXT_PUBLIC_APP_URL` should be `https://werida.io` in production.
+5. ~~**GitHub repo**~~ ✅ Done — [github.com/aiadict/aichecker](https://github.com/aiadict/aichecker).
 
 ## Layout
 
