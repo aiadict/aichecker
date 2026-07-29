@@ -19,7 +19,10 @@ interface ConsumeCreditResult {
 export async function POST(req: NextRequest) {
   const user = await getAuthenticatedUser(req);
   if (!user) {
-    return NextResponse.json<CreateCheckResponse>({ ok: false, error: "unauthorized" });
+    // Real 401 (not just ok:false in a 200) so the extension's fetch layer
+    // can key off status code alone to trigger a token-refresh-and-retry —
+    // see apps/extension/src/lib/api.ts.
+    return NextResponse.json<CreateCheckResponse>({ ok: false, error: "unauthorized" }, { status: 401 });
   }
 
   const body = (await req.json()) as CreateCheckRequest;

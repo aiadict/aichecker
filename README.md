@@ -7,7 +7,7 @@ A Chrome extension + web dashboard that detects AI-generated text, powered by th
 ## ⚠️ Required before this does anything real
 
 1. ~~**`PANGRAM_API_KEY`**~~ ✅ Done — real key wired into `packages/pangram-client`, and now fully verified end to end (the Pangram account has prepaid credits as of the Supabase integration work).
-2. ~~**Supabase project**~~ ✅ Done — project `aichecker` live (ref `najbzowkupdhlartoyjk`, region `eu-west-1`). Real auth (Supabase Auth, email/password) and DB (migrations + seed) are wired into `/api/checks` and `/api/me` — verified end to end with a real signed-up user: signup bootstrap trigger, atomic credit consumption (incl. daily-cap enforcement), a real Pangram prediction, and history all confirmed against the live database. `apps/web/src/lib/mock-store.ts` is now only used by the `/dashboard` pages (not yet wired to real auth/DB — see docs/architecture.md).
+2. ~~**Supabase project**~~ ✅ Done — project `aichecker` live (ref `najbzowkupdhlartoyjk`, region `eu-west-1`). Real auth (Supabase Auth, email/password) and DB are wired into `/api/checks`, `/api/me`, and the `/dashboard` pages (cookie-based session via `@supabase/ssr`, protected by `middleware.ts`) — all verified end to end with real signed-up users. `lib/mock-store.ts` is gone; nothing reads fake data anymore. Token refresh is also wired up (extension retries once on a 401 using the stored refresh token).
 3. **Stripe account** (test mode) — for `apps/web`'s billing routes.
 4. ~~**Domain name**~~ ✅ Done — `werida.io`, contact aliases `hello@werida.io` / `support@werida.io`. `NEXT_PUBLIC_APP_URL` should be `https://werida.io` in production.
 5. ~~**GitHub repo**~~ ✅ Done — [github.com/aiadict/aichecker](https://github.com/aiadict/aichecker).

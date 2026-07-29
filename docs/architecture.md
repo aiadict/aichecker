@@ -54,9 +54,34 @@ The extension never implements its own OAuth/password UI. Instead:
    `Authorization: Bearer <token>`; `apps/web/src/lib/auth.ts`'s `getAuthenticatedUser` verifies
    it against Supabase Auth (`supabase.auth.getUser(token)`) on every request.
 
-**Known limitation:** no token-refresh flow yet — the extension stores the `refreshToken` but
-doesn't use it. Supabase access tokens expire (default ~1 hour), so users will need to re-sign-in
-periodically until that's wired up. Fine for this dev stage; flagged as a fast-follow.
+**Token refresh (done):** `apps/extension/src/lib/api.ts`'s `authedFetch` retries once on a 401 —
+it calls Supabase's `token?grant_type=refresh_token` endpoint directly (no SDK needed, keeps the
+extension bundle small) using the stored `refreshToken`, persists the new session, and retries
+the original request. If the refresh token itself is invalid, it clears the session
+(`setAuthSession(null)`) so the UI falls back to "Not signed in" rather than looping. This is why
+`POST /api/checks`'s unauthorized case returns a real `401` status (not just `ok:false` in a 200)
+— the extension keys off the status code to trigger this, uniformly with `GET /api/checks` and
+`GET /api/me`.
+
+## Auth flow: web dashboard
+
+Separate from the extension's Bearer-token flow, but the same underlying Supabase Auth users:
+
+- `lib/supabase/client.ts` uses `@supabase/ssr`'s `createBrowserClient`, which persists the
+  session in cookies (not localStorage) — that's what lets the server side see it too. `/login`
+  uses this client for both the extension handoff (reads the returned session object directly,
+  independent of how it's persisted) and normal dashboard sign-in (redirects to `/dashboard`).
+- `apps/web/src/middleware.ts` runs on every `/dashboard/*` request: refreshes the session cookie
+  via `@supabase/ssr`'s `createServerClient` (Server Components can't set cookies themselves, so
+  without this a session nearing expiry would go stale), and redirects to `/login` if there's no
+  user. Confirmed live: an unauthenticated request to `/dashboard` gets a `307` to `/login`.
+- `lib/supabase/server.ts`'s `createSupabaseServerClient()` is the cookie-scoped, RLS-respecting
+  client used by the `/dashboard` Server Components and by the public `/history/[slug]` page.
+  The share page deliberately does **not** use the admin client or an application-level
+  `is_public` check — it relies entirely on RLS (`checks`' policies allow the owner via
+  `auth.uid() = user_id`, or anyone when `is_public = true`). Confirmed live: an anonymous
+  request to a freshly-created (private) check's share link 404s; flipping `is_public` to `true`
+  makes the same link visible to the same anonymous request, no code path change.
 
 ## Data flow: a "Check for AI" action
 
@@ -81,10 +106,9 @@ all its data were deleted afterward (`on delete cascade` from `auth.users` down 
    - Inserts into `checks` (+ `check_windows`) and `api_usage_log` via `lib/checks-repo.ts` and
      the service-role client directly (already-verified user, trusted server context).
 4. Response returned to the extension; also queryable via `GET /api/checks` (used by the
-   extension's History tab) and `GET /api/me` (credits header). **Not yet wired**: the
-   `/dashboard` pages still read `lib/mock-store.ts`, not these real tables — same visual
-   layout, different (fake) backing data. Wiring the dashboard to real auth/DB is separate,
-   later work.
+   extension's History tab) and `GET /api/me` (credits header). The `/dashboard` pages now read
+   these same real tables too (via the RLS-scoped SSR client, not the admin client) —
+   `lib/mock-store.ts` has been deleted, nothing references it anymore.
 
 ## Database schema (Supabase Postgres)
 
