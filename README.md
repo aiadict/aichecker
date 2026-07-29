@@ -7,7 +7,7 @@ A Chrome extension + web dashboard that detects AI-generated text, powered by th
 ## ⚠️ Required before this does anything real
 
 1. ~~**`PANGRAM_API_KEY`**~~ ✅ Done — real key wired into `packages/pangram-client` (submit-then-poll against Pangram's REST API). Auth verified live; full happy-path verification is pending prepaid credits on the Pangram account (currently $0 — top up at pangram.com's Developer API tab).
-2. **Supabase project** — create one at supabase.com, run `supabase/migrations`, then `supabase/seed.sql`.
+2. ~~**Supabase project**~~ ✅ Done — project `aichecker` live (ref `najbzowkupdhlartoyjk`, region `eu-west-1`). Migrations + seed applied and verified against the real Data API (see `docs/architecture.md`). The real DB is still empty of actual users/checks — `apps/web`'s API routes still read/write the mock store (`src/lib/mock-store.ts`) pending the auth + real-DB wiring described there.
 3. **Stripe account** (test mode) — for `apps/web`'s billing routes.
 4. ~~**Domain name**~~ ✅ Done — `werida.io`, contact aliases `hello@werida.io` / `support@werida.io`. `NEXT_PUBLIC_APP_URL` should be `https://werida.io` in production.
 5. ~~**GitHub repo**~~ ✅ Done — [github.com/aiadict/aichecker](https://github.com/aiadict/aichecker).
@@ -18,7 +18,7 @@ A Chrome extension + web dashboard that detects AI-generated text, powered by th
 apps/web/            Next.js marketing site + dashboard + API routes (talks to Pangram, Supabase, Stripe)
 apps/extension/       Chrome MV3 extension (talks only to apps/web, never to Pangram directly)
 packages/shared-types/  Shared TypeScript types used by both apps
-packages/pangram-client/ Server-only Pangram API wrapper (mocked until PANGRAM_API_KEY exists)
+packages/pangram-client/ Server-only Pangram API wrapper (falls back to a mock only if PANGRAM_API_KEY is unset)
 supabase/             SQL migrations + seed data (plans, credit economics)
 docs/                 Product spec, architecture, privacy/legal checklist
 scripts/              Utility scripts (e.g. margin estimator for plan pricing)

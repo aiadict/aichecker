@@ -73,6 +73,24 @@ api_usage_log       OUR cost tracking against Pangram — service-role only, nev
 RLS (`20260729000002_rls_policies.sql`): users can only read/write their own rows; `plans` is
 public-read; `api_usage_log` has no client policy at all (service-role bypasses RLS by design).
 
+**GRANTs are separate from RLS and easy to forget** (`20260729000003_grants.sql`): we unchecked
+"Automatically expose new tables" when creating the Supabase project (their own recommendation,
+for manual access control), which means Postgres never gives the `anon`/`authenticated` roles a
+base table-level GRANT on new tables — RLS policies are only consulted *after* that GRANT exists.
+Confirmed live: querying `plans` returned `permission denied` until the GRANT migration ran, even
+though the public-read RLS policy was already in place. **Any future table needs both** an RLS
+policy (which rows) **and** an explicit `GRANT` in a migration (whether the role can touch the
+table at all) — `api_usage_log` intentionally gets neither beyond service-role.
+
+## Live environment
+
+- **Supabase project:** `aichecker` (ref `najbzowkupdhlartoyjk`, region `eu-west-1`). Migrations
+  and seed applied via the Supabase CLI (`supabase db push`) against the project's **Transaction
+  pooler** connection string — the direct-connection host (`db.<ref>.supabase.co`) is IPv6-only
+  on new projects and unreachable from most local networks; the shared pooler
+  (`aws-0-<region>.pooler.supabase.com:6543`) is IPv4 by default and free.
+- Real project URL + keys live only in `apps/web/.env.local` (gitignored, never committed).
+
 ## Extension internals
 
 - **Manifest V3**, permissions: `contextMenus`, `storage`, `activeTab`, `scripting`,
