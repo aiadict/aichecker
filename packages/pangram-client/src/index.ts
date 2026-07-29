@@ -28,6 +28,16 @@ export interface PangramPredictResult {
   wordCount: number;
   isMocked: boolean;
   dashboardLink?: string;
+  /**
+   * Pangram's own `version` field from the response (e.g. "3.3.2"). Not
+   * documented as a controllable request parameter anywhere we could find —
+   * capturing it here is our only way to audit which model actually served
+   * a request, given Pangram's pricing page lists a 10x cost difference
+   * between "Pangram 3" ($0.05/1,000 words) and "Pangram 4" ($0.05/100
+   * words) with no documented way to pin the cheaper one. See
+   * api_usage_log.pangram_model_version and docs/product-spec.md §4.
+   */
+  modelVersion?: string;
 }
 
 export interface PangramClientOptions {
@@ -186,6 +196,7 @@ function mapPangramResponse(data: PangramTaskSuccess, wordCount: number): Pangra
     wordCount,
     isMocked: false,
     dashboardLink: data.dashboard_link,
+    modelVersion: data.version,
   };
 }
 

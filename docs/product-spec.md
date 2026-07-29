@@ -64,6 +64,19 @@ changes to re-validate margin before touching pricing.
 **Open item:** if Pangram offers a wholesale/reseller rate once the real API key + contract
 terms arrive, re-run the margin calc — prices above can likely come down.
 
+**⚠️ Unresolved risk, actively being tracked (2026-07-29):** `pangram.com/pricing` now lists
+**two** model-version rates — "Pangram 3: $0.05 = 1,000 words" and "Pangram 4: $0.05 = 100
+words" (10x costlier per word). Every entire margin table above assumes the Pangram 3 rate. We
+could not find any documented REST API parameter to pin the cheaper model — the `/task` endpoint
+we integrated only documents `text` and `public_dashboard_link` as request fields, and there's no
+versioned URL for it (unlike the earlier v2→v3 migration, which did change the URL path).
+`packages/pangram-client` now captures Pangram's `version` response field into
+`api_usage_log.pangram_model_version` on every real request as an audit trail, and the API route
+logs it loudly to the server console. **Action needed:** confirm directly with Pangram (account
+dashboard's API/Developer settings, or `support@pangram.com`) which rate the Developer API key
+actually bills at, and whether it's configurable — do not treat the numbers in this table as
+confirmed until that lands.
+
 ## 5. Target users
 
 Individual writers/students verifying their own work, educators/reviewers spot-checking

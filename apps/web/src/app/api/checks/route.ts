@@ -100,10 +100,17 @@ export async function POST(req: NextRequest) {
 
   // Our own cost tracking against Pangram — independent of what we charge
   // the user, never exposed to any client (service-role only, no RLS policy).
+  // pangram_model_version is an audit trail against Pangram's own
+  // undocumented (as of this writing) split between "Pangram 3"
+  // ($0.05/1,000 words) and "Pangram 4" ($0.05/100 words, 10x costlier) —
+  // see docs/product-spec.md §4. Logged loudly here on purpose: a version
+  // string we don't expect is the first sign the cost model is wrong.
+  console.log(`Pangram model version served this check: ${prediction.modelVersion ?? "(none returned)"}`);
   await admin.from("api_usage_log").insert({
     check_id: result.id,
     pangram_credits_billed: creditsUsed,
     cost_usd_estimate: creditsUsed * pangram.costPerCredit,
+    pangram_model_version: prediction.modelVersion ?? null,
   });
 
   return NextResponse.json<CreateCheckResponse>({
