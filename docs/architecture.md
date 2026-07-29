@@ -252,7 +252,52 @@ Two more migrations add behavior, not just access:
   (`aws-0-<region>.pooler.supabase.com:6543`) is IPv4 by default and free.
 - **Stripe account:** "werida sandbox" (`acct_1TyZuTRouUhCdZVM`), test mode. CLI authenticated via
   device-pairing (`stripe login --non-interactive` / `--complete`), 90-day token expiry.
+- **Vercel project:** `aichecker`, under the `dmajchro-serwispilot` team (an existing team from a
+  prior, unrelated product — confirmed there's no code/data mixing, projects are fully isolated;
+  only the Team name leaks into default `*.vercel.app` URLs, which is cosmetic and moot once a
+  custom domain is attached). Live at **https://werida.io** (+ `www.werida.io`).
 - Real project URLs + keys live only in `apps/web/.env.local` (gitignored, never committed).
+
+## Deployment (Vercel)
+
+- **Root Directory is `apps/web`, and this is load-bearing.** Deploying via `vercel` from inside
+  `apps/web` (rather than the repo root) uploads only that subfolder — our npm workspace links
+  (`@ai-checker/pangram-client`, `@ai-checker/shared-types`) then resolve to nothing, since npm
+  tries to fetch them from the real registry and 404s. Confirmed live: this exact failure
+  happened on the first deploy attempt. Fixed by setting the Vercel project's `rootDirectory` to
+  `apps/web` (via the REST API, `PATCH /v9/projects/{id}`) and always running `vercel` /
+  `vercel --prod` from the **repo root**, not `apps/web` — Vercel installs at the workspace root
+  (seeing the full monorepo) and only scopes the build itself to Root Directory.
+- **Git integration**: connected to `aiadict/aichecker` on GitHub, production branch `main`.
+  Pushes to `main` now deploy to production automatically; other branches get preview
+  deployments. This was a deliberate choice, confirmed with the user, since it means every future
+  `git push` to `main` goes live with no separate confirmation step.
+- **Domain (`werida.io`) was already handling real email** (Hostinger-hosted, MX/SPF/DMARC/DKIM
+  records for `hello@`/`support@werida.io`) before we touched DNS — the connection process was
+  scoped to avoid any risk to that:
+  - Did **not** switch nameservers to Vercel's (`ns1/ns2.vercel-dns.com`) — that would hand over
+    all DNS management, including the email records, to Vercel.
+  - Only changed one existing record: the apex `A` record, from Hostinger's placeholder IP to
+    Vercel's (`76.76.21.21`). Left the existing `CNAME www → werida.io` alone — once the apex
+    pointed at Vercel, `www` followed it automatically (confirmed live: `vercel domains verify
+    www.werida.io` reported `status: ok` off that same pre-existing record, no DNS change needed
+    for `www` at all beyond adding the domain to the Vercel project so a certificate got issued
+    for it).
+  - Confirmed live, after the DNS change: `dig +short A werida.io` → `76.76.21.21`,
+    `vercel domains verify werida.io` → `status: ok`, and both `https://werida.io` and
+    `https://www.werida.io` serving `200` once each domain's certificate finished provisioning
+    (a short async delay after verification — not instant, don't assume failure if `curl` gets a
+    TLS error in the first minute after adding a domain).
+- **Environment variables** are set per-environment via `vercel env add <NAME> <production|preview> --value <v> --yes`
+  (needs Vercel CLI ≥58; 54.x silently failed on the non-interactive Preview form specifically —
+  confirmed live, upgrading fixed it with no other change). `NEXT_PUBLIC_APP_URL` was set to the
+  Vercel-assigned URL first (before a domain existed to point it at), then updated to
+  `https://werida.io` and production redeployed once the domain was live — Stripe Checkout/Portal
+  redirect URLs depend on this being correct.
+- **Deployment Protection (Vercel SSO)** is on by default for this team, which makes preview URLs
+  return `302` to `vercel.com/sso-api` for anyone without dashboard access — expected, not a bug.
+  `vercel curl <url>` proxies through an authenticated bypass token for verifying preview
+  deployments from the CLI.
 
 ## Extension internals
 

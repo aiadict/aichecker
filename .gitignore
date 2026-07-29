@@ -30,3 +30,5 @@ supabase/.temp/
 # used only as internal design reference. Repo is public — do not publish
 # competitor screenshots. Keep locally only.
 content/
+.vercel
+.env*
