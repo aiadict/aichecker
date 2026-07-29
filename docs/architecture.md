@@ -152,6 +152,54 @@ Two more migrations add behavior, not just access:
   rows automatically, so the app never lazily creates them on first API call.
 - `20260729000005_consume_credit_fn.sql` — see "Data flow" below.
 
+## Billing (Stripe)
+
+- **One Stripe Product per plan** ("AI Checker Pro", "AI Checker Business"), each with one
+  monthly Price — per Stripe's own guidance, never put multiple tiers' prices on a single
+  Product (every Checkout/invoice line item shows the Product name, so shared tiers would be
+  indistinguishable to the customer). `plans.stripe_price_id` maps our plan to Stripe's price.
+- **`apps/web/src/lib/stripe.ts`** wraps a single server-only Stripe client. `STRIPE_SECRET_KEY`
+  is a **restricted key** (`rk_test_...`), not a full secret key — scoped to only Checkout
+  Sessions (write), Customers (write), Subscriptions (read), Customer Portal (write),
+  Products/Prices (read). Confirmed live: the RAK correctly succeeds on Checkout Session
+  creation and correctly gets `more_permissions_required` on out-of-scope calls (e.g. reading
+  account balance, creating a subscription directly) — the restriction is real, not just
+  configured and untested.
+- **Managed Payments** (Stripe's newer merchant-of-record product, on by default for new
+  accounts) is explicitly disabled — `managed_payments: { enabled: false }` — on every Checkout
+  Session. Left on, Stripe's "Link" becomes the merchant the customer sees on checkout, receipts,
+  and their statement, not AI Checker; disabling it keeps AI Checker as the seller of record,
+  matching what's already written into `/terms` and `/privacy`. This flag isn't in this SDK
+  version's TS types yet, hence the `as Record<string, unknown>` cast in
+  `api/billing/checkout/route.ts`.
+- **`POST /api/billing/checkout`**: creates a subscription-mode Checkout Session for a plan,
+  reusing the caller's existing `stripe_customer_id` if they have one. Never passes
+  `payment_method_types` (Stripe's own anti-pattern warning — it locks out payment methods that
+  would otherwise be dynamically offered).
+- **`POST /api/billing/portal`**: creates a Customer Portal session so users manage/cancel
+  their own subscription without any custom UI.
+- **`POST /api/billing/webhook`**: verifies the Stripe-Signature header before doing anything
+  (confirmed live: missing or invalid signatures get a `400`, not processed). `invoice.paid` is
+  the single source of truth for "what plan is this user actually on" — it covers the initial
+  purchase, every renewal, *and* Portal-driven upgrades/downgrades (Stripe generates a proration
+  invoice for those too), so there's no separate `customer.subscription.updated` handler. Every
+  plan-affecting event updates **both** `subscriptions.plan_id` and `credit_balances.plan_id` (+
+  resets `credits_remaining` to the new plan's `monthly_credits`) — these two tables are
+  otherwise independent, and `consume_credit`'s limits come from `credit_balances.plan_id`, not
+  `subscriptions.plan_id`.
+  - Known gap, acceptable at this stage: a failed renewal fires `invoice.payment_failed`, not
+    `invoice.paid` — there's no dunning/past-due enforcement yet.
+- **Verified live** (2026-07-29) with real Stripe objects (a real customer, a real subscription
+  against the real Pro price, a real invoice) and hand-signed webhook events (HMAC-SHA256 per
+  Stripe's documented scheme, using the real signing secret) POSTed to the running endpoint:
+  `checkout.session.completed` correctly linked `stripe_customer_id`/`stripe_subscription_id`;
+  `invoice.paid` correctly set `plan_id` to Pro and topped credits up to 500 with the right
+  `current_period_end`; `customer.subscription.deleted` correctly downgraded both tables back to
+  Free (10 credits). All test objects deleted afterward.
+- **Local webhook testing:** `stripe listen --forward-to localhost:<port>/api/billing/webhook`
+  prints a `whsec_...` signing secret — different from production's, which comes from a real
+  webhook endpoint registered against `https://werida.io/api/billing/webhook` once deployed.
+
 ## Live environment
 
 - **Supabase project:** `aichecker` (ref `najbzowkupdhlartoyjk`, region `eu-west-1`). Migrations
@@ -159,7 +207,9 @@ Two more migrations add behavior, not just access:
   pooler** connection string — the direct-connection host (`db.<ref>.supabase.co`) is IPv6-only
   on new projects and unreachable from most local networks; the shared pooler
   (`aws-0-<region>.pooler.supabase.com:6543`) is IPv4 by default and free.
-- Real project URL + keys live only in `apps/web/.env.local` (gitignored, never committed).
+- **Stripe account:** "werida sandbox" (`acct_1TyZuTRouUhCdZVM`), test mode. CLI authenticated via
+  device-pairing (`stripe login --non-interactive` / `--complete`), 90-day token expiry.
+- Real project URLs + keys live only in `apps/web/.env.local` (gitignored, never committed).
 
 ## Extension internals
 

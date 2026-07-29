@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import SignOutButton from "./components/SignOutButton";
+import ManageBillingButton from "./components/ManageBillingButton";
 
 interface CreditBalanceWithPlanRow {
   credits_remaining: number;
@@ -53,6 +54,7 @@ export default async function DashboardPage() {
           <Link className="cta-button" href="/pricing">
             Upgrade
           </Link>
+          <ManageBillingButton />
         </div>
       ) : (
         <p className="muted">Could not load your plan — try refreshing.</p>

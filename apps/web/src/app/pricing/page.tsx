@@ -1,3 +1,5 @@
+import UpgradeButton from "./components/UpgradeButton";
+
 const PLANS = [
   {
     key: "free",
@@ -23,7 +25,7 @@ const PLANS = [
     note: "3 seats included",
     features: ["Everything in Pro", "Seat pooling", "Admin controls"],
   },
-];
+] as const;
 
 export default function PricingPage() {
   return (
@@ -46,6 +48,9 @@ export default function PricingPage() {
                 <li key={f}>{f}</li>
               ))}
             </ul>
+            {(plan.key === "pro" || plan.key === "business") && (
+              <UpgradeButton planKey={plan.key} label={`Upgrade to ${plan.name}`} />
+            )}
           </div>
         ))}
       </div>

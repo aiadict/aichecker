@@ -5,14 +5,20 @@
 -- Cost basis: Pangram API = $0.05/1,000 words (realtime) or $0.04/1,000
 -- (bulk). 1 credit = 1,000 words. Revisit once a real/negotiated API rate
 -- is confirmed — see scripts/estimate-margin.ts.
+--
+-- stripe_price_id values below are TEST MODE price IDs (Stripe account
+-- "werida sandbox", products "AI Checker Pro"/"AI Checker Business",
+-- created 2026-07-29 via the Stripe CLI). Swap these for live-mode price
+-- IDs before any real launch — test-mode and live-mode objects are
+-- entirely separate in Stripe, sharing no IDs.
 
-insert into public.plans (key, name, monthly_credits, daily_cap, price_cents, billing_interval, seats_included, features)
+insert into public.plans (key, name, monthly_credits, daily_cap, price_cents, billing_interval, seats_included, stripe_price_id, features)
 values
-  ('free', 'Free', 10, 4, 0, 'month', 1,
+  ('free', 'Free', 10, 4, 0, 'month', 1, null,
     '{"history": true, "shareable_links": true, "floating_icon": true, "google_docs_widget": false, "feed_scanning": false}'::jsonb),
-  ('pro', 'Pro', 500, null, 4900, 'month', 1,
+  ('pro', 'Pro', 500, null, 4900, 'month', 1, 'price_1TyaGTRouUhCdZVMtBFcVUAs',
     '{"history": true, "shareable_links": true, "floating_icon": true, "google_docs_widget": false, "feed_scanning": false, "priority_support": true}'::jsonb),
-  ('business', 'Business', 2000, null, 19900, 'month', 3,
+  ('business', 'Business', 2000, null, 19900, 'month', 3, 'price_1TyaHmRouUhCdZVMBXtGw7rf',
     '{"history": true, "shareable_links": true, "floating_icon": true, "google_docs_widget": false, "feed_scanning": false, "priority_support": true, "seat_pooling": true, "admin_controls": true}'::jsonb)
 on conflict (key) do update set
   name = excluded.name,
@@ -21,4 +27,5 @@ on conflict (key) do update set
   price_cents = excluded.price_cents,
   billing_interval = excluded.billing_interval,
   seats_included = excluded.seats_included,
+  stripe_price_id = excluded.stripe_price_id,
   features = excluded.features;
