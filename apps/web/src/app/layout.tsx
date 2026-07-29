@@ -11,7 +11,12 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body>
+      {/* Browser extensions (Grammarly, LastPass, etc.) inject attributes
+          like data-gr-ext-installed into <body> before React hydrates,
+          which React otherwise flags as a hydration mismatch. Harmless —
+          suppressHydrationWarning only ignores attribute diffs on this one
+          node, not hydration errors generally. */}
+      <body suppressHydrationWarning>
         <div className="container">
           <nav className="site-nav">
             <Link href="/" className="brand">
