@@ -4,7 +4,7 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 interface CheckRow {
   id: string;
-  text_snippet: string;
+  full_text: string;
   prediction_short: string;
   share_slug: string | null;
   created_at: string;
@@ -22,7 +22,7 @@ export default async function HistoryPage() {
   // admin-client equivalent used by the extension-facing API routes.
   const { data } = await supabase
     .from("checks")
-    .select("id, text_snippet, prediction_short, share_slug, created_at")
+    .select("id, full_text, prediction_short, share_slug, created_at")
     .eq("user_id", user.id)
     .order("created_at", { ascending: false })
     .limit(50)
@@ -49,7 +49,7 @@ export default async function HistoryPage() {
           <tbody>
             {checks.map((c) => (
               <tr key={c.id}>
-                <td>{c.text_snippet.slice(0, 60)}…</td>
+                <td>{c.full_text.slice(0, 60)}…</td>
                 <td className="muted">{new Date(c.created_at).toLocaleString()}</td>
                 <td>
                   <Link href={`/history/${c.share_slug}`}>

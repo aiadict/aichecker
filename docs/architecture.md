@@ -121,8 +121,10 @@ plans               THE pricing/credit config table — key, monthly_credits, da
                      pricing; never hardcode credit amounts in application code.
 subscriptions       user's current plan + Stripe subscription state
 credit_balances     the running "x/y" meter shown in the extension header
-checks              one row per check (text snippet, verdict, fractions, source_url,
-                     share_slug, is_public)
+checks              one row per check (full_text, verdict, fractions, source_url,
+                     share_slug, is_public). full_text is exactly that — the
+                     complete submitted text, not a truncated preview; see
+                     "History & result display" below for why.
 check_windows       per-span AI/human breakdown, powers the "AI Highlight" view
 api_usage_log       OUR cost tracking against Pangram — service-role only, never exposed
                      to the client. Independent of what we charge the user.
@@ -151,6 +153,57 @@ Two more migrations add behavior, not just access:
   that creates the matching `public.users` + `subscriptions` (free plan) + `credit_balances`
   rows automatically, so the app never lazily creates them on first API call.
 - `20260729000005_consume_credit_fn.sql` — see "Data flow" below.
+
+**Same GRANT gotcha, third time** (`20260801000002_grant_delete_checks.sql`): adding the "users
+can delete own checks" RLS policy (`20260801000001_...sql`) wasn't enough on its own — confirmed
+live, both an anonymous delete attempt *and* the actual owner's delete attempt got `permission
+denied for table checks`, because `authenticated` had never been granted `DELETE` on `checks` at
+all (the original grants migration only gave it `SELECT, INSERT`). Pattern holds: every new
+*operation* on a table (not just every new table) needs its own explicit `GRANT`, RLS policy
+alone is never sufficient. `anon` deliberately gets no `DELETE` grant — only signed-in owners can
+delete their own checks.
+
+## History & result display (2026-08-01 UX pass)
+
+Prompted by a screenshot-by-screenshot comparison against Pangram's own extension (12 screenshots
+in `content/aichecker_vs_pangram_screenshots/`), which surfaced one genuine bug and several
+missing-parity items. Full comparison writeup and phased plan are in the conversation history;
+this section covers what actually shipped in Phase 1.
+
+- **Bug: the AI percentage could flatly contradict the verdict text.** Pangram returns three
+  fractions — `fraction_ai`, `fraction_ai_assisted`, `fraction_human` — but the UI only ever
+  displayed `fractionAi` as "the percentage." A document that's 0% *fully* AI-generated but 100%
+  *AI-assisted* would show "**0%** ... We believe this document is moderately AI-assisted" — two
+  contradictory claims in the same card. Fixed in both `apps/extension`'s `CheckForAiTab` and
+  `apps/web`'s `/history/[slug]`: the headline percentage is now `fractionAi + fractionAiAssisted`
+  ("AI involvement"), with a three-segment AI/Assisted/Human breakdown bar underneath (colors
+  reused from the existing `.verdict.ai/.human/.mixed` palette). Verified live against a real
+  Pangram result (100% AI, "fully AI-generated") — headline and verdict text agree now by
+  construction, not by coincidence.
+- **`checks.full_text` (renamed from `text_snippet`) now stores the complete submitted text**,
+  not a 200-character truncation applied at write time. Decided after actually comparing costs:
+  even a heavy user's monthly text storage costs a small fraction of a cent, versus the
+  $0.04-0.05/1,000 words already being paid to Pangram to generate the check in the first place —
+  storage was never the expensive part. List views (extension History tab, dashboard table)
+  still show short previews, but by truncating *at render time* now, not write time — the full
+  text is always in the database for the detail page. Verified live: submitted 591 characters,
+  confirmed `full_text` in the database and in the API response were both exactly 591, not 200.
+- **Per-check delete**, added as a direct consequence of storing more text — honoring the
+  "delete anytime" promise in `/privacy` means something now. `DeleteCheckButton` (client
+  component, `/history/[slug]`) calls the RLS-scoped browser Supabase client directly, matching
+  the existing `SignOutButton`/`ManageBillingButton` pattern rather than adding a new API route.
+  Only rendered for the check's owner. Verified live: anonymous delete attempt denied, owner's
+  delete succeeded and the row was confirmed gone (404 on revisit).
+- **Explicitly deferred, not forgotten** (user's call): the "Share result" feature (copy-link
+  button, public/private toggle in the UI — the data model already supports it via
+  `is_public`/`share_slug`) is out of scope for now. Also still open, treated as later-phase
+  parity/redesign work rather than bugs: clickable history rows (currently only the small result
+  badge is a link on the dashboard, nothing is clickable in the extension's History tab), a
+  richer compact result card (info-icon tooltip, synthesized narrative insight text like "AI
+  content appears in the later part"), color-highlighted AI/human spans on the detail page using
+  the already-captured `check_windows` data, and replacing the native popup with an on-page
+  floating result window for the right-click/floating-icon flows (native popups auto-close the
+  instant the user clicks the page, which undercuts that flow specifically).
 
 ## Billing (Stripe)
 

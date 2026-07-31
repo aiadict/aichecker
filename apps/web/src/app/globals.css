@@ -67,6 +67,47 @@ nav.site-nav .brand { font-weight: 800; font-size: 18px; text-decoration: none; 
 .pill.human { background: #dcfce7; color: #166534; }
 .pill.mixed { background: #fef3c7; color: #92400e; }
 
+.breakdown-bar {
+  display: flex;
+  height: 8px;
+  border-radius: 4px;
+  overflow: hidden;
+  margin: 12px 0 8px;
+  background: var(--border);
+}
+.breakdown-bar .seg.ai { background: #c2410c; }
+.breakdown-bar .seg.assisted { background: #b45309; }
+.breakdown-bar .seg.human { background: #15803d; }
+
+.breakdown-legend {
+  display: flex;
+  gap: 16px;
+  font-size: 13px;
+  color: var(--muted);
+  flex-wrap: wrap;
+}
+.breakdown-legend .dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  margin-right: 4px;
+}
+.breakdown-legend .dot.ai { background: #c2410c; }
+.breakdown-legend .dot.assisted { background: #b45309; }
+.breakdown-legend .dot.human { background: #15803d; }
+
+.checked-text {
+  white-space: pre-wrap;
+  line-height: 1.6;
+  max-height: 400px;
+  overflow-y: auto;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #fff;
+}
+
 table { width: 100%; border-collapse: collapse; }
 th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid var(--border); font-size: 14px; }
 

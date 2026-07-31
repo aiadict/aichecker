@@ -4,7 +4,7 @@ import { getSupabaseAdmin } from "./supabase/admin";
 
 interface CheckRow {
   id: string;
-  text_snippet: string;
+  full_text: string;
   word_count: number;
   credits_used: number;
   prediction: string | null;
@@ -21,7 +21,7 @@ interface CheckRow {
 function mapCheck(row: CheckRow, windows: CheckWindow[]): CheckResult {
   return {
     id: row.id,
-    textSnippet: row.text_snippet,
+    fullText: row.full_text,
     wordCount: row.word_count,
     creditsUsed: row.credits_used,
     prediction: row.prediction ?? "",
@@ -39,7 +39,7 @@ function mapCheck(row: CheckRow, windows: CheckWindow[]): CheckResult {
 
 export interface InsertCheckParams {
   userId: string;
-  textSnippet: string;
+  fullText: string;
   wordCount: number;
   creditsUsed: number;
   prediction: string;
@@ -59,7 +59,7 @@ export async function insertCheck(params: InsertCheckParams): Promise<CheckResul
     .from("checks")
     .insert({
       user_id: params.userId,
-      text_snippet: params.textSnippet,
+      full_text: params.fullText,
       word_count: params.wordCount,
       credits_used: params.creditsUsed,
       prediction: params.prediction,

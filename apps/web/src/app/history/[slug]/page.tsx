@@ -1,12 +1,17 @@
 import { notFound } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import DeleteCheckButton from "./components/DeleteCheckButton";
 
 interface CheckRow {
-  text_snippet: string;
+  id: string;
+  user_id: string;
+  full_text: string;
   word_count: number;
   prediction: string;
   prediction_short: string;
   fraction_ai: number;
+  fraction_human: number;
+  fraction_ai_assisted: number;
   is_public: boolean;
 }
 
@@ -20,25 +25,70 @@ export default async function SharedCheckPage({ params }: { params: Promise<{ sl
   const { slug } = await params;
   const supabase = await createSupabaseServerClient();
 
-  const { data: check } = await supabase
-    .from("checks")
-    .select("text_snippet, word_count, prediction, prediction_short, fraction_ai, is_public")
-    .eq("share_slug", slug)
-    .single<CheckRow>();
+  const [{ data: check }, { data: userData }] = await Promise.all([
+    supabase
+      .from("checks")
+      .select(
+        "id, user_id, full_text, word_count, prediction, prediction_short, fraction_ai, fraction_human, fraction_ai_assisted, is_public"
+      )
+      .eq("share_slug", slug)
+      .single<CheckRow>(),
+    supabase.auth.getUser(),
+  ]);
 
   if (!check) notFound();
+
+  const isOwner = userData.user?.id === check.user_id;
+  const aiInvolvement = Math.round((check.fraction_ai + check.fraction_ai_assisted) * 100);
 
   return (
     <div className="container">
       <h1>Check result</h1>
       <div className="card">
-        <p>{check.text_snippet}</p>
         <p className={`pill ${check.prediction_short}`}>{check.prediction}</p>
-        <p className="muted">
-          {check.word_count} words · {Math.round(check.fraction_ai * 100)}% AI
+
+        <div style={{ fontSize: 28, fontWeight: 800, margin: "8px 0 0" }}>{aiInvolvement}%</div>
+        <p className="muted" style={{ margin: 0 }}>
+          of this text shows AI involvement
         </p>
-        {!check.is_public && <p className="muted">This result is private — only you can see this link.</p>}
+
+        <div className="breakdown-bar">
+          <div className="seg ai" style={{ width: `${check.fraction_ai * 100}%` }} />
+          <div className="seg assisted" style={{ width: `${check.fraction_ai_assisted * 100}%` }} />
+          <div className="seg human" style={{ width: `${check.fraction_human * 100}%` }} />
+        </div>
+        <div className="breakdown-legend">
+          <span>
+            <i className="dot ai" />
+            AI {Math.round(check.fraction_ai * 100)}%
+          </span>
+          <span>
+            <i className="dot assisted" />
+            Assisted {Math.round(check.fraction_ai_assisted * 100)}%
+          </span>
+          <span>
+            <i className="dot human" />
+            Human {Math.round(check.fraction_human * 100)}%
+          </span>
+        </div>
+
+        <p className="muted" style={{ marginTop: 16 }}>
+          {check.word_count} words
+        </p>
+        <div className="checked-text">{check.full_text}</div>
+
+        {!check.is_public && (
+          <p className="muted" style={{ marginTop: 12 }}>
+            This result is private — only you can see this link.
+          </p>
+        )}
       </div>
+
+      {isOwner && (
+        <p>
+          <DeleteCheckButton checkId={check.id} />
+        </p>
+      )}
     </div>
   );
 }

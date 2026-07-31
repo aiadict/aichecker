@@ -51,8 +51,29 @@ export default function CheckForAiTab({ prefillText }: { prefillText: string }) 
       {response?.ok && (
         <div className="result-card">
           <div className={`verdict ${response.result.predictionShort}`}>{response.result.prediction}</div>
-          <div className="pct">{Math.round(response.result.fractionAi * 100)}%</div>
-          <div className="muted">of this text is AI</div>
+          <div className="pct">
+            {Math.round((response.result.fractionAi + response.result.fractionAiAssisted) * 100)}%
+          </div>
+          <div className="muted">of this text shows AI involvement</div>
+          <div className="breakdown-bar">
+            <div className="seg ai" style={{ width: `${response.result.fractionAi * 100}%` }} />
+            <div className="seg assisted" style={{ width: `${response.result.fractionAiAssisted * 100}%` }} />
+            <div className="seg human" style={{ width: `${response.result.fractionHuman * 100}%` }} />
+          </div>
+          <div className="breakdown-legend">
+            <span>
+              <i className="dot ai" />
+              AI {Math.round(response.result.fractionAi * 100)}%
+            </span>
+            <span>
+              <i className="dot assisted" />
+              Assisted {Math.round(response.result.fractionAiAssisted * 100)}%
+            </span>
+            <span>
+              <i className="dot human" />
+              Human {Math.round(response.result.fractionHuman * 100)}%
+            </span>
+          </div>
         </div>
       )}
     </div>

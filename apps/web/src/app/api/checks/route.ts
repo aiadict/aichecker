@@ -89,7 +89,7 @@ export async function POST(req: NextRequest) {
 
   const result = await insertCheck({
     userId: user.id,
-    textSnippet: text.slice(0, 200),
+    fullText: text,
     wordCount: prediction.wordCount,
     creditsUsed,
     prediction: prediction.prediction,

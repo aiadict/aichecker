@@ -45,7 +45,7 @@ export interface CheckWindow {
 
 export interface CheckResult {
   id: string;
-  textSnippet: string;
+  fullText: string;
   wordCount: number;
   creditsUsed: number;
   prediction: string; // human-readable, e.g. "AI Generated"

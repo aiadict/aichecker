@@ -22,7 +22,7 @@ export default function HistoryTab() {
     <div>
       {items.map((item) => (
         <div className="history-item" key={item.id}>
-          <span>{item.textSnippet.slice(0, 40)}…</span>
+          <span>{item.fullText.slice(0, 40)}…</span>
           <span className={`badge ${item.predictionShort}`}>{item.predictionShort}</span>
         </div>
       ))}
