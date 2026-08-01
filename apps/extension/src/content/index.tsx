@@ -104,16 +104,24 @@ function ensureIconHost(): { host: HTMLDivElement; button: HTMLButtonElement } {
         height: 28px;
         border-radius: 999px;
         background: #3d6fe0;
-        color: white;
-        font: 700 13px/1 system-ui, sans-serif;
         cursor: pointer;
         box-shadow: 0 2px 8px rgba(0,0,0,0.25);
       }
       button:hover { background: #2c56c4; }
+      button svg { width: 20px; height: 20px; display: block; }
     `;
     const button = document.createElement("button");
     button.type = "button";
-    button.textContent = "AI";
+    // Same glyph as the toolbar/popup mark, minus its own background rect —
+    // this button's circular background already does that job.
+    button.innerHTML = `
+      <svg viewBox="0 0 32 32">
+        <rect x="6.5" y="19.4" width="14" height="2.4" rx="1.2" fill="#fff"/>
+        <rect x="6.5" y="24.4" width="9" height="2.4" rx="1.2" fill="#fff" opacity="0.75"/>
+        <circle cx="19.5" cy="12" r="6" fill="none" stroke="#fff" stroke-width="1.8"/>
+        <line x1="23.7" y1="16.2" x2="27" y2="19.5" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+    `;
     button.setAttribute("aria-label", "Check selection for AI Checker");
     shadow.appendChild(style);
     shadow.appendChild(button);
