@@ -18,11 +18,23 @@ chrome.runtime.onInstalled.addListener(() => {
 
 chrome.contextMenus.onClicked.addListener(async (info, tab) => {
   if (info.menuItemId !== CONTEXT_MENU_ID || !info.selectionText || !tab?.id) return;
-  await chrome.tabs.sendMessage(tab.id, {
-    type: "ai-checker/check-selection",
-    text: info.selectionText,
-    sourceUrl: tab.url ?? "",
-  });
+  try {
+    await chrome.tabs.sendMessage(tab.id, {
+      type: "ai-checker/check-selection",
+      text: info.selectionText,
+      sourceUrl: tab.url ?? "",
+    });
+  } catch (err) {
+    // Most commonly: this tab was already open before the extension was
+    // last (re)loaded, so it's still running the old content script, which
+    // lost its connection to this new extension instance — Chrome doesn't
+    // re-inject content scripts into already-open tabs on an unpacked
+    // reload, only on fresh navigation. Was previously unhandled, so this
+    // failed with zero visible feedback. Refreshing the tab re-injects the
+    // current content script and fixes it; logged here so that's
+    // diagnosable from the service worker console instead of a silent no-op.
+    console.error("Couldn't reach the content script in this tab — try refreshing the page.", err);
+  }
 });
 
 // Messages from the content script (see src/content/index.tsx): a check or
