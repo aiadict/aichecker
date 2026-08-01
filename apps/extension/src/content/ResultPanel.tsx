@@ -6,27 +6,25 @@ export type PanelState =
   | { status: "done"; response: CreateCheckResponse }
   | { status: "error"; message: string };
 
-export interface PanelPosition {
-  top: number;
-  left: number;
-}
-
+// Always docked at a fixed viewport corner (see .panel in content/index.tsx's
+// PANEL_CSS) rather than anchored near the selection — anchoring seemed
+// nicer but a position: fixed element isn't reachable by scrolling the
+// page at all, so a selection near the bottom of a long page pushed the
+// panel partly or fully off-screen with no way to reach the rest of it.
+// A fixed, predictable spot (matching how the popup always opens in the
+// same place) trades a little context for always being fully visible and
+// reachable.
 export default function ResultPanel({
   state,
-  position,
   onClose,
   shareFn,
 }: {
   state: PanelState;
-  position: PanelPosition | null;
   onClose: () => void;
   shareFn: (id: string) => Promise<ShareCheckResponse>;
 }) {
   return (
-    <div
-      className="panel"
-      style={position ? { top: position.top, left: position.left } : { bottom: 20, right: 20 }}
-    >
+    <div className="panel">
       <div className="panel-header">
         <span>AI Checker</span>
         <button className="panel-close" onClick={onClose} aria-label="Close">

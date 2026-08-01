@@ -14,7 +14,7 @@
 
 import { createRoot, type Root } from "react-dom/client";
 import type { CreateCheckResponse, ShareCheckResponse } from "@ai-checker/shared-types";
-import ResultPanel, { type PanelPosition, type PanelState } from "./ResultPanel";
+import ResultPanel, { type PanelState } from "./ResultPanel";
 import { getSettings } from "../lib/storage";
 import { API_BASE_URL } from "../lib/config";
 
@@ -27,8 +27,10 @@ const PANEL_CSS = `
   * { box-sizing: border-box; }
   .panel {
     position: fixed;
+    bottom: 20px;
+    right: 20px;
     width: 320px;
-    max-height: 480px;
+    max-height: min(480px, calc(100vh - 40px));
     overflow-y: auto;
     background: #ffffff;
     border: 1px solid #e5e7eb;
@@ -134,7 +136,7 @@ function showIconNearSelection(rect: DOMRect, text: string) {
     e.preventDefault();
     e.stopPropagation();
     hideIcon();
-    runCheckAndShowPanel(text, window.location.href, rect);
+    runCheckAndShowPanel(text, window.location.href);
   };
 }
 
@@ -209,57 +211,27 @@ async function shareCheckInBackground(checkId: string): Promise<ShareCheckRespon
   return chrome.runtime.sendMessage({ type: "ai-checker/share-check", checkId });
 }
 
-function renderPanel(state: PanelState, position: PanelPosition | null) {
+function renderPanel(state: PanelState) {
   const root = ensurePanelHost();
-  root.render(
-    <ResultPanel state={state} position={position} onClose={hidePanel} shareFn={shareCheckInBackground} />
-  );
+  root.render(<ResultPanel state={state} onClose={hidePanel} shareFn={shareCheckInBackground} />);
 }
 
-const PANEL_WIDTH = 320;
-const PANEL_MARGIN = 8;
-
-// `.panel` is `position: fixed`, i.e. viewport-relative — anchorRect (from
-// getBoundingClientRect()) already is too, so no scrollX/scrollY offset
-// belongs here (that's only correct for position: absolute). Adding it, as
-// an earlier version of this did, silently pushed the panel thousands of
-// pixels below the viewport on any page scrolled down at all: the check
-// still ran and landed in history, but nothing was ever visible on-screen.
-function clampToViewport(rect: DOMRect): PanelPosition {
-  return {
-    top: Math.min(rect.bottom + 10, window.innerHeight - 60),
-    left: Math.max(PANEL_MARGIN, Math.min(rect.left, window.innerWidth - PANEL_WIDTH - PANEL_MARGIN)),
-  };
-}
-
-async function runCheckAndShowPanel(text: string, sourceUrl: string, anchorRect: DOMRect | null) {
-  const position: PanelPosition | null = anchorRect ? clampToViewport(anchorRect) : null;
-
-  renderPanel({ status: "loading" }, position);
+async function runCheckAndShowPanel(text: string, sourceUrl: string) {
+  renderPanel({ status: "loading" });
   try {
     const response = await runCheckInBackground(text, sourceUrl);
-    renderPanel({ status: "done", response }, position);
+    renderPanel({ status: "done", response });
   } catch {
-    renderPanel({ status: "error", message: "Network error. Please try again." }, position);
+    renderPanel({ status: "error", message: "Network error. Please try again." });
   }
-}
-
-function currentSelectionRect(): DOMRect | null {
-  const selection = window.getSelection();
-  if (!selection || selection.isCollapsed || selection.rangeCount === 0) return null;
-  const rect = selection.getRangeAt(0).getBoundingClientRect();
-  if (rect.width === 0 && rect.height === 0) return null;
-  return rect;
 }
 
 // Right-click "Check for AI Content" — the background service worker owns
 // the context menu (needs the chrome.contextMenus API) but delegates the
-// actual check + panel display back here. The selection is usually still
-// live in the page at this point (right-clicking a selection doesn't
-// clear it), so we can still anchor the panel to it when available.
+// actual check + panel display back here.
 chrome.runtime.onMessage.addListener((message) => {
   if (message?.type === "ai-checker/check-selection") {
-    runCheckAndShowPanel(message.text, message.sourceUrl, currentSelectionRect());
+    runCheckAndShowPanel(message.text, message.sourceUrl);
   }
 });
 
