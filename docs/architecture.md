@@ -194,16 +194,84 @@ this section covers what actually shipped in Phase 1.
   the existing `SignOutButton`/`ManageBillingButton` pattern rather than adding a new API route.
   Only rendered for the check's owner. Verified live: anonymous delete attempt denied, owner's
   delete succeeded and the row was confirmed gone (404 on revisit).
-- **Explicitly deferred, not forgotten** (user's call): the "Share result" feature (copy-link
-  button, public/private toggle in the UI — the data model already supports it via
-  `is_public`/`share_slug`) is out of scope for now. Also still open, treated as later-phase
-  parity/redesign work rather than bugs: clickable history rows (currently only the small result
-  badge is a link on the dashboard, nothing is clickable in the extension's History tab), a
-  richer compact result card (info-icon tooltip, synthesized narrative insight text like "AI
-  content appears in the later part"), color-highlighted AI/human spans on the detail page using
-  the already-captured `check_windows` data, and replacing the native popup with an on-page
-  floating result window for the right-click/floating-icon flows (native popups auto-close the
-  instant the user clicks the page, which undercuts that flow specifically).
+- Everything deferred out of Phase 1 (share result, clickable history rows, a richer compact
+  result card, highlighted spans, and the floating-window redesign) shipped in the very next pass
+  — see "Everything deferred from Phase 1" below.
+
+## Everything deferred from Phase 1 (2026-08-01, same-day follow-up)
+
+- **Share result.** `checks.is_public` is now user-toggleable via a **column-scoped** grant —
+  `grant update (is_public) on public.checks to authenticated` plus a matching RLS policy
+  (`supabase/migrations/20260801000003_share_checks.sql`) — deliberately not a blanket `UPDATE`
+  grant. A blanket grant plus that same RLS policy would let a user rewrite their own check's
+  `prediction`/fractions and then share the doctored result as if Pangram produced it; Postgres
+  enforces column-level `UPDATE` grants at the "which columns may appear in `SET`" level, so
+  `is_public` is the only column this can ever touch. Two call sites: `ShareResultButton`
+  (`apps/web/src/app/history/[slug]/components/`) updates straight through the RLS-scoped browser
+  client, matching `DeleteCheckButton`'s pattern; the extension has no Supabase session of its own,
+  so it goes through a new `POST /api/checks/[id]/share` route instead, which does the same update
+  server-side with an explicit `.eq("user_id", user.id)` ownership check (the admin client bypasses
+  RLS, so ownership can't be left to policy there). Verified live: a check is a 404 on its
+  `/history/<slug>` link before sharing, 200 with full content after; the RLS-scoped client can
+  flip `is_public` but a same-client attempt to also set `prediction` in the same call is rejected
+  with "permission denied for table checks."
+- **Clickable history rows.** Extension's `HistoryTab` rows now `window.open` the row's
+  `/history/<shareSlug>` link. The dashboard's `<tr>` can't itself be a `<Link>` (invalid HTML — a
+  `<tr>`'s only valid children are cells), so a small client component, `ClickableRow`, wraps the
+  cells and calls `router.push` on click instead; the badge-only `Link` it replaced is gone.
+- **Richer compact result.** `ResultCard` (new: `apps/extension/src/components/ResultCard.tsx`) is
+  now shared between the popup's "Check for AI" tab and the on-page panel (see below) — an info
+  icon (title-attribute tooltip) explains the detection methodology, a synthesized one-line insight
+  ("AI involvement is concentrated in the later part of this text" / "...appears scattered
+  throughout...") is computed from window position data, plus "View full analysis" and "Share
+  result" actions.
+- **The insight line** is `synthesizeInsight(windows: CheckWindow[])`, added to
+  `packages/shared-types` alongside the types themselves rather than duplicated per-app — the
+  package is consumed as raw TS source (`main`/`types` both point at `src/index.ts`), so both
+  bundlers compile it directly; it's not a types-only package by convention, just by content so
+  far. Returns `null` (renders nothing) when there's nothing positional worth saying: fewer than 2
+  windows, every window sharing one label, or the AI/mixed windows spanning more than 60% of the
+  text's character range (a "scattered" verdict is returned then, instead of picking one region
+  index-average would falsely suggest is nowhere near the text's actual AI content). Verified with
+  synthetic multi-window data (unit-style, not something the real Pangram API reliably produces on
+  demand): concentrated-early, concentrated-late, uniform → null, and both-ends → "scattered" all
+  behave as designed.
+- **Highlighted text spans.** `buildHighlightSegments(fullText, windows)`, same package, splits
+  `full_text` into ordered `{text, label}` segments at window boundaries — gap-aware, since windows
+  don't always cover the text contiguously; an uncovered stretch gets `label: null` (rendered
+  plain) rather than being misclassified as human. `/history/[slug]` renders `ai`/`mixed` segments
+  as `<mark class="hl-ai">`/`<mark class="hl-mixed">` and leaves `human`/`null` segments as plain
+  text — matching Pangram's own "highlight only what's flagged" behavior rather than color-coding
+  the entire page. `check_windows` is fetched with the same RLS policy already used for the fraction
+  data (owner-or-public read), no new policy needed. Verified live against a real Pangram result:
+  response HTML contained `<mark class="hl-ai">` wrapping the flagged span and the full checked
+  text was present and unmodified around it.
+- **Floating-window redesign.** The native-popup flows (right-click "Check for AI Content" and the
+  floating-icon-on-selection click) previously called `chrome.action.openPopup()`, which Chrome
+  auto-closes the instant focus leaves it — the moment the user clicks back into the page to do
+  anything with the result, e.g. to select more text or scroll. Replaced with an on-page panel
+  (`apps/extension/src/content/ResultPanel.tsx`), a React tree mounted into its own shadow-DOM host
+  in the content script, positioned near the original selection when one exists (context-menu
+  clicks don't always leave a live selection to anchor to; falls back to a fixed bottom-right
+  position) and dismissed only by its own close button. Two architectural changes this required:
+  - **Network calls are relayed through the background service worker, not called directly in the
+    content script.** A content script's own `fetch`/`XHR` is subject to the host page's CSP; the
+    service worker isn't. `background/index.ts` now handles `ai-checker/run-check` and
+    `ai-checker/share-check` messages by calling `lib/api.ts`'s `createCheck`/`shareCheck` and
+    relaying the response back — the popup, being an actual extension page rather than a content
+    script, still calls them directly.
+  - **The right-click context menu handler no longer touches the popup at all.** It used to
+    `setPendingSelection` + `chrome.action.openPopup()`; it now does
+    `chrome.tabs.sendMessage(tab.id, { type: "ai-checker/check-selection", ... })`, and the content
+    script itself runs the check and shows the panel. The now-unused `pendingSelection`
+    read/write pair (`setPendingSelection`/`consumePendingSelection` in `lib/storage.ts`, and the
+    popup's `App.tsx` prefill-on-mount effect) was removed rather than left as dead code — nothing
+    sets it anymore, since both flows that used to feed it now go straight to the on-page panel
+    instead of the popup.
+  - `ResultCard`'s CSS (`.result-card`, `.verdict`, `.breakdown-bar`, `.link-button`, etc.) is
+    duplicated as a plain CSS string injected into the panel's own shadow root — shadow DOM
+    intentionally blocks the popup's stylesheet from reaching in, so the same class names need
+    their own copy of the rules here, kept in sync by hand.
 
 ## Billing (Stripe)
 

@@ -1,4 +1,10 @@
-import type { CreateCheckRequest, CreateCheckResponse, CheckResult, MeResponse } from "@ai-checker/shared-types";
+import type {
+  CreateCheckRequest,
+  CreateCheckResponse,
+  CheckResult,
+  MeResponse,
+  ShareCheckResponse,
+} from "@ai-checker/shared-types";
 import { API_BASE_URL, SUPABASE_URL, SUPABASE_ANON_KEY } from "./config";
 import { getAuthSession, setAuthSession, type AuthSession } from "./storage";
 
@@ -78,5 +84,10 @@ export async function listRecentChecks(limit = 5): Promise<CheckResult[]> {
 export async function getMe(): Promise<MeResponse | null> {
   const res = await authedFetch("/api/me");
   if (!res.ok) return null;
+  return res.json();
+}
+
+export async function shareCheck(id: string): Promise<ShareCheckResponse> {
+  const res = await authedFetch(`/api/checks/${id}/share`, { method: "POST" });
   return res.json();
 }

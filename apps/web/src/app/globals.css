@@ -107,9 +107,14 @@ nav.site-nav .brand { font-weight: 800; font-size: 18px; text-decoration: none; 
   border-radius: 8px;
   background: #fff;
 }
+.checked-text mark { padding: 0 1px; border-radius: 2px; }
+.checked-text mark.hl-ai { background: #fecaca; }
+.checked-text mark.hl-mixed { background: #fde68a; }
 
 table { width: 100%; border-collapse: collapse; }
 th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid var(--border); font-size: 14px; }
+tr.clickable-row { cursor: pointer; }
+tr.clickable-row:hover { background: #f9fafb; }
 
 .muted { color: var(--muted); }
 .link-button {

@@ -14,7 +14,6 @@ export const DEFAULT_SETTINGS: ExtensionSettings = {
 const KEYS = {
   authSession: "authSession",
   settings: "settings",
-  pendingSelection: "pendingSelection",
 } as const;
 
 export interface AuthSession {
@@ -50,19 +49,4 @@ export async function getSettings(): Promise<ExtensionSettings> {
 export async function setSettings(settings: Partial<ExtensionSettings>): Promise<void> {
   const current = await getSettings();
   await chrome.storage.local.set({ [KEYS.settings]: { ...current, ...settings } });
-}
-
-/** Set by the content script's floating icon / context menu; read once by the popup on open. */
-export async function setPendingSelection(text: string, sourceUrl: string): Promise<void> {
-  await chrome.storage.session.set({ [KEYS.pendingSelection]: { text, sourceUrl } });
-}
-
-export async function consumePendingSelection(): Promise<{ text: string; sourceUrl: string } | null> {
-  const { [KEYS.pendingSelection]: pending } = await chrome.storage.session.get(
-    KEYS.pendingSelection
-  );
-  if (pending) {
-    await chrome.storage.session.remove(KEYS.pendingSelection);
-  }
-  return (pending as { text: string; sourceUrl: string } | undefined) ?? null;
 }

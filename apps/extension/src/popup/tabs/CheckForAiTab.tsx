@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
-import { createCheck } from "../../lib/api";
+import { createCheck, shareCheck } from "../../lib/api";
 import type { CreateCheckResponse } from "@ai-checker/shared-types";
+import ResultCard, { describeCheckError } from "../../components/ResultCard";
 
 const MIN_CHARS = 20;
 
@@ -39,43 +40,11 @@ export default function CheckForAiTab({ prefillText }: { prefillText: string }) 
 
       {response && !response.ok && (
         <p className="muted" style={{ marginTop: 12 }}>
-          {response.error === "insufficient_credits" && "You're out of credits — upgrade to keep checking."}
-          {response.error === "daily_cap_reached" && "Daily free-plan limit reached — try again tomorrow."}
-          {response.error === "unauthorized" && "Please sign in from the Settings tab first."}
-          {(response.error === "text_too_short" || response.error === "text_too_long") &&
-            "That text is outside the allowed length for a check."}
-          {response.error === "upstream_error" && response.message}
+          {describeCheckError(response)}
         </p>
       )}
 
-      {response?.ok && (
-        <div className="result-card">
-          <div className={`verdict ${response.result.predictionShort}`}>{response.result.prediction}</div>
-          <div className="pct">
-            {Math.round((response.result.fractionAi + response.result.fractionAiAssisted) * 100)}%
-          </div>
-          <div className="muted">of this text shows AI involvement</div>
-          <div className="breakdown-bar">
-            <div className="seg ai" style={{ width: `${response.result.fractionAi * 100}%` }} />
-            <div className="seg assisted" style={{ width: `${response.result.fractionAiAssisted * 100}%` }} />
-            <div className="seg human" style={{ width: `${response.result.fractionHuman * 100}%` }} />
-          </div>
-          <div className="breakdown-legend">
-            <span>
-              <i className="dot ai" />
-              AI {Math.round(response.result.fractionAi * 100)}%
-            </span>
-            <span>
-              <i className="dot assisted" />
-              Assisted {Math.round(response.result.fractionAiAssisted * 100)}%
-            </span>
-            <span>
-              <i className="dot human" />
-              Human {Math.round(response.result.fractionHuman * 100)}%
-            </span>
-          </div>
-        </div>
-      )}
+      {response?.ok && <ResultCard result={response.result} shareFn={shareCheck} />}
     </div>
   );
 }

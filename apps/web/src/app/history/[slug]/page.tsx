@@ -1,6 +1,28 @@
 import { notFound } from "next/navigation";
+import { buildHighlightSegments, synthesizeInsight, type CheckWindow, type Prediction } from "@ai-checker/shared-types";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import DeleteCheckButton from "./components/DeleteCheckButton";
+import ShareResultButton from "./components/ShareResultButton";
+
+interface WindowRow {
+  label: string;
+  ai_assistance_score: number;
+  confidence: number;
+  start_char: number;
+  end_char: number;
+  word_count: number;
+}
+
+function mapWindow(row: WindowRow): CheckWindow {
+  return {
+    label: row.label as Prediction,
+    aiAssistanceScore: row.ai_assistance_score,
+    confidence: row.confidence,
+    startChar: row.start_char,
+    endChar: row.end_char,
+    wordCount: row.word_count,
+  };
+}
 
 interface CheckRow {
   id: string;
@@ -13,6 +35,7 @@ interface CheckRow {
   fraction_human: number;
   fraction_ai_assisted: number;
   is_public: boolean;
+  share_slug: string;
 }
 
 // Public, read-only shared result page — mirrors Pangram's
@@ -29,7 +52,7 @@ export default async function SharedCheckPage({ params }: { params: Promise<{ sl
     supabase
       .from("checks")
       .select(
-        "id, user_id, full_text, word_count, prediction, prediction_short, fraction_ai, fraction_human, fraction_ai_assisted, is_public"
+        "id, user_id, full_text, word_count, prediction, prediction_short, fraction_ai, fraction_human, fraction_ai_assisted, is_public, share_slug"
       )
       .eq("share_slug", slug)
       .single<CheckRow>(),
@@ -40,6 +63,20 @@ export default async function SharedCheckPage({ params }: { params: Promise<{ sl
 
   const isOwner = userData.user?.id === check.user_id;
   const aiInvolvement = Math.round((check.fraction_ai + check.fraction_ai_assisted) * 100);
+
+  // Fetched after we have check.id — RLS already covers owner-or-public
+  // read here (see "users can read windows of own checks" policy), same
+  // rule as the checks row itself.
+  const { data: windowRows } = await supabase
+    .from("check_windows")
+    .select("label, ai_assistance_score, confidence, start_char, end_char, word_count")
+    .eq("check_id", check.id)
+    .order("start_char")
+    .returns<WindowRow[]>();
+
+  const windows = (windowRows ?? []).map(mapWindow);
+  const segments = buildHighlightSegments(check.full_text, windows);
+  const insight = synthesizeInsight(windows);
 
   return (
     <div className="container">
@@ -72,10 +109,26 @@ export default async function SharedCheckPage({ params }: { params: Promise<{ sl
           </span>
         </div>
 
+        {insight && (
+          <p className="muted" style={{ marginTop: 12 }}>
+            {insight}
+          </p>
+        )}
+
         <p className="muted" style={{ marginTop: 16 }}>
           {check.word_count} words
         </p>
-        <div className="checked-text">{check.full_text}</div>
+        <div className="checked-text">
+          {segments.map((seg, i) =>
+            seg.label && seg.label !== "human" ? (
+              <mark key={i} className={`hl-${seg.label}`}>
+                {seg.text}
+              </mark>
+            ) : (
+              <span key={i}>{seg.text}</span>
+            )
+          )}
+        </div>
 
         {!check.is_public && (
           <p className="muted" style={{ marginTop: 12 }}>
@@ -85,9 +138,10 @@ export default async function SharedCheckPage({ params }: { params: Promise<{ sl
       </div>
 
       {isOwner && (
-        <p>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <ShareResultButton checkId={check.id} shareSlug={check.share_slug} initialIsPublic={check.is_public} />
           <DeleteCheckButton checkId={check.id} />
-        </p>
+        </div>
       )}
     </div>
   );

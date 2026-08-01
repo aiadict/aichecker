@@ -29,6 +29,6 @@ supabase/.temp/
 # Reference material: screenshots of Pangram's (third-party) proprietary UI,
 # used only as internal design reference. Repo is public — do not publish
 # competitor screenshots. Keep locally only.
-content/
+/content/
 .vercel
 .env*

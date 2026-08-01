@@ -75,6 +75,79 @@ export type CreateCheckResponse =
   | { ok: false; error: "text_too_short" | "text_too_long" }
   | { ok: false; error: "upstream_error"; message: string };
 
+export type ShareCheckResponse =
+  | { ok: true; shareSlug: string }
+  | { ok: false; error: "unauthorized" | "not_found" };
+
+const NON_HUMAN_LABELS: Prediction[] = ["ai", "mixed"];
+
+/**
+ * Synthesizes a one-line narrative from window position data — e.g. "AI
+ * involvement is concentrated in the later part of this text." Returns
+ * null when there's nothing positional worth saying: no window data, a
+ * single window, or every window sharing one label (nothing to contrast
+ * against). Shared by both apps since it's pure and only depends on
+ * CheckWindow — see docs/architecture.md for why shared-types carries
+ * runtime code, not just types.
+ */
+export function synthesizeInsight(windows: CheckWindow[]): string | null {
+  if (windows.length < 2) return null;
+  if (new Set(windows.map((w) => w.label)).size === 1) return null;
+
+  const sorted = [...windows].sort((a, b) => a.startChar - b.startChar);
+  const spanStart = sorted[0]!.startChar;
+  const spanEnd = sorted[sorted.length - 1]!.endChar;
+  const span = spanEnd - spanStart;
+  if (span <= 0) return null;
+
+  const nonHuman = sorted.filter((w) => NON_HUMAN_LABELS.includes(w.label));
+  if (nonHuman.length === 0) return null;
+
+  const relPositions = nonHuman.map((w) => ((w.startChar + w.endChar) / 2 - spanStart) / span);
+  const minPos = Math.min(...relPositions);
+  const maxPos = Math.max(...relPositions);
+
+  // Spread across more than 60% of the text's range — nowhere to point to.
+  if (maxPos - minPos > 0.6) {
+    return "AI involvement appears scattered throughout this text, rather than concentrated in one section.";
+  }
+
+  const avgPos = relPositions.reduce((a, b) => a + b, 0) / relPositions.length;
+  const region = avgPos < 0.33 ? "earlier part" : avgPos > 0.67 ? "later part" : "middle";
+  return `AI involvement is concentrated in the ${region} of this text.`;
+}
+
+export interface HighlightSegment {
+  text: string;
+  label: Prediction | null; // null = not covered by any window, rendered plain
+}
+
+/**
+ * Splits full_text into ordered segments by window boundaries so the
+ * detail page can render colored spans without guessing at gaps — windows
+ * don't always cover the entire text contiguously, and uncovered stretches
+ * render plain (label: null) rather than being misclassified as human.
+ */
+export function buildHighlightSegments(fullText: string, windows: CheckWindow[]): HighlightSegment[] {
+  const sorted = [...windows].sort((a, b) => a.startChar - b.startChar);
+  const segments: HighlightSegment[] = [];
+  let cursor = 0;
+
+  for (const w of sorted) {
+    if (w.startChar > cursor) {
+      segments.push({ text: fullText.slice(cursor, w.startChar), label: null });
+    }
+    if (w.endChar > cursor) {
+      segments.push({ text: fullText.slice(Math.max(cursor, w.startChar), w.endChar), label: w.label });
+      cursor = w.endChar;
+    }
+  }
+  if (cursor < fullText.length) {
+    segments.push({ text: fullText.slice(cursor), label: null });
+  }
+  return segments;
+}
+
 export interface MeResponse {
   email: string;
   plan: {

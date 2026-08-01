@@ -1,6 +1,6 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import ClickableRow from "./components/ClickableRow";
 
 interface CheckRow {
   id: string;
@@ -48,15 +48,13 @@ export default async function HistoryPage() {
           </thead>
           <tbody>
             {checks.map((c) => (
-              <tr key={c.id}>
+              <ClickableRow key={c.id} href={`/history/${c.share_slug}`}>
                 <td>{c.full_text.slice(0, 60)}…</td>
                 <td className="muted">{new Date(c.created_at).toLocaleString()}</td>
                 <td>
-                  <Link href={`/history/${c.share_slug}`}>
-                    <span className={`pill ${c.prediction_short}`}>{c.prediction_short}</span>
-                  </Link>
+                  <span className={`pill ${c.prediction_short}`}>{c.prediction_short}</span>
                 </td>
-              </tr>
+              </ClickableRow>
             ))}
           </tbody>
         </table>

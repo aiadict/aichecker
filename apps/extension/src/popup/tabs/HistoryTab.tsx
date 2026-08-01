@@ -21,7 +21,11 @@ export default function HistoryTab() {
   return (
     <div>
       {items.map((item) => (
-        <div className="history-item" key={item.id}>
+        <div
+          className="history-item"
+          key={item.id}
+          onClick={() => window.open(`${API_BASE_URL}/history/${item.shareSlug}`, "_blank", "noopener")}
+        >
           <span>{item.fullText.slice(0, 40)}…</span>
           <span className={`badge ${item.predictionShort}`}>{item.predictionShort}</span>
         </div>

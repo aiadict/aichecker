@@ -121,7 +121,21 @@ textarea {
   padding: 8px 0;
   border-bottom: 1px solid var(--border);
   font-size: 13px;
+  cursor: pointer;
 }
+.history-item:hover { background: #f9fafb; }
+.link-button {
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--brand);
+  text-decoration: underline;
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+}
+.link-button:disabled { color: var(--muted); cursor: default; }
+
 .badge { padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 700; }
 .badge.ai { background: #fee2e2; color: #b91c1c; }
 .badge.human { background: #dcfce7; color: #166534; }
