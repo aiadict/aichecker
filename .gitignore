@@ -32,3 +32,6 @@ supabase/.temp/
 /content/
 .vercel
 .env*
+# Not a secret — just the public production API base URL, and vite build
+# won't pick up VITE_APP_API_URL without this file existing on disk.
+!apps/extension/.env.production
