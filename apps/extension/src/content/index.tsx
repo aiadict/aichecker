@@ -216,10 +216,24 @@ function renderPanel(state: PanelState, position: PanelPosition | null) {
   );
 }
 
+const PANEL_WIDTH = 320;
+const PANEL_MARGIN = 8;
+
+// `.panel` is `position: fixed`, i.e. viewport-relative — anchorRect (from
+// getBoundingClientRect()) already is too, so no scrollX/scrollY offset
+// belongs here (that's only correct for position: absolute). Adding it, as
+// an earlier version of this did, silently pushed the panel thousands of
+// pixels below the viewport on any page scrolled down at all: the check
+// still ran and landed in history, but nothing was ever visible on-screen.
+function clampToViewport(rect: DOMRect): PanelPosition {
+  return {
+    top: Math.min(rect.bottom + 10, window.innerHeight - 60),
+    left: Math.max(PANEL_MARGIN, Math.min(rect.left, window.innerWidth - PANEL_WIDTH - PANEL_MARGIN)),
+  };
+}
+
 async function runCheckAndShowPanel(text: string, sourceUrl: string, anchorRect: DOMRect | null) {
-  const position: PanelPosition | null = anchorRect
-    ? { top: window.scrollY + anchorRect.bottom + 10, left: window.scrollX + anchorRect.left }
-    : null;
+  const position: PanelPosition | null = anchorRect ? clampToViewport(anchorRect) : null;
 
   renderPanel({ status: "loading" }, position);
   try {
