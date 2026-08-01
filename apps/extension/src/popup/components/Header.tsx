@@ -17,7 +17,13 @@ export default function Header() {
   return (
     <header className="header">
       <div className="brand">
-        <span className="logo" aria-hidden="true" />
+        <svg className="logo" viewBox="0 0 32 32" aria-hidden="true">
+          <rect width="32" height="32" rx="7" fill="#3d6fe0" />
+          <rect x="6.5" y="19.4" width="14" height="2.4" rx="1.2" fill="#fff" />
+          <rect x="6.5" y="24.4" width="9" height="2.4" rx="1.2" fill="#fff" opacity="0.75" />
+          <circle cx="19.5" cy="12" r="6" fill="none" stroke="#fff" strokeWidth="1.8" />
+          <line x1="23.7" y1="16.2" x2="27" y2="19.5" stroke="#fff" strokeWidth="2" strokeLinecap="round" />
+        </svg>
         AI Checker
       </div>
       <div className="credits">

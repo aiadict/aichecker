@@ -273,6 +273,49 @@ this section covers what actually shipped in Phase 1.
     intentionally blocks the popup's stylesheet from reaching in, so the same class names need
     their own copy of the rules here, kept in sync by hand.
 
+## Visual identity (2026-08-02 rebrand)
+
+Moved off the original orange (`#ea580c`) — user feedback was that it read too close to
+Pangram's own branding. Went through a full round-trip with the user (a ChatGPT-authored
+navy/teal recommendation was explicitly rejected as "too templated — everyone's AI tool looks
+like that now"; landed on a lighter, blue-only palette instead) before implementing. Deliberately
+scoped to visuals only — no product renaming (stays "AI Checker," `werida.io` is just the
+domain), no logic/workflow changes.
+
+- **Palette**: `--brand: #3d6fe0` / `--brand-dark: #2c56c4` / `--brand-soft: #e8eefc`, `--fg:
+  #1a2233`, `--muted: #64748b`, `--border: #e2e8f0`, background pure white throughout — same
+  token names in `apps/web/src/app/globals.css` and `apps/extension/src/popup/styles.css`, kept
+  in sync by hand as before. **Verdict colors (ai/human/mixed) are explicitly unchanged** —
+  user's call: those are semantic, not brand, and were fine as-is.
+- **Icon**: a magnifying glass over two lines of varying length (representing text), white on a
+  `#3d6fe0` rounded-square chip — user's own concept after rejecting three abstract alternatives
+  (a split-circle mark, a checkmark, and minimal text-bars) as "not what I had in mind," then
+  five weight/color variants of this one. Source lives at
+  `apps/extension/public/icons/source.svg` (32×32, plain rect/circle/line — no complex path
+  data, so it stays crisp at 16px); rasterized to `icon16/48/128.png` via `rsvg-convert` (`brew
+  install librsvg`, no npm dependency needed for a one-off raster). Same source copied verbatim
+  to `apps/web/src/app/icon.svg` — Next's automatic favicon convention picks it up with zero
+  config; there was no favicon at all before this.
+- **Typography**: Geist. Web uses the `geist` npm package's `GeistSans` export directly (not
+  `next/font/google`) applied via `className` on `<html>` in `layout.tsx`. Extension popup
+  self-hosts the single variable-weight woff2 (`node_modules/geist/dist/fonts/geist-sans/
+  Geist-Variable.woff2`, ~68KB, covers every weight 100–900) copied to
+  `apps/extension/public/fonts/` and loaded via `@font-face` — deliberately not a Google Fonts
+  CDN link, so the popup renders instantly offline with no extra network request or CSP
+  surface. **The on-page floating panel (`content/index.tsx`'s `PANEL_CSS`) deliberately stays
+  on the system font stack** — loading a custom webfont into arbitrary third-party pages via the
+  panel's shadow root would need `web_accessible_resources` plumbing for a panel that's only
+  visible briefly; not worth it.
+- **Layout**: `apps/web`'s `.container` widened from 880px to 1080px, a couple of border-radii
+  nudged from 8px to 10px for consistency with `.card`'s existing 12px — light touch only, per
+  explicit instruction not to introduce "big unused whitespace." The extension popup's own
+  spacing/density is untouched — colors and font only there, no layout changes, since it's
+  already tight by necessity (fixed 380px width).
+- Verified live: rebuilt both apps cleanly (typecheck + build), confirmed `--brand: #3d6fe0` and
+  the Geist `className` in the actually-served HTML/CSS from a local `next dev` run, and visually
+  inspected the rasterized icon16.png/128.png directly — the magnifier+lines composition reads
+  clearly at both sizes.
+
 ## Billing (Stripe)
 
 - **One Stripe Product per plan** ("AI Checker Pro", "AI Checker Business"), each with one

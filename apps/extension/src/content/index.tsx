@@ -74,7 +74,7 @@ const PANEL_CSS = `
   .breakdown-legend .dot.ai { background: #c2410c; }
   .breakdown-legend .dot.assisted { background: #b45309; }
   .breakdown-legend .dot.human { background: #15803d; }
-  .link-button { background: none; border: none; padding: 0; color: #ea580c; text-decoration: underline; cursor: pointer; font: inherit; font-size: 12px; }
+  .link-button { background: none; border: none; padding: 0; color: #3d6fe0; text-decoration: underline; cursor: pointer; font: inherit; font-size: 12px; }
   .link-button:disabled { color: #6b7280; cursor: default; }
 `;
 
@@ -103,13 +103,13 @@ function ensureIconHost(): { host: HTMLDivElement; button: HTMLButtonElement } {
         width: 28px;
         height: 28px;
         border-radius: 999px;
-        background: #ea580c;
+        background: #3d6fe0;
         color: white;
         font: 700 13px/1 system-ui, sans-serif;
         cursor: pointer;
         box-shadow: 0 2px 8px rgba(0,0,0,0.25);
       }
-      button:hover { background: #c2410c; }
+      button:hover { background: #2c56c4; }
     `;
     const button = document.createElement("button");
     button.type = "button";
