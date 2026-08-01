@@ -66,7 +66,7 @@ textarea {
   font-weight: 600;
   cursor: pointer;
 }
-.primary-button:disabled { background: #f3d0b8; cursor: not-allowed; }
+.primary-button:disabled { background: var(--border); color: var(--muted); cursor: not-allowed; }
 .primary-button:hover:not(:disabled) { background: var(--brand-dark); }
 
 .result-card {
