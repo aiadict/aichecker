@@ -1,82 +1,14 @@
 // Content script: shows a small floating "AI Checker" icon near a text
-// selection anywhere on the web, and — for both that icon and the
-// right-click "Check for AI Content" menu — an on-page result panel that
-// stays visible after the user clicks elsewhere on the page. This
-// replaces the earlier design of opening the native toolbar popup, which
-// Chrome auto-closes the instant focus leaves it (the moment you click
-// back into the page to do anything with the result). See
-// docs/architecture.md for the tradeoffs.
-//
-// Actual network calls (createCheck, shareCheck) are relayed through the
-// background service worker rather than fetched directly here — a content
-// script's own fetch/XHR calls are subject to the host page's CSP, while
-// the background worker isn't.
+// selection anywhere on the web. Clicking it (or the right-click "Check
+// for AI Content" menu, handled entirely in the background worker) opens
+// the popup with the selection prefilled — the real "paste text, click
+// Check for AI" flow, not an automatic check. See docs/architecture.md.
 
-import { createRoot, type Root } from "react-dom/client";
-import type { CreateCheckResponse, ShareCheckResponse } from "@ai-checker/shared-types";
-import ResultPanel, { type PanelState } from "./ResultPanel";
 import { getSettings } from "../lib/storage";
 import { API_BASE_URL } from "../lib/config";
 
 const MIN_SELECTION_LENGTH = 20;
 const ICON_HOST_ID = "ai-checker-floating-icon-host";
-const PANEL_HOST_ID = "ai-checker-panel-host";
-
-const PANEL_CSS = `
-  :host { all: initial; }
-  * { box-sizing: border-box; }
-  .panel {
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    width: 320px;
-    max-height: min(480px, calc(100vh - 40px));
-    overflow-y: auto;
-    background: #ffffff;
-    border: 1px solid #e5e7eb;
-    border-radius: 12px;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.18);
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    font-size: 13px;
-    line-height: 1.5;
-    color: #111827;
-  }
-  .panel-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 10px 12px;
-    border-bottom: 1px solid #e5e7eb;
-    font-weight: 700;
-  }
-  .panel-close {
-    all: unset;
-    cursor: pointer;
-    font-size: 16px;
-    line-height: 1;
-    color: #6b7280;
-    padding: 2px 6px;
-  }
-  .panel-close:hover { color: #111827; }
-  .panel-body { padding: 12px; }
-  .result-card .verdict { font-weight: 700; font-size: 16px; text-transform: capitalize; }
-  .result-card .verdict.ai { color: #c2410c; }
-  .result-card .verdict.human { color: #15803d; }
-  .result-card .verdict.mixed { color: #b45309; }
-  .result-card .pct { font-size: 28px; font-weight: 800; margin: 6px 0; }
-  .muted { color: #6b7280; font-size: 12px; }
-  .breakdown-bar { display: flex; height: 8px; border-radius: 4px; overflow: hidden; margin: 10px 0 8px; background: #e5e7eb; }
-  .breakdown-bar .seg.ai { background: #c2410c; }
-  .breakdown-bar .seg.assisted { background: #b45309; }
-  .breakdown-bar .seg.human { background: #15803d; }
-  .breakdown-legend { display: flex; gap: 12px; font-size: 12px; color: #6b7280; flex-wrap: wrap; }
-  .breakdown-legend .dot { display: inline-block; width: 8px; height: 8px; border-radius: 999px; margin-right: 4px; }
-  .breakdown-legend .dot.ai { background: #c2410c; }
-  .breakdown-legend .dot.assisted { background: #b45309; }
-  .breakdown-legend .dot.human { background: #15803d; }
-  .link-button { background: none; border: none; padding: 0; color: #3d6fe0; text-decoration: underline; cursor: pointer; font: inherit; font-size: 12px; }
-  .link-button:disabled { color: #6b7280; cursor: default; }
-`;
 
 // --- Floating selection icon ------------------------------------------
 
@@ -144,11 +76,6 @@ function showIconNearSelection(rect: DOMRect, text: string) {
     e.preventDefault();
     e.stopPropagation();
     hideIcon();
-    // Opens the popup with the selection prefilled rather than running the
-    // check itself — shows the real "paste text, click Check for AI" flow
-    // instead of a result just silently appearing in History. The
-    // right-click "Check for AI Content" menu is unchanged; it still uses
-    // runCheckAndShowPanel below directly.
     chrome.runtime.sendMessage({
       type: "ai-checker/open-popup-with-selection",
       text,
@@ -187,69 +114,6 @@ document.addEventListener("selectionchange", () => {
 });
 document.addEventListener("mousedown", (e) => {
   if (iconHostEl && !iconHostEl.contains(e.target as Node)) hideIcon();
-});
-
-// --- Result panel --------------------------------------------------------
-
-let panelHostEl: HTMLDivElement | null = null;
-let panelRoot: Root | null = null;
-
-function ensurePanelHost(): Root {
-  if (!panelHostEl) {
-    panelHostEl = document.createElement("div");
-    panelHostEl.id = PANEL_HOST_ID;
-    panelHostEl.style.position = "fixed";
-    panelHostEl.style.top = "0";
-    panelHostEl.style.left = "0";
-    panelHostEl.style.zIndex = "2147483647";
-    document.documentElement.appendChild(panelHostEl);
-
-    const shadow = panelHostEl.attachShadow({ mode: "open" });
-    const style = document.createElement("style");
-    style.textContent = PANEL_CSS;
-    shadow.appendChild(style);
-
-    const mount = document.createElement("div");
-    shadow.appendChild(mount);
-    panelRoot = createRoot(mount);
-  }
-  return panelRoot!;
-}
-
-function hidePanel() {
-  panelRoot?.render(<></>);
-}
-
-async function runCheckInBackground(text: string, sourceUrl: string): Promise<CreateCheckResponse> {
-  return chrome.runtime.sendMessage({ type: "ai-checker/run-check", text, sourceUrl });
-}
-
-async function shareCheckInBackground(checkId: string): Promise<ShareCheckResponse> {
-  return chrome.runtime.sendMessage({ type: "ai-checker/share-check", checkId });
-}
-
-function renderPanel(state: PanelState) {
-  const root = ensurePanelHost();
-  root.render(<ResultPanel state={state} onClose={hidePanel} shareFn={shareCheckInBackground} />);
-}
-
-async function runCheckAndShowPanel(text: string, sourceUrl: string) {
-  renderPanel({ status: "loading" });
-  try {
-    const response = await runCheckInBackground(text, sourceUrl);
-    renderPanel({ status: "done", response });
-  } catch {
-    renderPanel({ status: "error", message: "Network error. Please try again." });
-  }
-}
-
-// Right-click "Check for AI Content" — the background service worker owns
-// the context menu (needs the chrome.contextMenus API) but delegates the
-// actual check + panel display back here.
-chrome.runtime.onMessage.addListener((message) => {
-  if (message?.type === "ai-checker/check-selection") {
-    runCheckAndShowPanel(message.text, message.sourceUrl);
-  }
 });
 
 // Auth handoff: only relevant on our own web app's origin, where /login

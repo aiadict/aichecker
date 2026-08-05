@@ -7,15 +7,8 @@ import {
 } from "@ai-checker/shared-types";
 import { API_BASE_URL } from "../lib/config";
 
-/**
- * Shared between the popup's "Check for AI" tab and the on-page floating
- * panel (see src/content/ResultPanel.tsx) — the two surfaces show the same
- * result, just inside different DOM/CSS contexts. `shareFn` is injected
- * rather than imported directly because the panel has to route the share
- * call through the background service worker (a content script's own
- * fetch is subject to the host page's CSP; the popup, as an extension
- * page, isn't and can call lib/api's shareCheck directly).
- */
+/** Used by the popup's "Check for AI" tab. `shareFn` is injected rather than imported directly
+ * so this component doesn't need to know where the share call actually goes. */
 
 export function describeCheckError(response: Extract<CreateCheckResponse, { ok: false }>): string {
   switch (response.error) {

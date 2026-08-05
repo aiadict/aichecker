@@ -349,16 +349,24 @@ alongside it.
   Uses `chrome.action.getUserSettings().isOnToolbar` (MV3, Chrome 91+) to only show while it's
   actually still unpinned, rather than a dumb "show once" flag that would nag a user who already
   pinned it or go silent for one who later unpinned it.
-- **Floating icon now opens the popup with the selection prefilled**, instead of running the check
-  itself and showing the on-page panel — a deliberate reversal of part of the floating-panel
-  redesign above, scoped to *only* this one entry point. Re-introduces the `pendingSelection`
-  handoff (`setPendingSelection`/`consumePendingSelection` in `lib/storage.ts`) that was deleted
-  when the panel redesign shipped, wired to a fresh `ai-checker/open-popup-with-selection` message
-  the floating icon's click sends to the background worker (content scripts can't call
-  `chrome.action.openPopup()` directly). **The right-click "Check for AI Content" menu is
-  unchanged** — it still runs the check itself and shows the on-page panel, since only the
-  floating-icon flow was called out as feeling too opaque ("a result just appears in History,
-  with no visible step in between").
+- **Both the floating icon and the right-click "Check for AI Content" menu now open the popup
+  with the selection prefilled**, instead of running the check silently and showing the on-page
+  panel — a full reversal of the floating-panel redesign above, one entry point at a time (the
+  floating icon changed first per explicit request; right-click followed once it became clear the
+  same "a result just appears in History, with no visible step in between" complaint applied to
+  it too). Re-introduces the `pendingSelection` handoff
+  (`setPendingSelection`/`consumePendingSelection` in `lib/storage.ts`) that was deleted when the
+  panel redesign shipped. Both flows converge on the same `openPopupWithSelection()` helper in
+  `background/index.ts` — the floating icon reaches it via an `ai-checker/open-popup-with-selection`
+  message (content scripts can't call `chrome.action.openPopup()` directly), while the
+  context-menu handler calls it directly, since it's already running in the background.
+  **The entire on-page panel is gone** — `content/ResultPanel.tsx` deleted, the panel-hosting
+  code stripped from `content/index.tsx`, and the now-unreferenced `ai-checker/run-check`/
+  `ai-checker/share-check` background message handlers removed along with it (the popup already
+  calls `createCheck`/`shareCheck` directly, being an extension page rather than a content
+  script — no CSP to route around). Net effect, confirmed in the build output: the content
+  script's bundle shrank considerably and no longer needs `ResultCard` exposed via
+  `web_accessible_resources` at all, since that component is now popup-only.
 
 ## Billing (Stripe)
 
