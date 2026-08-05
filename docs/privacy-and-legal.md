@@ -40,8 +40,9 @@ legal advice — have an actual lawyer review the policies before publishing.
 - [ ] Data-use disclosures accurate in the CWS **Privacy Practices** dashboard tab (separate from
   the privacy policy itself): we do read/transmit selected text (to check it) and do not sell it
   or use it for unrelated purposes.
-- [ ] Store screenshots (1280×800) + small promo tile (440×280) — not yet created, deferred until
-  everything else ships.
+- [x] Small promo tile (440×280) — `store-assets/chrome-web-store/small-tile-440x280.png`. Same
+  icon glyph as the real extension icon, flat brand-blue background, "Check for AI" label.
+- [ ] Store screenshots (1280×800) — still not created.
 - [x] Chrome Web Store developer account exists — using the existing personal account
   (`majchrowski.d@gmail.com`, $5 fee already paid), not a new werida.io-branded one. The login
   email is never shown publicly; set the listing's **Developer name** field to "AI Checker" (or
