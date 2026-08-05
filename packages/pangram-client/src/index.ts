@@ -16,7 +16,7 @@
  * testable without hitting the real, billed API.
  */
 
-import type { CheckWindow, Prediction } from "@ai-checker/shared-types";
+import { countWords, type CheckWindow, type Prediction } from "@ai-checker/shared-types";
 
 export interface PangramPredictResult {
   prediction: string;
@@ -223,12 +223,6 @@ function mapConfidenceToScore(confidence: string): number {
 
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-function countWords(text: string): number {
-  const trimmed = text.trim();
-  if (!trimmed) return 0;
-  return trimmed.split(/\s+/).length;
 }
 
 /**

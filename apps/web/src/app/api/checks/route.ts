@@ -1,13 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { PangramApiError, PangramClient } from "@ai-checker/pangram-client";
-import type { CreateCheckRequest, CreateCheckResponse } from "@ai-checker/shared-types";
+import { countWords, type CreateCheckRequest, type CreateCheckResponse } from "@ai-checker/shared-types";
 import { getAuthenticatedUser } from "@/lib/auth";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { insertCheck, listChecksForUser } from "@/lib/checks-repo";
 
 const pangram = new PangramClient();
 
-const MIN_CHARS = 20;
+// Word-based, not character-based — short of ~50 words, Pangram's own
+// results get noticeably less reliable (seen live earlier: even a 256-word
+// sample came back "Low confidence"). MAX_CHARS stays character-based —
+// that's a payload-size guard, a different concern from detection validity.
+const MIN_WORDS = 50;
 const MAX_CHARS = 50_000;
 
 interface ConsumeCreditResult {
@@ -28,7 +32,7 @@ export async function POST(req: NextRequest) {
   const body = (await req.json()) as CreateCheckRequest;
   const text = body.text?.trim() ?? "";
 
-  if (text.length < MIN_CHARS) {
+  if (countWords(text) < MIN_WORDS) {
     return NextResponse.json<CreateCheckResponse>({ ok: false, error: "text_too_short" });
   }
   if (text.length > MAX_CHARS) {

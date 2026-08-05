@@ -1,6 +1,19 @@
 // Shared types used by both apps/web and apps/extension.
 // Keep this the single source of truth for the shapes crossing that boundary.
 
+/**
+ * Single source of truth for "how many words is this text" — used for the
+ * minimum-length gate (extension button + backend validation must agree on
+ * exactly the same count, or the UI could show the button enabled while the
+ * backend still rejects it) and for Pangram credit billing
+ * (packages/pangram-client), so both mean the same thing everywhere.
+ */
+export function countWords(text: string): number {
+  const trimmed = text.trim();
+  if (!trimmed) return 0;
+  return trimmed.split(/\s+/).length;
+}
+
 export type PlanKey = "free" | "pro" | "business";
 
 export interface Plan {
