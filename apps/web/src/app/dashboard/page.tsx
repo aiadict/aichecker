@@ -95,6 +95,9 @@ export default async function DashboardPage() {
       <p>
         <Link href="/dashboard/history">View check history →</Link>
       </p>
+      <p>
+        <Link href="/dashboard/account">Account settings →</Link>
+      </p>
     </div>
   );
 }
