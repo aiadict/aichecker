@@ -16,7 +16,7 @@
  * testable without hitting the real, billed API.
  */
 
-import { countWords, type CheckWindow, type Prediction } from "@ai-checker/shared-types";
+import { countWords, creditsForWordCount, type CheckWindow, type Prediction } from "@ai-checker/shared-types";
 
 export interface PangramPredictResult {
   prediction: string;
@@ -46,7 +46,6 @@ export interface PangramClientOptions {
   mode?: "realtime" | "bulk";
 }
 
-const WORDS_PER_CREDIT = 1000;
 const API_BASE_URL = "https://text.external-api.pangram.com";
 const POLL_INTERVAL_MS = 700;
 const MAX_POLL_ATTEMPTS = 40; // ~28s ceiling before giving up
@@ -100,7 +99,7 @@ export class PangramClient {
   }
 
   creditsForWordCount(wordCount: number): number {
-    return Math.max(1, Math.ceil(wordCount / WORDS_PER_CREDIT));
+    return creditsForWordCount(wordCount);
   }
 
   private async submitTask(text: string): Promise<string> {

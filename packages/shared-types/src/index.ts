@@ -14,6 +14,22 @@ export function countWords(text: string): number {
   return trimmed.split(/\s+/).length;
 }
 
+const WORDS_PER_CREDIT = 1000;
+
+/**
+ * Same reasoning as countWords: the extension's live "N Words, M Credits"
+ * counter and pangram-client's actual billing (packages/pangram-client)
+ * need to agree exactly, or the number shown before a check wouldn't match
+ * what actually gets deducted. Returns 0 for empty text — a real check
+ * always costs at least 1 credit once there's any word count at all, but
+ * "0 words costs 1 credit" would be a misleading thing to show someone
+ * looking at an empty box.
+ */
+export function creditsForWordCount(wordCount: number): number {
+  if (wordCount <= 0) return 0;
+  return Math.max(1, Math.ceil(wordCount / WORDS_PER_CREDIT));
+}
+
 export type PlanKey = "free" | "pro" | "business";
 
 export interface Plan {

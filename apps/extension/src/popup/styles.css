@@ -67,6 +67,16 @@ body {
 
 .tabpanel { padding: 16px; min-height: 260px; }
 
+.word-counter-row {
+  text-align: right;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--brand);
+  margin-bottom: 6px;
+}
+
+.textarea-wrap { position: relative; }
+
 textarea {
   width: 100%;
   min-height: 140px;
@@ -75,6 +85,30 @@ textarea {
   padding: 10px;
   font: inherit;
   resize: vertical;
+}
+
+.clear-text-btn {
+  all: unset;
+  position: absolute;
+  right: 8px;
+  bottom: 8px;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  background: #f3f4f6;
+  color: var(--muted);
+  cursor: pointer;
+}
+.clear-text-btn:hover { color: var(--fg); }
+.clear-text-btn svg { width: 14px; height: 14px; }
+
+.min-words-hint {
+  font-size: 12px;
+  color: var(--brand);
+  margin: 6px 0 0;
 }
 
 .primary-button {

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { createCheck, shareCheck } from "../../lib/api";
-import { countWords, type CreateCheckResponse } from "@ai-checker/shared-types";
+import { countWords, creditsForWordCount, type CreateCheckResponse } from "@ai-checker/shared-types";
 import ResultCard, { describeCheckError } from "../../components/ResultCard";
 
 // Word-based, not character-based — matches the backend's own minimum
@@ -19,6 +19,7 @@ export default function CheckForAiTab({ prefillText }: { prefillText: string }) 
   }, [prefillText]);
 
   const wordCount = countWords(text);
+  const credits = creditsForWordCount(wordCount);
   const belowMinimum = wordCount < MIN_WORDS;
 
   async function handleCheck() {
@@ -36,20 +37,38 @@ export default function CheckForAiTab({ prefillText }: { prefillText: string }) 
 
   return (
     <div>
-      <textarea
-        placeholder="Enter or paste your text here"
-        value={text}
-        onChange={(e) => setText(e.target.value)}
-      />
+      <div className="word-counter-row">
+        {wordCount} {wordCount === 1 ? "Word" : "Words"}, {credits} {credits === 1 ? "Credit" : "Credits"}
+      </div>
+
+      <div className="textarea-wrap">
+        <textarea
+          placeholder="Enter or paste your text here"
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+        />
+        {text.length > 0 && (
+          <button className="clear-text-btn" onClick={() => setText("")} aria-label="Clear text">
+            <svg viewBox="0 0 20 20" fill="none">
+              <path
+                d="M4 6h12M8 6V4.5a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1V6M5.5 6l.6 9a1 1 0 0 0 1 .9h5.8a1 1 0 0 0 1-.9l.6-9"
+                stroke="currentColor"
+                strokeWidth="1.3"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </button>
+        )}
+      </div>
+
+      {text.length > 0 && belowMinimum && (
+        <p className="min-words-hint">Minimum 50 words required for accurate detection</p>
+      )}
+
       <button className="primary-button" disabled={belowMinimum || loading} onClick={handleCheck}>
         {loading ? "Checking…" : "Check for AI"}
       </button>
-
-      {belowMinimum && (
-        <p style={{ color: "var(--brand)", fontSize: 12, marginTop: 6 }}>
-          Minimum 50 words required for accurate detection
-        </p>
-      )}
 
       {response && !response.ok && (
         <p className="muted" style={{ marginTop: 12 }}>
