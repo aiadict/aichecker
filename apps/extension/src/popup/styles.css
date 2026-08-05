@@ -43,6 +43,28 @@ body {
 .header .credits { text-align: right; font-size: 12px; color: var(--muted); }
 .header .credits strong { color: var(--fg); }
 
+.pin-nudge {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 10px 16px;
+  background: var(--brand-soft);
+  border-bottom: 1px solid var(--border);
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--fg);
+}
+.pin-nudge-close {
+  all: unset;
+  cursor: pointer;
+  font-size: 15px;
+  line-height: 1;
+  color: var(--muted);
+  padding: 0 2px;
+  margin-left: auto;
+}
+.pin-nudge-close:hover { color: var(--fg); }
+
 .tabpanel { padding: 16px; min-height: 260px; }
 
 textarea {

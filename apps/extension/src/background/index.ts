@@ -3,7 +3,7 @@
 // script's own fetch/XHR is subject to the host page's CSP, while this
 // service worker isn't, so createCheck/shareCheck run here instead.
 
-import { setAuthSession } from "../lib/storage";
+import { setAuthSession, setPendingSelection } from "../lib/storage";
 import { createCheck, shareCheck } from "../lib/api";
 
 const CONTEXT_MENU_ID = "ai-checker-check-selection";
@@ -38,12 +38,28 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
 });
 
 // Messages from the content script (see src/content/index.tsx): a check or
-// share request from the on-page panel, or a session handoff after signing
-// in on the /login page.
+// share request from the on-page panel, the floating icon asking to open
+// the popup with the selection prefilled instead, or a session handoff
+// after signing in on the /login page.
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   if (message?.type === "ai-checker/run-check") {
     createCheck({ text: message.text, sourceUrl: message.sourceUrl }).then(sendResponse);
     return true; // keep the message channel open for the async response
+  }
+
+  if (message?.type === "ai-checker/open-popup-with-selection") {
+    (async () => {
+      // Deliberately shows the real "paste text, click Check for AI" flow
+      // instead of running the check silently — the floating icon used to
+      // do that (see the on-page panel other flows use), but showing
+      // nothing until a result popped into History felt opaque. The
+      // right-click context menu is unchanged; only this one entry point
+      // now opens the popup.
+      await setPendingSelection(message.text, message.sourceUrl);
+      await chrome.action.openPopup();
+      sendResponse({ ok: true });
+    })();
+    return true;
   }
 
   if (message?.type === "ai-checker/share-check") {

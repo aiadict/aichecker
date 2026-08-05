@@ -316,6 +316,50 @@ domain), no logic/workflow changes.
   inspected the rasterized icon16.png/128.png directly — the magnifier+lines composition reads
   clearly at both sizes.
 
+## Pre-CWS-review pass (2026-08-02)
+
+A full ecosystem audit ahead of Chrome Web Store submission, plus two workflow changes requested
+alongside it.
+
+- **Account Settings** (`/dashboard/account`) now actually exists — `/terms` and `/privacy` had
+  promised account deletion and data export "from Account Settings" since the original privacy
+  copy was written, but the page was never built. Export streams every check as JSON straight
+  through the RLS-scoped browser client; deletion calls a new admin-authenticated route
+  (`/api/account/delete`) that deletes the `auth.users` row, cascading to everything owned via the
+  FKs already in place. Deletion is **blocked** while an active paid subscription exists — points
+  the user to Manage Billing instead of cancelling it on their behalf, because
+  `STRIPE_SECRET_KEY` is a restricted key with read-only access to Subscriptions (see the Billing
+  section below); the route has no way to call `subscriptions.cancel()` even if it wanted to.
+  Verified live: free-plan self-delete cascades correctly, paid-plan attempt gets a clean 409.
+- **`activeTab` and `scripting` permissions removed** from the manifest — neither was referenced
+  anywhere in the code (the content script is registered declaratively, not injected via
+  `chrome.scripting.*`, and nothing reads tab data beyond what `host_permissions`/the
+  context-menu callback already hand over for free). Fewer permissions, faster review, a less
+  alarming install prompt.
+- **Rate limiting**: a Vercel Firewall custom rule on `POST /api/checks` (20 req/60s per IP),
+  staged in log-only mode — per Vercel's own staged-rollout guidance, not published to production
+  yet. The account owner needs to review real traffic in the Firewall dashboard before switching
+  the rule's action from `log` to actually enforcing.
+- **Confirmed live** (not just flagged) that Supabase Auth's Site URL was still
+  `http://localhost:3000` in production — generated a real signup-confirmation link via the admin
+  API (`auth.admin.generateLink`) and read its `redirect_to`. Needs a dashboard fix (Authentication
+  → URL Configuration) that the service-role key has no access to make.
+- **Pin nudge**: a dismissible banner in the popup (`PinNudge.tsx`) suggesting the user pin the
+  extension — Chrome has no API for an extension to pin itself, this is purely instructional.
+  Uses `chrome.action.getUserSettings().isOnToolbar` (MV3, Chrome 91+) to only show while it's
+  actually still unpinned, rather than a dumb "show once" flag that would nag a user who already
+  pinned it or go silent for one who later unpinned it.
+- **Floating icon now opens the popup with the selection prefilled**, instead of running the check
+  itself and showing the on-page panel — a deliberate reversal of part of the floating-panel
+  redesign above, scoped to *only* this one entry point. Re-introduces the `pendingSelection`
+  handoff (`setPendingSelection`/`consumePendingSelection` in `lib/storage.ts`) that was deleted
+  when the panel redesign shipped, wired to a fresh `ai-checker/open-popup-with-selection` message
+  the floating icon's click sends to the background worker (content scripts can't call
+  `chrome.action.openPopup()` directly). **The right-click "Check for AI Content" menu is
+  unchanged** — it still runs the check itself and shows the on-page panel, since only the
+  floating-icon flow was called out as feeling too opaque ("a result just appears in History,
+  with no visible step in between").
+
 ## Billing (Stripe)
 
 - **One Stripe Product per plan** ("AI Checker Pro", "AI Checker Business"), each with one

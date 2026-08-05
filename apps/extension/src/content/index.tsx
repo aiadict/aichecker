@@ -144,7 +144,16 @@ function showIconNearSelection(rect: DOMRect, text: string) {
     e.preventDefault();
     e.stopPropagation();
     hideIcon();
-    runCheckAndShowPanel(text, window.location.href);
+    // Opens the popup with the selection prefilled rather than running the
+    // check itself — shows the real "paste text, click Check for AI" flow
+    // instead of a result just silently appearing in History. The
+    // right-click "Check for AI Content" menu is unchanged; it still uses
+    // runCheckAndShowPanel below directly.
+    chrome.runtime.sendMessage({
+      type: "ai-checker/open-popup-with-selection",
+      text,
+      sourceUrl: window.location.href,
+    });
   };
 }
 

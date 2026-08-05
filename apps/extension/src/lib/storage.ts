@@ -14,6 +14,8 @@ export const DEFAULT_SETTINGS: ExtensionSettings = {
 const KEYS = {
   authSession: "authSession",
   settings: "settings",
+  pinNudgeDismissed: "pinNudgeDismissed",
+  pendingSelection: "pendingSelection",
 } as const;
 
 export interface AuthSession {
@@ -49,4 +51,32 @@ export async function getSettings(): Promise<ExtensionSettings> {
 export async function setSettings(settings: Partial<ExtensionSettings>): Promise<void> {
   const current = await getSettings();
   await chrome.storage.local.set({ [KEYS.settings]: { ...current, ...settings } });
+}
+
+/** User explicitly closed the "pin the extension" nudge — don't show it again. */
+export async function getPinNudgeDismissed(): Promise<boolean> {
+  const { [KEYS.pinNudgeDismissed]: dismissed } = await chrome.storage.local.get(KEYS.pinNudgeDismissed);
+  return Boolean(dismissed);
+}
+
+export async function setPinNudgeDismissed(): Promise<void> {
+  await chrome.storage.local.set({ [KEYS.pinNudgeDismissed]: true });
+}
+
+/**
+ * Set by the floating icon's click handler (see content/index.tsx), read
+ * once by the popup on open. Only the floating-icon flow uses this — the
+ * right-click "Check for AI Content" menu still runs the check itself and
+ * shows the on-page panel directly, unchanged.
+ */
+export async function setPendingSelection(text: string, sourceUrl: string): Promise<void> {
+  await chrome.storage.session.set({ [KEYS.pendingSelection]: { text, sourceUrl } });
+}
+
+export async function consumePendingSelection(): Promise<{ text: string; sourceUrl: string } | null> {
+  const { [KEYS.pendingSelection]: pending } = await chrome.storage.session.get(KEYS.pendingSelection);
+  if (pending) {
+    await chrome.storage.session.remove(KEYS.pendingSelection);
+  }
+  return (pending as { text: string; sourceUrl: string } | undefined) ?? null;
 }
