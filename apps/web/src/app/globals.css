@@ -132,40 +132,7 @@ footer.site-footer { padding: 40px 0; color: var(--muted); font-size: 13px; }
 .welcome-hero { text-align: center; max-width: 520px; margin: 0 auto 48px; }
 .welcome-hero h1 { font-size: 32px; margin-bottom: 10px; }
 
-.step-num {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  border-radius: 999px;
-  background: var(--brand);
-  color: #fff;
-  font-weight: 700;
-  font-size: 14px;
-  margin-bottom: 10px;
-}
-
-.welcome-step {
-  display: flex;
-  align-items: center;
-  gap: 40px;
-  padding: 32px 0;
-  border-bottom: 1px solid var(--border);
-}
-.welcome-step-reverse { flex-direction: row-reverse; }
-.welcome-step-text { flex: 1; min-width: 240px; }
-.welcome-step-text h3 { margin: 0 0 8px; }
-.welcome-step-img {
-  flex: 1;
-  min-width: 240px;
-  max-width: 100%;
-  height: auto;
-  border-radius: 10px;
-  border: 1px solid var(--border);
-}
-
-.welcome-step-full { padding: 32px 0; }
+.welcome-step-full { max-width: 640px; margin: 0 auto; padding: 32px 0; text-align: center; }
 .welcome-step-full h3 { margin: 4px 0 8px; }
 .welcome-step-img-full {
   width: 100%;
@@ -176,8 +143,3 @@ footer.site-footer { padding: 40px 0; color: var(--muted); font-size: 13px; }
 }
 
 .welcome-cta { text-align: center; margin-top: 40px; }
-
-@media (max-width: 680px) {
-  .welcome-step { flex-direction: column; }
-  .welcome-step-reverse { flex-direction: column; }
-}
