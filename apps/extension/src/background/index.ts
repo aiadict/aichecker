@@ -2,15 +2,25 @@
 // session handoff from the /login page.
 
 import { setAuthSession, setPendingSelection } from "../lib/storage";
+import { API_BASE_URL } from "../lib/config";
 
 const CONTEXT_MENU_ID = "ai-checker-check-selection";
 
-chrome.runtime.onInstalled.addListener(() => {
+chrome.runtime.onInstalled.addListener((details) => {
   chrome.contextMenus.create({
     id: CONTEXT_MENU_ID,
     title: "Check for AI Content",
     contexts: ["selection"],
   });
+
+  // Only on a genuine first install. Chrome reports "update" for a version
+  // bump or a plain reload of an already-loaded unpacked extension
+  // (chrome://extensions' refresh icon) — "install" only fires again if the
+  // extension is fully removed and re-loaded, which is the same situation a
+  // real user re-installing from the Web Store would be in.
+  if (details.reason === "install") {
+    chrome.tabs.create({ url: `${API_BASE_URL}/welcome` });
+  }
 });
 
 /**
