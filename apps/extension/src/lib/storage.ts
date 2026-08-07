@@ -54,8 +54,12 @@ export async function setSettings(settings: Partial<ExtensionSettings>): Promise
 
 /**
  * Set by background/index.ts's openSidePanelWithSelection() — both the
- * floating icon and the right-click "Check for AI Content" menu land there
- * — and read once by the side panel on open (see panel/App.tsx).
+ * floating icon and the right-click "Check for AI Content" menu land there.
+ * Unlike the old popup (which always started from a fresh mount), the side
+ * panel is persistent and can already be open when a new selection comes
+ * in, so this is read both once on mount AND live via onPendingSelectionSet
+ * below (see panel/App.tsx) — a mount-only read would miss any selection
+ * made while the panel was already sitting open.
  */
 export async function setPendingSelection(text: string, sourceUrl: string): Promise<void> {
   await chrome.storage.session.set({ [KEYS.pendingSelection]: { text, sourceUrl } });
@@ -67,4 +71,19 @@ export async function consumePendingSelection(): Promise<{ text: string; sourceU
     await chrome.storage.session.remove(KEYS.pendingSelection);
   }
   return (pending as { text: string; sourceUrl: string } | undefined) ?? null;
+}
+
+/**
+ * Notifies `callback` whenever a new pending selection is written (not on
+ * the removal consumePendingSelection does right after reading it — only
+ * on an actual new value arriving). Returns an unsubscribe function.
+ */
+export function onPendingSelectionSet(callback: () => void): () => void {
+  function listener(changes: { [key: string]: chrome.storage.StorageChange }, areaName: string) {
+    if (areaName === "session" && changes[KEYS.pendingSelection]?.newValue) {
+      callback();
+    }
+  }
+  chrome.storage.onChanged.addListener(listener);
+  return () => chrome.storage.onChanged.removeListener(listener);
 }

@@ -32,19 +32,27 @@ chrome.runtime.onInstalled.addListener((details) => {
 
 /**
  * Both the right-click menu and the floating icon (via the message handler
- * below) land here: stash the selection and open the side panel with it
- * prefilled, rather than running the check silently — shows the real
- * "paste text, click Check for AI" flow instead of a result just appearing
- * in History with no visible step in between. Called directly inside a
- * user-gesture-triggered event (the menu click, or a message stemming
- * from the floating icon's click), the same requirement
- * chrome.action.openPopup() had before this — chrome.sidePanel.open() is
- * held to the same "must follow a user gesture" rule.
+ * below) land here: open the side panel and stash the selection for it to
+ * pick up, rather than running the check silently — shows the real "paste
+ * text, click Check for AI" flow instead of a result just appearing in
+ * History with no visible step in between.
+ *
+ * chrome.sidePanel.open() needs a very fresh user gesture — confirmed live
+ * that even the right-click path (which, unlike the floating icon, has no
+ * cross-context message hop at all) failed to open the panel while
+ * setPendingSelection's storage write was awaited first. open() now goes
+ * first, as the very next thing after the gesture, before anything else
+ * has a chance to spend it.
  */
 async function openSidePanelWithSelection(text: string, sourceUrl: string, windowId: number | undefined) {
   if (windowId === undefined) return;
+  try {
+    await chrome.sidePanel.open({ windowId });
+  } catch (err) {
+    console.error("chrome.sidePanel.open() failed", err);
+    return;
+  }
   await setPendingSelection(text, sourceUrl);
-  await chrome.sidePanel.open({ windowId });
 }
 
 chrome.contextMenus.onClicked.addListener(async (info, tab) => {

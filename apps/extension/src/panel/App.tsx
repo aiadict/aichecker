@@ -3,7 +3,7 @@ import Header from "./components/Header";
 import CheckForAiTab from "./tabs/CheckForAiTab";
 import HistoryTab from "./tabs/HistoryTab";
 import SettingsTab from "./tabs/SettingsTab";
-import { consumePendingSelection } from "../lib/storage";
+import { consumePendingSelection, onPendingSelectionSet } from "../lib/storage";
 import { API_BASE_URL } from "../lib/config";
 
 type TabKey = "check" | "history" | "settings";
@@ -14,14 +14,23 @@ export default function App() {
 
   useEffect(() => {
     // Set by background/index.ts's openSidePanelWithSelection() — both the
-    // floating icon and the right-click menu land there — consumed once so
-    // it doesn't reappear next time the panel opens.
-    consumePendingSelection().then((pending) => {
-      if (pending?.text) {
-        setPrefillText(pending.text);
-        setTab("check");
-      }
-    });
+    // floating icon and the right-click menu land there.
+    function loadPendingSelection() {
+      consumePendingSelection().then((pending) => {
+        if (pending?.text) {
+          setPrefillText(pending.text);
+          setTab("check");
+        }
+      });
+    }
+
+    // Once for whatever was already waiting when the panel mounted, and
+    // again any time a new one arrives while it's already open — unlike
+    // the old popup (always a fresh mount), the side panel is persistent,
+    // so a selection made while it's sitting open needs a live update, not
+    // just a one-time read.
+    loadPendingSelection();
+    return onPendingSelectionSet(loadPendingSelection);
   }, []);
 
   return (
