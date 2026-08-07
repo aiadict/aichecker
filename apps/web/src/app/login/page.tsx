@@ -14,10 +14,24 @@ export default function LoginPage() {
   );
 }
 
+/**
+ * Only ever a same-site relative path (e.g. "/dashboard/history" — set by
+ * middleware.ts when it bounces an unauthenticated /dashboard/* request
+ * here). Rejects anything else so this can't be turned into an open
+ * redirect via a crafted ?redirectTo= value (a protocol-relative "//evil.com"
+ * or an absolute "https://evil.com" would both fail the leading-single-
+ * slash check below).
+ */
+function safeRedirectTarget(value: string | null): string {
+  if (value && value.startsWith("/") && !value.startsWith("//")) return value;
+  return "/dashboard";
+}
+
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const isExtensionSource = searchParams.get("source") === "extension";
+  const redirectTo = safeRedirectTarget(searchParams.get("redirectTo"));
 
   const [mode, setMode] = useState<Mode>("sign-in");
   const [email, setEmail] = useState("");
@@ -75,7 +89,7 @@ function LoginForm() {
       return;
     }
 
-    router.push("/dashboard");
+    router.push(redirectTo);
   }
 
   return (

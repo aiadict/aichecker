@@ -31,6 +31,11 @@ export async function middleware(request: NextRequest) {
 
   if (!user && request.nextUrl.pathname.startsWith("/dashboard")) {
     const loginUrl = new URL("/login", request.url);
+    // So the login page can send the user back to where they actually
+    // wanted to go (e.g. /dashboard/history from the extension's "View
+    // All Checks" link) instead of always dropping them on the generic
+    // /dashboard overview after signing in.
+    loginUrl.searchParams.set("redirectTo", request.nextUrl.pathname + request.nextUrl.search);
     return NextResponse.redirect(loginUrl);
   }
 
