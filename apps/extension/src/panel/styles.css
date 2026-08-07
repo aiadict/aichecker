@@ -144,7 +144,7 @@ textarea {
   cursor: pointer;
 }
 .result-close:hover { color: var(--fg); background: #f3f4f6; }
-.result-card .verdict { font-weight: 700; font-size: 16px; padding-right: 20px; }
+.result-card .verdict { font-weight: 700; font-size: 20px; padding-right: 20px; }
 .result-card .verdict.ai { color: #c2410c; }
 .result-card .verdict.human { color: #15803d; }
 .result-card .verdict.mixed { color: #b45309; }

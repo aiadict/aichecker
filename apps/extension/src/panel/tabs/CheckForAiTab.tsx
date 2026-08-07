@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { createCheck, shareCheck } from "../../lib/api";
+import { createCheck } from "../../lib/api";
 import { countWords, creditsForWordCount, type CreateCheckResponse } from "@ai-checker/shared-types";
 import ResultCard, { describeCheckError } from "../../components/ResultCard";
 
@@ -44,7 +44,7 @@ export default function CheckForAiTab({ prefillText }: { prefillText: string }) 
       )}
 
       {response?.ok && (
-        <ResultCard result={response.result} shareFn={shareCheck} onClose={() => setResponse(null)} />
+        <ResultCard result={response.result} onClose={() => setResponse(null)} />
       )}
 
       <div className="word-counter-row">

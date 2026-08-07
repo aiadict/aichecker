@@ -1,14 +1,5 @@
-import { useState } from "react";
-import {
-  synthesizeInsight,
-  type CheckResult,
-  type CreateCheckResponse,
-  type ShareCheckResponse,
-} from "@ai-checker/shared-types";
+import { synthesizeInsight, type CheckResult, type CreateCheckResponse } from "@ai-checker/shared-types";
 import { API_BASE_URL } from "../lib/config";
-
-/** Used by the popup's "Check for AI" tab. `shareFn` is injected rather than imported directly
- * so this component doesn't need to know where the share call actually goes. */
 
 export function describeCheckError(response: Extract<CreateCheckResponse, { ok: false }>): string {
   switch (response.error) {
@@ -26,42 +17,17 @@ export function describeCheckError(response: Extract<CreateCheckResponse, { ok: 
   }
 }
 
-function ShareButton({
-  checkId,
-  shareFn,
-}: {
-  checkId: string;
-  shareFn: (id: string) => Promise<ShareCheckResponse>;
-}) {
-  const [busy, setBusy] = useState(false);
-  const [copied, setCopied] = useState(false);
+// Pangram's own `prediction` is a full sentence ("We believe that this
+// document is fully AI-generated") — good for the detail page, too long to
+// sit next to a big percentage number here. Short label instead, derived
+// from our own normalized category rather than parsing their sentence.
+const SHORT_LABEL: Record<CheckResult["predictionShort"], string> = {
+  ai: "AI generated",
+  human: "Human written",
+  mixed: "AI-assisted",
+};
 
-  async function handleShare() {
-    setBusy(true);
-    const res = await shareFn(checkId);
-    setBusy(false);
-    if (!res.ok) return;
-    await navigator.clipboard.writeText(`${API_BASE_URL}/history/${res.shareSlug}`);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  }
-
-  return (
-    <button className="link-button" onClick={handleShare} disabled={busy}>
-      {copied ? "Link copied!" : "Share result"}
-    </button>
-  );
-}
-
-export default function ResultCard({
-  result,
-  shareFn,
-  onClose,
-}: {
-  result: CheckResult;
-  shareFn: (id: string) => Promise<ShareCheckResponse>;
-  onClose?: () => void;
-}) {
+export default function ResultCard({ result, onClose }: { result: CheckResult; onClose?: () => void }) {
   const insight = synthesizeInsight(result.windows);
 
   return (
@@ -71,7 +37,7 @@ export default function ResultCard({
           ×
         </button>
       )}
-      <div className={`verdict ${result.predictionShort}`}>{result.prediction}</div>
+      <div className={`verdict ${result.predictionShort}`}>{SHORT_LABEL[result.predictionShort]}</div>
       <div className="pct">{Math.round((result.fractionAi + result.fractionAiAssisted) * 100)}%</div>
       <div className="muted">
         of this text shows AI involvement{" "}
@@ -108,7 +74,7 @@ export default function ResultCard({
         </p>
       )}
 
-      <div style={{ display: "flex", justifyContent: "space-between", marginTop: 12 }}>
+      <div style={{ marginTop: 12 }}>
         <a
           href={`${API_BASE_URL}/history/${result.shareSlug}`}
           target="_blank"
@@ -117,7 +83,6 @@ export default function ResultCard({
         >
           View full analysis
         </a>
-        <ShareButton checkId={result.id} shareFn={shareFn} />
       </div>
     </div>
   );
