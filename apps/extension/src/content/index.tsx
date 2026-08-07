@@ -1,8 +1,8 @@
 // Content script: shows a small floating "AI Checker" icon near a text
 // selection anywhere on the web. Clicking it (or the right-click "Check
 // for AI Content" menu, handled entirely in the background worker) opens
-// the popup with the selection prefilled — the real "paste text, click
-// Check for AI" flow, not an automatic check. See docs/architecture.md.
+// the side panel with the selection prefilled — the real "paste text,
+// click Check for AI" flow, not an automatic check. See docs/architecture.md.
 
 import { getSettings } from "../lib/storage";
 import { API_BASE_URL } from "../lib/config";
@@ -44,7 +44,7 @@ function ensureIconHost(): { host: HTMLDivElement; button: HTMLButtonElement } {
     `;
     const button = document.createElement("button");
     button.type = "button";
-    // Same glyph as the toolbar/popup mark, minus its own background rect —
+    // Same glyph as the toolbar/panel mark, minus its own background rect —
     // this button's circular background already does that job.
     button.innerHTML = `
       <svg viewBox="0 0 32 32">
@@ -77,7 +77,7 @@ function showIconNearSelection(rect: DOMRect, text: string) {
     e.stopPropagation();
     hideIcon();
     chrome.runtime.sendMessage({
-      type: "ai-checker/open-popup-with-selection",
+      type: "ai-checker/open-panel-with-selection",
       text,
       sourceUrl: window.location.href,
     });

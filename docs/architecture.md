@@ -517,18 +517,74 @@ alongside it.
 
 ## Extension internals
 
-- **Manifest V3**, permissions: `contextMenus`, `storage`, `activeTab`, `scripting`,
-  `host_permissions: <all_urls>` — each needs an explicit justification string in the Chrome Web
-  Store listing (see `docs/privacy-and-legal.md`).
-- **Content script** (`src/content/index.ts`): listens for `selectionchange`; on a selection
+- **Manifest V3**, permissions: `contextMenus`, `storage`, `sidePanel`, `host_permissions:
+  <all_urls>` — each needs an explicit justification string in the Chrome Web Store listing (see
+  `docs/privacy-and-legal.md`). `activeTab`/`scripting` were dropped as unused (2026-08-05).
+- **Content script** (`src/content/index.tsx`): listens for `selectionchange`; on a selection
   ≥20 chars, renders a shadow-DOM button near the selection. Clicking it messages the background
-  worker rather than trying to open the popup directly — `chrome.action.openPopup()` from a
-  content script context is unreliable across Chrome versions.
+  worker rather than trying to open the side panel directly — `chrome.sidePanel.open()` isn't
+  callable from a content script context.
 - **Background service worker** (`src/background/index.ts`): owns the `contextMenus` entry and
-  is the only place that calls `chrome.action.openPopup()` (reliable there, since it runs in
-  direct response to a user-gesture event — the menu click or the forwarded message).
-- **Popup** (`src/popup/`): React app, three tabs (Check for AI / History / Settings), reads any
-  pending selection out of `chrome.storage.session` on mount.
+  is the only place that calls `chrome.sidePanel.open()` (reliable there, since it runs in direct
+  response to a user-gesture event — the menu click or the forwarded message).
+- **UI** (`src/panel/`): React app, side panel (not a popup — see the 2026-08-07 section below),
+  three tabs (Check for AI / History / Settings) switched via an icon bar, reads any pending
+  selection out of `chrome.storage.session` on mount.
+
+## Side panel migration (2026-08-07)
+
+Replaced the toolbar popup (`chrome.action.default_popup`, closed on blur) with Chrome's **Side
+Panel API** — a persistent panel docked to the browser edge that stays open across navigation and
+doesn't close when the user clicks back into the page. User's own call after seeing Copyleaks'
+extension use one; scoped and mocked up (a static HTML/CSS comparison of the default and Settings
+states) before touching real code.
+
+- **`src/popup/` renamed to `src/panel/`** — mechanical rename, "popup" was actively wrong once
+  there wasn't one.
+- **Manifest**: `action: {}` (deliberately no `default_popup` — setting one wins over side panel
+  behavior for the toolbar-icon click, silently, so its absence is load-bearing, not
+  incidental), new `side_panel: { default_path: "src/panel/index.html" }`, `sidePanel` added to
+  `permissions`.
+- **`chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true })`**, called once in
+  `onInstalled` (same place `contextMenus.create` already lived) — makes the toolbar icon open
+  the panel with no separate click listener needed.
+- **Every entry point now opens the side panel**, confirmed as the explicit intent, not a
+  default: toolbar-icon click (native, via the behavior setting above), the floating icon, and
+  the right-click "Check for AI Content" menu (both via a renamed
+  `ai-checker/open-panel-with-selection` message into a single `openSidePanelWithSelection()`
+  helper in `background/index.ts` — same `chrome.sidePanel.open({ windowId })` call either way,
+  the floating icon just has to reach it via a message since content scripts can't call it
+  directly).
+- **Chrome renders its own header above our content** — extension icon, name, a native pin
+  icon, and (Chrome 141+) a native close control — confirmed against the official API reference,
+  not assumed. This directly removed scope rather than adding it:
+  - `Header.tsx` no longer renders a logo/name row, just the credits line — duplicating what
+    Chrome already shows would've been redundant.
+  - The custom `PinNudge.tsx` banner (built one session earlier, before this migration was
+    on the table) was deleted outright along with its `chrome.storage` keys — it existed to
+    solve toolbar-icon discoverability for a popup; the side panel's pin control is native and
+    always visible, so there's no discovery problem left to nudge about.
+  - No custom "×" close button was built either, for the same reason — Chrome's native one
+    already covers it.
+- **Bottom nav**: the three text tabs became a 4-icon bar (Check / History / Contact / Settings).
+  Contact opens `${API_BASE_URL}/support` in a new tab — that page doesn't exist yet, deliberately
+  deferred. A 5th "Rate us" icon was scoped but is **not** included yet — its destination is a
+  Chrome Web Store review URL, which only exists once the extension has a real listing ID from
+  actually being published; there's nothing to link to yet.
+  - Settings now fully replaces the textbox/button/result area rather than living alongside it
+    (confirmed explicitly) — clicking the now-grayed-out Check icon is what navigates back,
+    same toggle mechanism the old text tabs used, just icon-driven.
+- **`ResultCard` gained an optional `onClose`** — a "×" the user can click to dismiss a result
+  without needing to run a new check to clear it, wired in `CheckForAiTab.tsx` via
+  `setResponse(null)`. `ResultPanel.tsx`'s own copy of this component died with it back in the
+  on-page-panel removal, so `ResultCard` has exactly one caller now.
+- **CSS**: dropped the popup's fixed `width: 380px` for `min-width: 280px` — a side panel is
+  user-resizable, unlike a fixed-size popup, so the layout needs to be fluid rather than assuming
+  one width.
+- **Not verified by us**: whether the toolbar click / floating icon / right-click flows actually
+  open the panel correctly, and whether Chrome's native header renders the way the API reference
+  described, both need a live Chrome test — there's no way to drive the browser's side panel UI
+  from here to confirm it directly.
 
 ## Why this shape (vs. alternatives considered)
 

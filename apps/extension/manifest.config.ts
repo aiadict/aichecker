@@ -5,15 +5,16 @@ import pkg from "./package.json";
 // the Chrome Web Store listing (see docs/privacy-and-legal.md):
 //   - contextMenus: powers the right-click "Check for AI Content" action
 //   - storage:      caches the auth session + settings locally
-// "host_permissions": <all_urls> is required so the right-click check,
-// floating icon, and content-script panel work on any site — this is the
-// single most sensitive permission and needs the clearest justification
-// copy at submission time. `activeTab` and `scripting` were dropped: the
-// content script is registered declaratively above (not injected via
-// chrome.scripting.*), and nothing reads tab data beyond what
-// host_permissions and the context-menu callback already provide —
-// fewer permissions means a faster review and a less alarming install
-// prompt for users.
+//   - sidePanel:    the extension's UI lives in Chrome's side panel, not a
+//                   toolbar popup — see docs/architecture.md for why
+// "host_permissions": <all_urls> is required so the right-click check and
+// floating icon work on any site — this is the single most sensitive
+// permission and needs the clearest justification copy at submission time.
+// `activeTab` and `scripting` were dropped: the content script is
+// registered declaratively above (not injected via chrome.scripting.*),
+// and nothing reads tab data beyond what host_permissions and the
+// context-menu callback already provide — fewer permissions means a
+// faster review and a less alarming install prompt for users.
 export default defineManifest({
   manifest_version: 3,
   name: "AI Checker",
@@ -25,8 +26,13 @@ export default defineManifest({
     48: "public/icons/icon48.png",
     128: "public/icons/icon128.png",
   },
-  action: {
-    default_popup: "src/popup/index.html",
+  // No default_popup: setting one takes over the action icon's click
+  // behavior entirely (side panel behavior is silently ignored while it's
+  // present), so the toolbar icon opening the side panel instead depends
+  // on this key being absent, not just on sidePanel.setPanelBehavior().
+  action: {},
+  side_panel: {
+    default_path: "src/panel/index.html",
   },
   background: {
     service_worker: "src/background/index.ts",
@@ -39,6 +45,6 @@ export default defineManifest({
       run_at: "document_idle",
     },
   ],
-  permissions: ["contextMenus", "storage"],
+  permissions: ["contextMenus", "storage", "sidePanel"],
   host_permissions: ["<all_urls>"],
 });

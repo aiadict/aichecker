@@ -76,7 +76,9 @@ export default function CheckForAiTab({ prefillText }: { prefillText: string }) 
         </p>
       )}
 
-      {response?.ok && <ResultCard result={response.result} shareFn={shareCheck} />}
+      {response?.ok && (
+        <ResultCard result={response.result} shareFn={shareCheck} onClose={() => setResponse(null)} />
+      )}
     </div>
   );
 }

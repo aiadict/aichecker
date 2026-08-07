@@ -22,48 +22,23 @@
 
 * { box-sizing: border-box; }
 
+/* No fixed width — a side panel is user-resizable (Chrome enforces its own
+   sensible minimum), unlike the fixed 380px the old toolbar popup used. */
 body {
   margin: 0;
-  width: 380px;
+  min-width: 280px;
   font-family: "Geist", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   color: var(--fg);
   background: var(--bg);
 }
 
-.header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 12px 16px;
-  border-bottom: 1px solid var(--border);
-}
-
-.header .brand { display: flex; align-items: center; gap: 8px; font-weight: 700; }
-.header .logo { width: 22px; height: 22px; display: block; }
-.header .credits { text-align: right; font-size: 12px; color: var(--muted); }
-.header .credits strong { color: var(--fg); }
-
-.pin-nudge {
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
-  padding: 10px 16px;
-  background: var(--brand-soft);
-  border-bottom: 1px solid var(--border);
+.credits-row {
+  text-align: right;
   font-size: 12px;
-  line-height: 1.5;
-  color: var(--fg);
-}
-.pin-nudge-close {
-  all: unset;
-  cursor: pointer;
-  font-size: 15px;
-  line-height: 1;
   color: var(--muted);
-  padding: 0 2px;
-  margin-left: auto;
+  padding: 12px 16px 0;
 }
-.pin-nudge-close:hover { color: var(--fg); }
+.credits-row strong { color: var(--fg); }
 
 .tabpanel { padding: 16px; min-height: 260px; }
 
@@ -126,12 +101,30 @@ textarea {
 .primary-button:hover:not(:disabled) { background: var(--brand-dark); }
 
 .result-card {
+  position: relative;
   margin-top: 16px;
   border: 1px solid var(--border);
   border-radius: 10px;
   padding: 14px;
 }
-.result-card .verdict { font-weight: 700; font-size: 16px; }
+.result-close {
+  all: unset;
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 5px;
+  font-size: 15px;
+  line-height: 1;
+  color: var(--muted);
+  cursor: pointer;
+}
+.result-close:hover { color: var(--fg); background: #f3f4f6; }
+.result-card .verdict { font-weight: 700; font-size: 16px; padding-right: 20px; }
 .result-card .verdict.ai { color: #c2410c; }
 .result-card .verdict.human { color: #15803d; }
 .result-card .verdict.mixed { color: #b45309; }
@@ -167,21 +160,27 @@ textarea {
 .breakdown-legend .dot.assisted { background: #b45309; }
 .breakdown-legend .dot.human { background: #15803d; }
 
-.tabs {
+.icon-bar {
   display: flex;
   border-top: 1px solid var(--border);
 }
-.tabs button {
+.icon-bar-item {
   flex: 1;
-  padding: 10px 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 10px 0 9px;
   border: none;
   background: none;
-  font-size: 12px;
-  font-weight: 600;
   color: var(--muted);
+  text-decoration: none;
   cursor: pointer;
 }
-.tabs button.active { color: var(--brand); }
+.icon-bar-item:hover { color: var(--fg); }
+.icon-bar-item.active { color: var(--brand); }
+.icon-bar-item svg { width: 19px; height: 19px; }
+.icon-bar-item span { font-size: 9.5px; font-weight: 600; }
 
 .history-item {
   display: flex;

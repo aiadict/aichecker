@@ -56,14 +56,21 @@ function ShareButton({
 export default function ResultCard({
   result,
   shareFn,
+  onClose,
 }: {
   result: CheckResult;
   shareFn: (id: string) => Promise<ShareCheckResponse>;
+  onClose?: () => void;
 }) {
   const insight = synthesizeInsight(result.windows);
 
   return (
     <div className="result-card" key={result.id}>
+      {onClose && (
+        <button className="result-close" onClick={onClose} aria-label="Dismiss result">
+          ×
+        </button>
+      )}
       <div className={`verdict ${result.predictionShort}`}>{result.prediction}</div>
       <div className="pct">{Math.round((result.fractionAi + result.fractionAiAssisted) * 100)}%</div>
       <div className="muted">

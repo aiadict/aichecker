@@ -1,5 +1,7 @@
-// MV3 service worker. Owns the right-click context menu and the auth
-// session handoff from the /login page.
+// MV3 service worker. Owns the right-click context menu, opens the side
+// panel on the extension's behalf (content scripts can't call
+// chrome.sidePanel.open() directly), and handles the auth session handoff
+// from the /login page.
 
 import { setAuthSession, setPendingSelection } from "../lib/storage";
 import { API_BASE_URL } from "../lib/config";
@@ -13,6 +15,11 @@ chrome.runtime.onInstalled.addListener((details) => {
     contexts: ["selection"],
   });
 
+  // Makes clicking the toolbar icon open the side panel directly — only
+  // takes effect because the manifest has no action.default_popup; a
+  // popup, if set, would silently win over this behavior.
+  chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true }).catch(console.error);
+
   // Only on a genuine first install. Chrome reports "update" for a version
   // bump or a plain reload of an already-loaded unpacked extension
   // (chrome://extensions' refresh icon) — "install" only fires again if the
@@ -25,29 +32,34 @@ chrome.runtime.onInstalled.addListener((details) => {
 
 /**
  * Both the right-click menu and the floating icon (via the message handler
- * below) land here: stash the selection and open the popup with it
+ * below) land here: stash the selection and open the side panel with it
  * prefilled, rather than running the check silently — shows the real
  * "paste text, click Check for AI" flow instead of a result just appearing
  * in History with no visible step in between. Called directly inside a
- * user-gesture-triggered event (the menu click), which Chrome allows for
- * chrome.action.openPopup() since M99.
+ * user-gesture-triggered event (the menu click, or a message stemming
+ * from the floating icon's click), the same requirement
+ * chrome.action.openPopup() had before this — chrome.sidePanel.open() is
+ * held to the same "must follow a user gesture" rule.
  */
-async function openPopupWithSelection(text: string, sourceUrl: string) {
+async function openSidePanelWithSelection(text: string, sourceUrl: string, windowId: number | undefined) {
+  if (windowId === undefined) return;
   await setPendingSelection(text, sourceUrl);
-  await chrome.action.openPopup();
+  await chrome.sidePanel.open({ windowId });
 }
 
-chrome.contextMenus.onClicked.addListener(async (info) => {
+chrome.contextMenus.onClicked.addListener(async (info, tab) => {
   if (info.menuItemId !== CONTEXT_MENU_ID || !info.selectionText) return;
-  await openPopupWithSelection(info.selectionText, info.pageUrl ?? "");
+  await openSidePanelWithSelection(info.selectionText, info.pageUrl ?? "", tab?.windowId);
 });
 
 // Messages from the content script (see src/content/index.tsx): the
-// floating icon asking to open the popup with its selection, or a session
-// handoff after signing in on the /login page.
-chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
-  if (message?.type === "ai-checker/open-popup-with-selection") {
-    openPopupWithSelection(message.text, message.sourceUrl).then(() => sendResponse({ ok: true }));
+// floating icon asking to open the side panel with its selection, or a
+// session handoff after signing in on the /login page.
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message?.type === "ai-checker/open-panel-with-selection") {
+    openSidePanelWithSelection(message.text, message.sourceUrl, sender.tab?.windowId).then(() =>
+      sendResponse({ ok: true })
+    );
     return true; // keep the message channel open for the async response
   }
 
