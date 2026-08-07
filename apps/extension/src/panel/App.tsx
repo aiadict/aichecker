@@ -25,7 +25,7 @@ export default function App() {
   }, []);
 
   return (
-    <div>
+    <div className="panel-root">
       <Header />
       <div className="tabpanel">
         {tab === "check" && <CheckForAiTab prefillText={prefillText} />}

@@ -36,7 +36,17 @@ export default function CheckForAiTab({ prefillText }: { prefillText: string }) 
   }
 
   return (
-    <div>
+    <div className="check-tab">
+      {response && !response.ok && (
+        <p className="muted" style={{ marginTop: 0, marginBottom: 12 }}>
+          {describeCheckError(response)}
+        </p>
+      )}
+
+      {response?.ok && (
+        <ResultCard result={response.result} shareFn={shareCheck} onClose={() => setResponse(null)} />
+      )}
+
       <div className="word-counter-row">
         {wordCount} {wordCount === 1 ? "Word" : "Words"}, {credits} {credits === 1 ? "Credit" : "Credits"}
       </div>
@@ -69,16 +79,6 @@ export default function CheckForAiTab({ prefillText }: { prefillText: string }) 
       <button className="primary-button" disabled={belowMinimum || loading} onClick={handleCheck}>
         {loading ? "Checking…" : "Check for AI"}
       </button>
-
-      {response && !response.ok && (
-        <p className="muted" style={{ marginTop: 12 }}>
-          {describeCheckError(response)}
-        </p>
-      )}
-
-      {response?.ok && (
-        <ResultCard result={response.result} shareFn={shareCheck} onClose={() => setResponse(null)} />
-      )}
     </div>
   );
 }
