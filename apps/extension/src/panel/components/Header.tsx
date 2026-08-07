@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { getAuthToken, onAuthSessionChanged } from "../../lib/storage";
+import { onCreditsChanged } from "../../lib/events";
 import { getMe } from "../../lib/api";
 import type { MeResponse } from "@ai-checker/shared-types";
 
@@ -25,10 +26,22 @@ export default function Header() {
     // popup's always-fresh mount, so a session that changes while it's
     // already open (a background refresh, or one racing refresh losing to
     // another and getting cleared — see lib/api.ts) needs to update the
-    // displayed credits live instead of leaving them stale.
+    // displayed credits live instead of leaving them stale. Also refresh
+    // right after a check spends credits (see lib/events.ts) — otherwise
+    // this count only ever updated on the next full panel mount, so a user
+    // running several checks in one session watched a stale number the
+    // whole time.
     refresh();
-    return onAuthSessionChanged(refresh);
+    const unsubAuth = onAuthSessionChanged(refresh);
+    const unsubCredits = onCreditsChanged(refresh);
+    return () => {
+      unsubAuth();
+      unsubCredits();
+    };
   }, []);
+
+  const dailyRemaining =
+    me?.plan.dailyCap != null ? Math.max(me.plan.dailyCap - me.checksToday, 0) : null;
 
   return (
     <div className="credits-row">
@@ -38,6 +51,12 @@ export default function Header() {
           <strong>
             {me.creditsRemaining}/{me.plan.monthlyCredits}
           </strong>
+          {dailyRemaining != null && (
+            <>
+              {" "}
+              · <strong>{dailyRemaining}</strong> left today
+            </>
+          )}
         </>
       ) : signedIn ? (
         <span className="muted">Loading…</span>

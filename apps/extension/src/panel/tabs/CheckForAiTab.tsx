@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { createCheck } from "../../lib/api";
+import { notifyCreditsChanged } from "../../lib/events";
 import { countWords, creditsForWordCount, type CreateCheckResponse } from "@ai-checker/shared-types";
 import ResultCard, { describeCheckError } from "../../components/ResultCard";
 
@@ -28,6 +29,7 @@ export default function CheckForAiTab({ prefillText }: { prefillText: string }) 
     try {
       const res = await createCheck({ text });
       setResponse(res);
+      if (res.ok) notifyCreditsChanged();
     } catch {
       setResponse({ ok: false, error: "upstream_error", message: "Network error. Is apps/web running?" });
     } finally {
