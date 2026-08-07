@@ -14,20 +14,40 @@ import { getAuthSession, setAuthSession, type AuthSession } from "./storage";
  * talks to apps/web" principle for everything except this narrow,
  * public-key-only auth exception; see docs/architecture.md).
  */
+let refreshPromise: Promise<AuthSession | null> | null = null;
+
 async function refreshSession(refreshToken: string): Promise<AuthSession | null> {
-  const res = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=refresh_token`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", apikey: SUPABASE_ANON_KEY },
-    body: JSON.stringify({ refresh_token: refreshToken }),
-  });
-  if (!res.ok) return null;
+  // Dedup concurrent refreshes. Supabase refresh tokens are single-use, so
+  // two authedFetch calls hitting a 401 around the same moment — e.g.
+  // Header's getMe() and whatever tab is mounted alongside it, both firing
+  // on the same panel open — would otherwise race to redeem the same
+  // refresh token: the loser gets rejected and wipes the session the
+  // winner just successfully stored. Confirmed live: Header showed a
+  // valid credits count while the very next "Check for AI" click got an
+  // immediate unauthorized error.
+  if (refreshPromise) return refreshPromise;
 
-  const data = (await res.json()) as { access_token?: string; refresh_token?: string };
-  if (!data.access_token || !data.refresh_token) return null;
+  refreshPromise = (async () => {
+    const res = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=refresh_token`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", apikey: SUPABASE_ANON_KEY },
+      body: JSON.stringify({ refresh_token: refreshToken }),
+    });
+    if (!res.ok) return null;
 
-  const session: AuthSession = { accessToken: data.access_token, refreshToken: data.refresh_token };
-  await setAuthSession(session);
-  return session;
+    const data = (await res.json()) as { access_token?: string; refresh_token?: string };
+    if (!data.access_token || !data.refresh_token) return null;
+
+    const session: AuthSession = { accessToken: data.access_token, refreshToken: data.refresh_token };
+    await setAuthSession(session);
+    return session;
+  })();
+
+  try {
+    return await refreshPromise;
+  } finally {
+    refreshPromise = null;
+  }
 }
 
 function buildRequest(path: string, session: AuthSession | null, init?: RequestInit): [string, RequestInit] {

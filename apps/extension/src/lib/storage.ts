@@ -87,3 +87,21 @@ export function onPendingSelectionSet(callback: () => void): () => void {
   chrome.storage.onChanged.addListener(listener);
   return () => chrome.storage.onChanged.removeListener(listener);
 }
+
+/**
+ * Notifies `callback` whenever the stored auth session is set OR cleared —
+ * e.g. by authedFetch's refresh-on-401 logic (lib/api.ts). The side panel
+ * is long-lived, unlike the old popup that was always a fresh mount, so a
+ * session that goes stale (or gets cleared) while the panel sits open
+ * needs to update the UI live rather than leaving it showing whatever was
+ * true at mount time. Returns an unsubscribe function.
+ */
+export function onAuthSessionChanged(callback: () => void): () => void {
+  function listener(changes: { [key: string]: chrome.storage.StorageChange }, areaName: string) {
+    if (areaName === "local" && KEYS.authSession in changes) {
+      callback();
+    }
+  }
+  chrome.storage.onChanged.addListener(listener);
+  return () => chrome.storage.onChanged.removeListener(listener);
+}

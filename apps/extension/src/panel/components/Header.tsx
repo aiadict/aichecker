@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { getAuthToken } from "../../lib/storage";
+import { getAuthToken, onAuthSessionChanged } from "../../lib/storage";
 import { getMe } from "../../lib/api";
 import type { MeResponse } from "@ai-checker/shared-types";
 
@@ -13,10 +13,21 @@ export default function Header() {
   const [me, setMe] = useState<MeResponse | null>(null);
 
   useEffect(() => {
-    getAuthToken().then(async (token) => {
-      setSignedIn(Boolean(token));
-      if (token) setMe(await getMe());
-    });
+    function refresh() {
+      getAuthToken().then(async (token) => {
+        setSignedIn(Boolean(token));
+        setMe(token ? await getMe() : null);
+      });
+    }
+
+    // Once on mount, and again any time the stored session is set or
+    // cleared afterward — the side panel is long-lived, unlike the old
+    // popup's always-fresh mount, so a session that changes while it's
+    // already open (a background refresh, or one racing refresh losing to
+    // another and getting cleared — see lib/api.ts) needs to update the
+    // displayed credits live instead of leaving them stale.
+    refresh();
+    return onAuthSessionChanged(refresh);
   }, []);
 
   return (
