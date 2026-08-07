@@ -68,6 +68,19 @@ function hideIcon() {
 
 function showIconNearSelection(rect: DOMRect, text: string) {
   const { host, button } = ensureIconHost();
+
+  // Re-claim the last position in the DOM on every show, not just once at
+  // creation. Other extensions doing the same "append to documentElement
+  // with the max z-index" thing we do (e.g. Copyleaks, confirmed live) can
+  // end up after us in DOM order, and for two elements at the same
+  // z-index in the same stacking context, the browser's native hit-testing
+  // routes clicks to whichever is later in the DOM — our icon stayed
+  // visible but silently unclickable, since that's decided before any of
+  // our JS runs. Moving ourselves last right before showing means we're
+  // the one re-asserting that position on every selection, rather than
+  // whatever the injection order happened to be at page load.
+  document.documentElement.appendChild(host);
+
   host.style.top = `${window.scrollY + rect.bottom + 6}px`;
   host.style.left = `${window.scrollX + rect.left}px`;
   host.style.display = "block";
