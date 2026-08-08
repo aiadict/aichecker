@@ -6,8 +6,8 @@ export default function HomePage() {
           Know instantly what&apos;s <em>human</em> or <em>AI</em>.
         </h1>
         <p>
-          AI Checker highlights AI-generated text anywhere on the web — paste it, select it, or
-          right-click it. Powered by the Pangram AI detection API.
+          AI Checker highlights AI-generated text anywhere on the web — just select and click the
+          AI Checker icon.
         </p>
         <a className="cta-button" href="https://chromewebstore.google.com" target="_blank" rel="noreferrer">
           Add to Chrome — it&apos;s free

@@ -10,7 +10,7 @@ export default function WelcomePage() {
   return (
     <div className="container welcome-page">
       <div className="welcome-hero">
-        <h1>AI Checker is installed 🎉</h1>
+        <h1>AI Checker is installed</h1>
         <p className="muted">Here&apos;s how to check your first piece of text.</p>
       </div>
 

@@ -60,7 +60,7 @@ export default function App() {
             <circle cx="15" cy="10" r="4.3" />
             <line x1="18" y1="13" x2="20.5" y2="15.5" strokeLinecap="round" />
           </svg>
-          <span>Check</span>
+          <span>AI Check</span>
         </button>
 
         <button

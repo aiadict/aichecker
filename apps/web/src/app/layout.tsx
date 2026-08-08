@@ -24,10 +24,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               <img src="/logo.svg" width={22} height={22} alt="" />
               AI Checker
             </Link>
-            <div>
-              <Link href="/pricing" style={{ marginRight: 16 }}>
-                Pricing
-              </Link>
+            <div className="site-nav-links">
+              <Link href="/pricing">Pricing</Link>
+              <Link href="/support">Support</Link>
               <Link href="/dashboard">Dashboard</Link>
             </div>
           </nav>
@@ -35,10 +34,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         {children}
         <div className="container">
           <footer className="site-footer">
-            <Link href="/privacy" style={{ marginRight: 16 }}>
-              Privacy Policy
-            </Link>
-            <Link href="/terms">Terms of Service</Link>
+            <div className="site-footer-links">
+              <Link href="/support">Support</Link>
+              <Link href="/privacy">Privacy Policy</Link>
+              <Link href="/terms">Terms of Service</Link>
+            </div>
             <p>© {new Date().getFullYear()} AI Checker. Detection powered by the Pangram API.</p>
           </footer>
         </div>

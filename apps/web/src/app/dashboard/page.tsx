@@ -14,6 +14,14 @@ interface CreditBalanceWithPlanRow {
   };
 }
 
+interface RecentCheckRow {
+  id: string;
+  full_text: string;
+  prediction_short: string;
+  share_slug: string | null;
+  created_at: string;
+}
+
 export default async function DashboardPage() {
   const supabase = await createSupabaseServerClient();
   const {
@@ -35,6 +43,18 @@ export default async function DashboardPage() {
     .select("status, cancel_at_period_end, current_period_end")
     .eq("user_id", user.id)
     .single<{ status: string; cancel_at_period_end: boolean; current_period_end: string | null }>();
+
+  // RLS already scopes this to the caller's own rows — the explicit filter
+  // here is just defense-in-depth/clarity, matching dashboard/history's
+  // equivalent query.
+  const { data: recentChecksData } = await supabase
+    .from("checks")
+    .select("id, full_text, prediction_short, share_slug, created_at")
+    .eq("user_id", user.id)
+    .order("created_at", { ascending: false })
+    .limit(3)
+    .returns<RecentCheckRow[]>();
+  const recentChecks = recentChecksData ?? [];
 
   const plan = data ? (Array.isArray(data.plans) ? data.plans[0] : data.plans) : null;
   const paymentIssue = subscriptionRow?.status === "past_due" || subscriptionRow?.status === "unpaid";
@@ -92,12 +112,68 @@ export default async function DashboardPage() {
         <p className="muted">Could not load your plan — try refreshing.</p>
       )}
 
-      <p>
-        <Link href="/dashboard/history">View check history →</Link>
-      </p>
-      <p>
-        <Link href="/dashboard/account">Account settings →</Link>
-      </p>
+      <div className="dashboard-links">
+        <Link href="/dashboard/history" className="dashboard-link-card">
+          <span className="dashboard-link-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" width="20" height="20">
+              <circle cx="12" cy="12" r="8.5" />
+              <path d="M12 7.5v5l3.5 2" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </span>
+          <span>
+            <strong>Check history</strong>
+            <span className="muted" style={{ display: "block", fontSize: 13 }}>
+              Every check you&apos;ve run, with results
+            </span>
+          </span>
+          <span className="dashboard-link-chevron">→</span>
+        </Link>
+        <Link href="/dashboard/account" className="dashboard-link-card">
+          <span className="dashboard-link-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" width="20" height="20">
+              <path d="M4 7h10M17 7h3M4 12h3M9 12h11M4 17h13M20 17h0" strokeLinecap="round" />
+              <circle cx="12" cy="7" r="1.8" fill="currentColor" stroke="none" />
+              <circle cx="6" cy="12" r="1.8" fill="currentColor" stroke="none" />
+              <circle cx="16" cy="17" r="1.8" fill="currentColor" stroke="none" />
+            </svg>
+          </span>
+          <span>
+            <strong>Account settings</strong>
+            <span className="muted" style={{ display: "block", fontSize: 13 }}>
+              Export your data or delete your account
+            </span>
+          </span>
+          <span className="dashboard-link-chevron">→</span>
+        </Link>
+      </div>
+
+      <div style={{ marginTop: 8 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+          <h2 style={{ fontSize: 18, margin: 0 }}>Recent checks</h2>
+          {recentChecks.length > 0 && (
+            <Link href="/dashboard/history" className="muted" style={{ fontSize: 13 }}>
+              View all
+            </Link>
+          )}
+        </div>
+        {recentChecks.length === 0 ? (
+          <div className="card" style={{ marginTop: 12 }}>
+            <p className="muted" style={{ margin: 0 }}>
+              No checks yet. Select text on any page and click the AI Checker icon, or paste text
+              into the extension directly.
+            </p>
+          </div>
+        ) : (
+          <div className="card" style={{ marginTop: 12, padding: 0 }}>
+            {recentChecks.map((c) => (
+              <Link key={c.id} href={`/history/${c.share_slug}`} className="dashboard-recent-row">
+                <span>{c.full_text.slice(0, 70)}…</span>
+                <span className={`pill ${c.prediction_short}`}>{c.prediction_short}</span>
+              </Link>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
