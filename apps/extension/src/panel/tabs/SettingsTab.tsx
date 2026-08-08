@@ -57,15 +57,6 @@ export default function SettingsTab() {
         <input type="checkbox" checked={settings.showFloatingIcon} onChange={toggleFloatingIcon} />
       </div>
 
-      <div className="settings-row">
-        <div>Google Doc Widget</div>
-        <span className="muted">Coming soon (Phase 2)</span>
-      </div>
-      <div className="settings-row">
-        <div>Automatically Scan My Feed</div>
-        <span className="muted">Coming soon (Phase 2)</span>
-      </div>
-
       <p className="muted" style={{ marginTop: 16 }}>
         <a href={`${API_BASE_URL}`} target="_blank" rel="noreferrer">
           Go to werida.io

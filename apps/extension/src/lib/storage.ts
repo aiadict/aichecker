@@ -15,6 +15,7 @@ const KEYS = {
   authSession: "authSession",
   settings: "settings",
   pendingSelection: "pendingSelection",
+  deviceId: "deviceId",
 } as const;
 
 export interface AuthSession {
@@ -40,6 +41,25 @@ export async function setAuthSession(session: AuthSession | null): Promise<void>
   } else {
     await chrome.storage.local.remove(KEYS.authSession);
   }
+}
+
+/**
+ * Random per-install identifier for the anonymous trial (see
+ * lib/api.ts's X-Device-Id header and apps/web's /api/checks +
+ * /api/trial). Lives in .local, not .sync, deliberately — it should NOT
+ * follow the user's Google account to another machine, since that would
+ * make the trial trivially stackable across devices sharing one profile.
+ * Generated once and never rotated, so reinstalling the extension (or a
+ * second Chrome profile) is the only way to get a fresh one — a known,
+ * accepted limitation of a device-scoped trial.
+ */
+export async function getOrCreateDeviceId(): Promise<string> {
+  const { [KEYS.deviceId]: existing } = await chrome.storage.local.get(KEYS.deviceId);
+  if (typeof existing === "string" && existing) return existing;
+
+  const id = crypto.randomUUID();
+  await chrome.storage.local.set({ [KEYS.deviceId]: id });
+  return id;
 }
 
 export async function getSettings(): Promise<ExtensionSettings> {

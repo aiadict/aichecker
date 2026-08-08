@@ -108,6 +108,14 @@ export type ShareCheckResponse =
   | { ok: true; shareSlug: string }
   | { ok: false; error: "unauthorized" | "not_found" };
 
+// Anonymous, pre-signup trial credits — see api/trial and api/checks'
+// unauthenticated branch. Keyed on a client-generated device ID, not a
+// user; 0 once exhausted or once the anonymous_trial_enabled app_config
+// flag is off.
+export interface TrialStatusResponse {
+  trialCreditsRemaining: number;
+}
+
 const NON_HUMAN_LABELS: Prediction[] = ["ai", "mixed"];
 
 /**

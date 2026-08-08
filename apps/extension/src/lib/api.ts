@@ -1,6 +1,12 @@
-import type { CreateCheckRequest, CreateCheckResponse, CheckResult, MeResponse } from "@ai-checker/shared-types";
+import type {
+  CreateCheckRequest,
+  CreateCheckResponse,
+  CheckResult,
+  MeResponse,
+  TrialStatusResponse,
+} from "@ai-checker/shared-types";
 import { API_BASE_URL, SUPABASE_URL, SUPABASE_ANON_KEY } from "./config";
-import { getAuthSession, setAuthSession, type AuthSession } from "./storage";
+import { getAuthSession, setAuthSession, getOrCreateDeviceId, type AuthSession } from "./storage";
 
 /**
  * Calls Supabase's token-refresh grant directly (no SDK needed for this one
@@ -44,13 +50,23 @@ async function refreshSession(refreshToken: string): Promise<AuthSession | null>
   }
 }
 
-function buildRequest(path: string, session: AuthSession | null, init?: RequestInit): [string, RequestInit] {
+function buildRequest(
+  path: string,
+  session: AuthSession | null,
+  deviceId: string,
+  init?: RequestInit
+): [string, RequestInit] {
   return [
     `${API_BASE_URL}${path}`,
     {
       ...init,
       headers: {
         "Content-Type": "application/json",
+        // Read only by the server when there's no session — identifies the
+        // anonymous trial's one-time 2 credits (see /api/checks, /api/trial).
+        // Harmless no-op otherwise, so it's always sent rather than only
+        // sometimes.
+        "X-Device-Id": deviceId,
         ...(session ? { Authorization: `Bearer ${session.accessToken}` } : {}),
         ...init?.headers,
       },
@@ -64,10 +80,12 @@ function buildRequest(path: string, session: AuthSession | null, init?: RequestI
  * necessarily closes the browser. Falls back to signing the user out
  * locally (setAuthSession(null)) if the refresh token itself is no longer
  * valid, so the UI correctly falls back to "Not signed in" / "Sign in".
+ * Works unauthenticated too (no session, no retry-on-401 attempted) — the
+ * anonymous trial flow just rides on the X-Device-Id header instead.
  */
 async function authedFetch(path: string, init?: RequestInit): Promise<Response> {
-  const session = await getAuthSession();
-  const res = await fetch(...buildRequest(path, session, init));
+  const [session, deviceId] = await Promise.all([getAuthSession(), getOrCreateDeviceId()]);
+  const res = await fetch(...buildRequest(path, session, deviceId, init));
 
   if (res.status !== 401 || !session?.refreshToken) return res;
 
@@ -77,7 +95,7 @@ async function authedFetch(path: string, init?: RequestInit): Promise<Response> 
     return res;
   }
 
-  return fetch(...buildRequest(path, refreshed, init));
+  return fetch(...buildRequest(path, refreshed, deviceId, init));
 }
 
 export async function createCheck(req: CreateCheckRequest): Promise<CreateCheckResponse> {
@@ -98,6 +116,12 @@ export async function listRecentChecks(limit = 5): Promise<CheckResult[]> {
 export async function getMe(): Promise<MeResponse | null> {
   const res = await authedFetch("/api/me");
   if (!res.ok) return null;
+  return res.json();
+}
+
+export async function getTrialStatus(): Promise<TrialStatusResponse> {
+  const res = await authedFetch("/api/trial");
+  if (!res.ok) return { trialCreditsRemaining: 0 };
   return res.json();
 }
 

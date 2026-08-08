@@ -11,14 +11,21 @@ type TabKey = "check" | "history" | "settings";
 export default function App() {
   const [tab, setTab] = useState<TabKey>("check");
   const [prefillText, setPrefillText] = useState("");
+  // Bumped (never read for its own value) every time a real pending
+  // selection arrives — CheckForAiTab watches it to auto-run the check for
+  // the floating-icon / right-click flow, without depending on prefillText
+  // itself changing (prefillText can be set from plain typing too, which
+  // shouldn't auto-run anything).
+  const [autoRunToken, setAutoRunToken] = useState(0);
 
   useEffect(() => {
     // Set by background/index.ts's openSidePanelWithSelection() — both the
-    // floating icon and the right-click menu land there.
+    // floating icon and the right-click menu land here.
     function loadPendingSelection() {
       consumePendingSelection().then((pending) => {
         if (pending?.text) {
           setPrefillText(pending.text);
+          setAutoRunToken((t) => t + 1);
           setTab("check");
         }
       });
@@ -37,7 +44,7 @@ export default function App() {
     <div className="panel-root">
       <Header />
       <div className="tabpanel">
-        {tab === "check" && <CheckForAiTab prefillText={prefillText} />}
+        {tab === "check" && <CheckForAiTab prefillText={prefillText} autoRunToken={autoRunToken} />}
         {tab === "history" && <HistoryTab />}
         {tab === "settings" && <SettingsTab />}
       </div>

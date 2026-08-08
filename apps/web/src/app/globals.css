@@ -31,7 +31,16 @@ nav.site-nav {
   padding: 20px 0;
   border-bottom: 1px solid var(--border);
 }
-nav.site-nav .brand { font-weight: 800; font-size: 18px; text-decoration: none; color: var(--fg); }
+nav.site-nav .brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 800;
+  font-size: 18px;
+  text-decoration: none;
+  color: var(--fg);
+}
+nav.site-nav .brand img { border-radius: 5px; }
 
 .hero { padding: 72px 0; }
 .hero h1 { font-size: 40px; line-height: 1.15; margin-bottom: 16px; }

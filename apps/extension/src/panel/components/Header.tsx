@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import { getAuthToken, onAuthSessionChanged } from "../../lib/storage";
 import { onCreditsChanged } from "../../lib/events";
-import { getMe } from "../../lib/api";
-import type { MeResponse } from "@ai-checker/shared-types";
+import { getMe, getTrialStatus } from "../../lib/api";
+import { API_BASE_URL } from "../../lib/config";
+import type { MeResponse, TrialStatusResponse } from "@ai-checker/shared-types";
 
 // No logo/name here — Chrome's own side panel header already shows the
 // extension's icon and name (pulled from the manifest), plus native pin
@@ -12,12 +13,18 @@ import type { MeResponse } from "@ai-checker/shared-types";
 export default function Header() {
   const [signedIn, setSignedIn] = useState<boolean | null>(null);
   const [me, setMe] = useState<MeResponse | null>(null);
+  const [trial, setTrial] = useState<TrialStatusResponse | null>(null);
 
   useEffect(() => {
     function refresh() {
       getAuthToken().then(async (token) => {
         setSignedIn(Boolean(token));
-        setMe(token ? await getMe() : null);
+        if (token) {
+          setMe(await getMe());
+        } else {
+          setMe(null);
+          setTrial(await getTrialStatus());
+        }
       });
     }
 
@@ -30,7 +37,8 @@ export default function Header() {
     // right after a check spends credits (see lib/events.ts) — otherwise
     // this count only ever updated on the next full panel mount, so a user
     // running several checks in one session watched a stale number the
-    // whole time.
+    // whole time. Covers both the signed-in credits row and the signed-out
+    // trial count, since CheckForAiTab fires the same event either way.
     refresh();
     const unsubAuth = onAuthSessionChanged(refresh);
     const unsubCredits = onCreditsChanged(refresh);
@@ -61,7 +69,17 @@ export default function Header() {
       ) : signedIn ? (
         <span className="muted">Loading…</span>
       ) : (
-        <span className="muted">Not signed in</span>
+        <>
+          {trial && trial.trialCreditsRemaining > 0 && (
+            <>
+              <strong>{trial.trialCreditsRemaining}</strong> trial{" "}
+              {trial.trialCreditsRemaining === 1 ? "credit" : "credits"} left ·{" "}
+            </>
+          )}
+          <a className="link-button" href={`${API_BASE_URL}/login?source=extension`} target="_blank" rel="noreferrer">
+            Sign in
+          </a>
+        </>
       )}
     </div>
   );

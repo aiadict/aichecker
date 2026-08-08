@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { createCheck } from "../../lib/api";
 import { notifyCreditsChanged } from "../../lib/events";
+import { API_BASE_URL } from "../../lib/config";
 import { countWords, creditsForWordCount, type CreateCheckResponse } from "@ai-checker/shared-types";
 import ResultCard, { describeCheckError } from "../../components/ResultCard";
 
@@ -10,7 +11,13 @@ import ResultCard, { describeCheckError } from "../../components/ResultCard";
 // never disagree on what "50 words" means.
 const MIN_WORDS = 50;
 
-export default function CheckForAiTab({ prefillText }: { prefillText: string }) {
+export default function CheckForAiTab({
+  prefillText,
+  autoRunToken,
+}: {
+  prefillText: string;
+  autoRunToken?: number;
+}) {
   const [text, setText] = useState(prefillText);
   const [loading, setLoading] = useState(false);
   const [response, setResponse] = useState<CreateCheckResponse | null>(null);
@@ -23,11 +30,15 @@ export default function CheckForAiTab({ prefillText }: { prefillText: string }) 
   const credits = creditsForWordCount(wordCount);
   const belowMinimum = wordCount < MIN_WORDS;
 
-  async function handleCheck() {
+  // Accepts an override so an auto-run (below) doesn't depend on `text`
+  // state having already caught up to a just-arrived prefillText in the
+  // same render — the two are set from separate effects, so reading `text`
+  // directly here would risk a stale value.
+  async function handleCheck(overrideText?: string) {
     setLoading(true);
     setResponse(null);
     try {
-      const res = await createCheck({ text });
+      const res = await createCheck({ text: overrideText ?? text });
       setResponse(res);
       if (res.ok) notifyCreditsChanged();
     } catch {
@@ -37,9 +48,35 @@ export default function CheckForAiTab({ prefillText }: { prefillText: string }) 
     }
   }
 
+  useEffect(() => {
+    // Fires once per real pending selection (floating icon / right-click
+    // "Check for AI Content" — see panel/App.tsx), not on plain typing.
+    // Skips straight past the extra "now click Check for AI" step, since
+    // the whole point of selecting text and clicking that icon is to check
+    // it, not just to paste it. Under the word minimum, do nothing and let
+    // the existing "Minimum 50 words" hint show, same as manual typing.
+    if (!autoRunToken) return;
+    if (countWords(prefillText) < MIN_WORDS) return;
+    handleCheck(prefillText);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoRunToken]);
+
   return (
     <div className="check-tab">
-      {response && !response.ok && (
+      {response && !response.ok && response.error === "unauthorized" && (
+        <p className="muted" style={{ marginTop: 0, marginBottom: 12 }}>
+          Sign in to check for AI —{" "}
+          <a
+            className="link-button"
+            href={`${API_BASE_URL}/login?source=extension`}
+            target="_blank"
+            rel="noreferrer"
+          >
+            Sign in
+          </a>
+        </p>
+      )}
+      {response && !response.ok && response.error !== "unauthorized" && (
         <p className="muted" style={{ marginTop: 0, marginBottom: 12 }}>
           {describeCheckError(response)}
         </p>
@@ -49,16 +86,15 @@ export default function CheckForAiTab({ prefillText }: { prefillText: string }) 
         <ResultCard result={response.result} onClose={() => setResponse(null)} />
       )}
 
-      <div className="word-counter-row">
-        {wordCount} {wordCount === 1 ? "Word" : "Words"}, {credits} {credits === 1 ? "Credit" : "Credits"}
-      </div>
-
       <div className="textarea-wrap">
         <textarea
           placeholder="Enter or paste your text here"
           value={text}
           onChange={(e) => setText(e.target.value)}
         />
+        <div className="textarea-counter">
+          {wordCount} {wordCount === 1 ? "Word" : "Words"}, {credits} {credits === 1 ? "Credit" : "Credits"}
+        </div>
         {text.length > 0 && (
           <button className="clear-text-btn" onClick={() => setText("")} aria-label="Clear text">
             <svg viewBox="0 0 20 20" fill="none">
@@ -78,7 +114,7 @@ export default function CheckForAiTab({ prefillText }: { prefillText: string }) 
         <p className="min-words-hint">Minimum 50 words required for accurate detection</p>
       )}
 
-      <button className="primary-button" disabled={belowMinimum || loading} onClick={handleCheck}>
+      <button className="primary-button" disabled={belowMinimum || loading} onClick={() => handleCheck()}>
         {loading ? "Checking…" : "Check for AI"}
       </button>
     </div>

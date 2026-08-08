@@ -21,6 +21,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <div className="container">
           <nav className="site-nav">
             <Link href="/" className="brand">
+              <img src="/logo.svg" width={22} height={22} alt="" />
               AI Checker
             </Link>
             <div>

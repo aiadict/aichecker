@@ -1,9 +1,16 @@
+import { randomUUID } from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { PangramApiError, PangramClient } from "@ai-checker/pangram-client";
-import { countWords, type CreateCheckRequest, type CreateCheckResponse } from "@ai-checker/shared-types";
+import {
+  countWords,
+  type CheckResult,
+  type CreateCheckRequest,
+  type CreateCheckResponse,
+} from "@ai-checker/shared-types";
 import { getAuthenticatedUser } from "@/lib/auth";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { insertCheck, listChecksForUser } from "@/lib/checks-repo";
+import { anonymousDailySpendCapReached, isAnonymousTrialEnabled } from "@/lib/anonymous-trial";
 
 const pangram = new PangramClient();
 
@@ -20,12 +27,28 @@ interface ConsumeCreditResult {
   credits_remaining: number;
 }
 
+interface ConsumeTrialCreditResult {
+  allowed: boolean;
+  credits_remaining: number;
+}
+
 export async function POST(req: NextRequest) {
   const user = await getAuthenticatedUser(req);
-  if (!user) {
-    // Real 401 (not just ok:false in a 200) so the extension's fetch layer
-    // can key off status code alone to trigger a token-refresh-and-retry —
-    // see apps/extension/src/lib/api.ts.
+  const deviceId = req.headers.get("x-device-id");
+
+  // No session AND no device ID — an old extension build predating the
+  // anonymous trial, or any non-extension caller. Same 401 as always, no
+  // behavior change for them.
+  if (!user && !deviceId) {
+    return NextResponse.json<CreateCheckResponse>({ ok: false, error: "unauthorized" }, { status: 401 });
+  }
+
+  const admin = getSupabaseAdmin();
+  const isAnonymous = !user;
+
+  // Checked before even parsing the body — an off switch or an exhausted
+  // trial should fail as cheaply as possible.
+  if (isAnonymous && !(await isAnonymousTrialEnabled(admin))) {
     return NextResponse.json<CreateCheckResponse>({ ok: false, error: "unauthorized" }, { status: 401 });
   }
 
@@ -37,6 +60,23 @@ export async function POST(req: NextRequest) {
   }
   if (text.length > MAX_CHARS) {
     return NextResponse.json<CreateCheckResponse>({ ok: false, error: "text_too_long" });
+  }
+
+  if (isAnonymous) {
+    // Pre-flight, before spending a real Pangram call: an already-exhausted
+    // device, or the global daily cap, both fail the same way a signed-out
+    // user does — sign in is the only way forward either way, since an
+    // anonymous trial has no "upgrade," only "sign in."
+    const { data: trialRow } = await admin
+      .from("anonymous_trials")
+      .select("credits_remaining")
+      .eq("device_id", deviceId!)
+      .maybeSingle();
+    const trialRemaining = (trialRow?.credits_remaining as number | undefined) ?? 2;
+
+    if (trialRemaining <= 0 || (await anonymousDailySpendCapReached(admin))) {
+      return NextResponse.json<CreateCheckResponse>({ ok: false, error: "unauthorized" }, { status: 401 });
+    }
   }
 
   let prediction;
@@ -59,14 +99,69 @@ export async function POST(req: NextRequest) {
   }
 
   const creditsUsed = pangram.creditsForWordCount(prediction.wordCount);
-  const admin = getSupabaseAdmin();
+
+  // Our own cost tracking against Pangram — independent of what we charge
+  // the user, never exposed to any client (service-role only, no RLS
+  // policy). Shared by both the authenticated and anonymous branches below.
+  console.log(`Pangram model version served this check: ${prediction.modelVersion ?? "(none returned)"}`);
+
+  if (isAnonymous) {
+    // Atomic decrement, same locking pattern as consume_credit but with no
+    // monthly/daily reset — trial credits never replenish. Any failure here
+    // (a concurrent request beat this one to the last credit) collapses to
+    // the same "sign in" response as running out in the first place.
+    const { data: consumeResult, error: consumeError } = await admin
+      .rpc("consume_trial_credit", { p_device_id: deviceId, p_credits_needed: creditsUsed })
+      .single<ConsumeTrialCreditResult>();
+
+    if (consumeError || !consumeResult?.allowed) {
+      return NextResponse.json<CreateCheckResponse>({ ok: false, error: "unauthorized" }, { status: 401 });
+    }
+
+    // Not persisted to checks/check_windows — anonymous checks aren't tied
+    // to an account, and checks.user_id is not null, so there's nowhere to
+    // put them. api_usage_log still gets a row (check_id: null, already
+    // nullable) so the anonymous flow doesn't create a blind spot in cost
+    // monitoring.
+    const result: CheckResult = {
+      id: randomUUID(),
+      fullText: text,
+      wordCount: prediction.wordCount,
+      creditsUsed,
+      prediction: prediction.prediction,
+      predictionShort: prediction.predictionShort,
+      fractionAi: prediction.fractionAi,
+      fractionHuman: prediction.fractionHuman,
+      fractionAiAssisted: prediction.fractionAiAssisted,
+      sourceUrl: body.sourceUrl ?? null,
+      isPublic: false,
+      shareSlug: null,
+      windows: prediction.windows,
+      createdAt: new Date().toISOString(),
+    };
+
+    await admin.from("api_usage_log").insert({
+      check_id: null,
+      pangram_credits_billed: creditsUsed,
+      cost_usd_estimate: creditsUsed * pangram.costPerCredit,
+      pangram_model_version: prediction.modelVersion ?? null,
+    });
+
+    return NextResponse.json<CreateCheckResponse>({
+      ok: true,
+      result,
+      creditsRemaining: consumeResult.credits_remaining,
+    });
+  }
+
+  // --- authenticated flow, unchanged ---
 
   // Atomic: locks the user's credit_balances row, resets daily/monthly
   // counters if expired, checks daily_cap + credits_remaining, and
   // decrements — all in one transaction (see supabase/migrations'
   // consume_credit function) so concurrent requests can't double-spend.
   const { data: consumeResult, error: consumeError } = await admin
-    .rpc("consume_credit", { p_user_id: user.id, p_credits_needed: creditsUsed })
+    .rpc("consume_credit", { p_user_id: user!.id, p_credits_needed: creditsUsed })
     .single<ConsumeCreditResult>();
 
   if (consumeError || !consumeResult) {
@@ -92,7 +187,7 @@ export async function POST(req: NextRequest) {
   }
 
   const result = await insertCheck({
-    userId: user.id,
+    userId: user!.id,
     fullText: text,
     wordCount: prediction.wordCount,
     creditsUsed,
@@ -105,14 +200,6 @@ export async function POST(req: NextRequest) {
     windows: prediction.windows,
   });
 
-  // Our own cost tracking against Pangram — independent of what we charge
-  // the user, never exposed to any client (service-role only, no RLS policy).
-  // pangram_model_version is an audit trail against Pangram's own
-  // undocumented (as of this writing) split between "Pangram 3"
-  // ($0.05/1,000 words) and "Pangram 4" ($0.05/100 words, 10x costlier) —
-  // see docs/product-spec.md §4. Logged loudly here on purpose: a version
-  // string we don't expect is the first sign the cost model is wrong.
-  console.log(`Pangram model version served this check: ${prediction.modelVersion ?? "(none returned)"}`);
   await admin.from("api_usage_log").insert({
     check_id: result.id,
     pangram_credits_billed: creditsUsed,

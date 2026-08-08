@@ -8,7 +8,10 @@ export function describeCheckError(response: Extract<CreateCheckResponse, { ok: 
     case "daily_cap_reached":
       return "Daily free-plan limit reached — try again tomorrow.";
     case "unauthorized":
-      return "Please sign in from the extension's Settings tab first.";
+      // CheckForAiTab special-cases this one with an inline Sign in link
+      // instead of this plain string — kept here only so the switch stays
+      // exhaustive.
+      return "Sign in to check for AI.";
     case "text_too_short":
     case "text_too_long":
       return "That text is outside the allowed length for a check.";
@@ -74,16 +77,18 @@ export default function ResultCard({ result, onClose }: { result: CheckResult; o
         </p>
       )}
 
-      <div style={{ marginTop: 12 }}>
-        <a
-          href={`${API_BASE_URL}/history/${result.shareSlug}`}
-          target="_blank"
-          rel="noreferrer"
-          className="link-button"
-        >
-          View full analysis
-        </a>
-      </div>
+      {result.shareSlug && (
+        <div style={{ marginTop: 12 }}>
+          <a
+            href={`${API_BASE_URL}/history/${result.shareSlug}`}
+            target="_blank"
+            rel="noreferrer"
+            className="link-button"
+          >
+            View full analysis
+          </a>
+        </div>
+      )}
     </div>
   );
 }
