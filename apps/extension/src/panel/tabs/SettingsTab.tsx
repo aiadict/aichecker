@@ -37,13 +37,7 @@ export default function SettingsTab() {
             Logout
           </button>
         ) : (
-          <a
-            className="primary-button"
-            style={{ width: "auto", margin: 0, textDecoration: "none", display: "inline-block", lineHeight: "24px" }}
-            href={`${API_BASE_URL}/login?source=extension`}
-            target="_blank"
-            rel="noreferrer"
-          >
+          <a className="signin-pill" href={`${API_BASE_URL}/login?source=extension`} target="_blank" rel="noreferrer">
             Sign in
           </a>
         )}

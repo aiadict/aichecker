@@ -14,6 +14,14 @@ export default function HomePage() {
         </a>
       </section>
 
+      <section style={{ paddingBottom: 40 }}>
+        <img
+          className="welcome-step-img-full"
+          src="/welcome/usage-3.png"
+          alt="Select text, click the floating AI Checker icon or use the right-click menu, then click Check for AI"
+        />
+      </section>
+
       <section>
         <div className="card">
           <h3>Check anywhere</h3>

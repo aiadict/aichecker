@@ -64,10 +64,13 @@ export default function CheckForAiTab({
   return (
     <div className="check-tab">
       {response && !response.ok && response.error === "unauthorized" && (
-        <p className="muted" style={{ marginTop: 0, marginBottom: 12 }}>
-          Sign in to check for AI —{" "}
+        <p
+          className="muted"
+          style={{ marginTop: 0, marginBottom: 12, display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}
+        >
+          Sign in to check for AI.
           <a
-            className="link-button"
+            className="signin-pill"
             href={`${API_BASE_URL}/login?source=extension`}
             target="_blank"
             rel="noreferrer"
@@ -88,7 +91,7 @@ export default function CheckForAiTab({
 
       <div className="textarea-wrap">
         <textarea
-          placeholder="Enter or paste your text here"
+          placeholder="Paste a paragraph from an article, essay, or email to check it for AI"
           value={text}
           onChange={(e) => setText(e.target.value)}
         />

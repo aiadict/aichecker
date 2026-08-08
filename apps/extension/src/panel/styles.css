@@ -231,6 +231,23 @@ textarea {
 }
 .link-button:disabled { color: var(--muted); cursor: default; }
 
+/* The one "Sign in" treatment, reused everywhere the panel asks someone to
+   sign in (header, the check-tab prompt, Settings) — used to be a text
+   link in two places and a full-size button in the third, which read as
+   three different actions instead of one. */
+.signin-pill {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: var(--brand);
+  color: white;
+  font-size: 12px;
+  font-weight: 600;
+  text-decoration: none;
+  line-height: 1.6;
+}
+.signin-pill:hover { background: var(--brand-dark); }
+
 .badge { padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 700; }
 .badge.ai { background: #fee2e2; color: #b91c1c; }
 .badge.human { background: #dcfce7; color: #166534; }

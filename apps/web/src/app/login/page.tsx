@@ -93,59 +93,63 @@ function LoginForm() {
   }
 
   return (
-    <div className="container">
-      <h1>{mode === "sign-up" ? "Create your account" : "Sign in"}</h1>
-      {isExtensionSource && (
-        <p className="muted">Signing in for the AI Checker extension.</p>
-      )}
+    <div className="container auth-page">
+      <div className="auth-card-wrap">
+        <h1 style={{ textAlign: "center" }}>{mode === "sign-up" ? "Create your account" : "Sign in"}</h1>
+        <p className="muted" style={{ textAlign: "center" }}>
+          {isExtensionSource
+            ? "Signing in for the AI Checker extension."
+            : "Save your check history, manage billing, and keep your credits in sync across devices."}
+        </p>
 
-      <form onSubmit={handleSubmit} style={{ maxWidth: 360 }}>
-        <div className="card">
-          <label htmlFor="email">Email</label>
-          <input
-            id="email"
-            type="email"
-            required
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            style={{ width: "100%", padding: 8, marginTop: 4, marginBottom: 12 }}
-          />
-          <label htmlFor="password">Password</label>
-          <input
-            id="password"
-            type="password"
-            required
-            minLength={6}
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            style={{ width: "100%", padding: 8, marginTop: 4, marginBottom: 12 }}
-          />
-          <button type="submit" className="cta-button" disabled={loading} style={{ width: "100%", border: "none" }}>
-            {loading ? "Please wait…" : mode === "sign-up" ? "Sign up" : "Sign in"}
-          </button>
-        </div>
-      </form>
-
-      {error && <p style={{ color: "#b91c1c" }}>{error}</p>}
-      {status && <p style={{ color: "#166534" }}>{status}</p>}
-
-      <p className="muted">
-        {mode === "sign-in" ? (
-          <>
-            No account?{" "}
-            <button className="link-button" onClick={() => setMode("sign-up")}>
-              Sign up
+        <form onSubmit={handleSubmit} style={{ maxWidth: 360, margin: "0 auto" }}>
+          <div className="card">
+            <label htmlFor="email">Email</label>
+            <input
+              id="email"
+              type="email"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              style={{ width: "100%", padding: 8, marginTop: 4, marginBottom: 12 }}
+            />
+            <label htmlFor="password">Password</label>
+            <input
+              id="password"
+              type="password"
+              required
+              minLength={6}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              style={{ width: "100%", padding: 8, marginTop: 4, marginBottom: 12 }}
+            />
+            <button type="submit" className="cta-button" disabled={loading} style={{ width: "100%", border: "none" }}>
+              {loading ? "Please wait…" : mode === "sign-up" ? "Sign up" : "Sign in"}
             </button>
-          </>
-        ) : (
-          <>
-            Already have an account?{" "}
-            <button className="link-button" onClick={() => setMode("sign-in")}>
-              Sign in
-            </button>
-          </>
-        )}
-      </p>
+          </div>
+        </form>
+
+        {error && <p style={{ color: "#b91c1c", textAlign: "center" }}>{error}</p>}
+        {status && <p style={{ color: "#166534", textAlign: "center" }}>{status}</p>}
+
+        <p className="muted" style={{ textAlign: "center" }}>
+          {mode === "sign-in" ? (
+            <>
+              No account?{" "}
+              <button className="link-button" onClick={() => setMode("sign-up")}>
+                Sign up
+              </button>
+            </>
+          ) : (
+            <>
+              Already have an account?{" "}
+              <button className="link-button" onClick={() => setMode("sign-in")}>
+                Sign in
+              </button>
+            </>
+          )}
+        </p>
+      </div>
     </div>
   );
 }

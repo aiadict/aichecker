@@ -54,11 +54,11 @@ export default function App() {
           onClick={() => setTab("check")}
           aria-label="Check for AI"
         >
-          <svg viewBox="0 0 32 32" fill="none">
-            <rect x="6.5" y="19.4" width="14" height="2.4" rx="1.2" fill="currentColor" />
-            <rect x="6.5" y="24.4" width="9" height="2.4" rx="1.2" fill="currentColor" opacity="0.6" />
-            <circle cx="19.5" cy="12" r="6" fill="none" stroke="currentColor" strokeWidth="2" />
-            <line x1="23.7" y1="16.2" x2="27" y2="19.5" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+            <path d="M4 15h7" strokeLinecap="round" />
+            <path d="M4 18.5h4.5" strokeLinecap="round" />
+            <circle cx="15" cy="10" r="4.3" />
+            <line x1="18" y1="13" x2="20.5" y2="15.5" strokeLinecap="round" />
           </svg>
           <span>Check</span>
         </button>

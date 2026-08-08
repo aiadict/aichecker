@@ -15,6 +15,18 @@ export default function SupportPage() {
         below that is how to reach a real person.
       </p>
 
+      <nav className="support-jumpnav" aria-label="Jump to a question">
+        <a href="#percentage">Percentage</a>
+        <a href="#word-minimum">Word minimum</a>
+        <a href="#credits">Credits</a>
+        <a href="#pinning">Pinning</a>
+        <a href="#privacy">Privacy</a>
+        <a href="#delete-account">Deleting data</a>
+        <a href="#billing">Billing</a>
+        <a href="#floating-icon">Floating icon</a>
+        <a href="#extension-signin">Extension sign-in</a>
+      </nav>
+
       <div className="card">
         <h3>Get in touch</h3>
         <p>
@@ -44,7 +56,7 @@ export default function SupportPage() {
 
       <h2 style={{ marginTop: 40 }}>Common questions</h2>
 
-      <div className="card">
+      <div className="card" id="percentage">
         <h3>What does the percentage mean?</h3>
         <p>
           It&apos;s how much of the text our detection model believes shows signs of AI
@@ -54,7 +66,7 @@ export default function SupportPage() {
         </p>
       </div>
 
-      <div className="card">
+      <div className="card" id="word-minimum">
         <h3>How much text do I need to paste?</h3>
         <p>
           At least 50 words. Shorter than that, the result isn&apos;t reliable enough to be worth
@@ -63,7 +75,7 @@ export default function SupportPage() {
         </p>
       </div>
 
-      <div className="card">
+      <div className="card" id="credits">
         <h3>What&apos;s a credit, and how many do I get?</h3>
         <p>
           1 credit covers roughly 1,000 words. The Free plan includes 10 credits a month (capped
@@ -73,7 +85,7 @@ export default function SupportPage() {
         </p>
       </div>
 
-      <div className="card">
+      <div className="card" id="pinning">
         <h3>How do I pin AI Checker to my toolbar?</h3>
         <p>
           Open AI Checker (click its toolbar icon, or select text and use the floating icon or
@@ -83,7 +95,7 @@ export default function SupportPage() {
         </p>
       </div>
 
-      <div className="card">
+      <div className="card" id="privacy">
         <h3>Is my text stored, or shared with anyone?</h3>
         <p>
           Your checked text is stored in your account (so your history means something), and sent
@@ -93,7 +105,7 @@ export default function SupportPage() {
         </p>
       </div>
 
-      <div className="card">
+      <div className="card" id="delete-account">
         <h3>How do I delete a check, or my whole account?</h3>
         <p>
           Open any past check from your <Link href="/dashboard/history">history</Link> and delete
@@ -103,7 +115,7 @@ export default function SupportPage() {
         </p>
       </div>
 
-      <div className="card">
+      <div className="card" id="billing">
         <h3>How do I upgrade, downgrade, or cancel?</h3>
         <p>
           Upgrade from <Link href="/pricing">pricing</Link>. To change or cancel a paid plan, go
@@ -113,7 +125,7 @@ export default function SupportPage() {
         </p>
       </div>
 
-      <div className="card">
+      <div className="card" id="floating-icon">
         <h3>The floating icon or right-click menu isn&apos;t showing up</h3>
         <p>
           Most often this means the extension needs a reload: go to{" "}
@@ -123,7 +135,7 @@ export default function SupportPage() {
         </p>
       </div>
 
-      <div className="card">
+      <div className="card" id="extension-signin">
         <h3>I&apos;m signed in on werida.io but the extension says I&apos;m not</h3>
         <p>
           The extension keeps its own sign-in, separate from your browser session on this site —

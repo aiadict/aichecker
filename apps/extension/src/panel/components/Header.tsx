@@ -76,7 +76,7 @@ export default function Header() {
               {trial.trialCreditsRemaining === 1 ? "credit" : "credits"} left ·{" "}
             </>
           )}
-          <a className="link-button" href={`${API_BASE_URL}/login?source=extension`} target="_blank" rel="noreferrer">
+          <a className="signin-pill" href={`${API_BASE_URL}/login?source=extension`} target="_blank" rel="noreferrer">
             Sign in
           </a>
         </>
