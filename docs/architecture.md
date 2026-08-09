@@ -595,3 +595,25 @@ states) before touching real code.
 - In-page shadow-DOM overlay over `chrome.action.openPopup()` for the floating icon: the native
   popup API is gated to direct user-gesture contexts the content script doesn't reliably have;
   the overlay approach (same pattern Grammarly uses) sidesteps that entirely.
+
+## Free plan: daily cap disabled, monthly credits 10 -> 25 (2026-08-09)
+
+First-iteration growth decision: keep signup as low-friction as possible for early Chrome Web
+Store traction, no daily-limit pressure and a more generous monthly allowance, revisit once
+there's a real user base. Both changes are pure data — `supabase/seed.sql`'s free plan row now
+has `monthly_credits = 25, daily_cap = null` (matches how Pro/Business have always had
+`daily_cap = null`), applied live via a direct `plans` table update, no migration needed since
+the schema/columns already existed.
+
+No code changed anywhere for this. `consume_credit()` (see
+`20260729000005_consume_credit_fn.sql`) already skips its daily-cap check whenever
+`daily_cap is null` — that's not new logic, Pro/Business have relied on it since launch. Every UI
+surface that shows a daily count (`Header.tsx`'s "N left today", the dashboard's "N checks/day")
+was already written to only render when `dailyCap` is non-null, for the same reason. Flipping the
+one value both stopped enforcement and hid the UI in one move; setting `daily_cap` back to a
+number later re-enables both, again with no code changes.
+
+Existing users' `credit_balances.credits_remaining` isn't backfilled — someone mid-cycle keeps
+whatever balance they already had (now displayed against the new "/25" denominator) until their
+next monthly reset actually tops them up to 25, same as any other live `monthly_credits` change
+always has.
