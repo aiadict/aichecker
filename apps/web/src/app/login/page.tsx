@@ -4,7 +4,7 @@ import { Suspense, useState, type FormEvent } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 
-type Mode = "sign-in" | "sign-up";
+type Mode = "sign-in" | "sign-up" | "forgot-password";
 
 export default function LoginPage() {
   return (
@@ -105,42 +105,109 @@ function LoginForm() {
     router.push(redirectTo);
   }
 
+  /**
+   * Deliberately shows the same "check your email" status whether or not
+   * the address has an account — Supabase's resetPasswordForEmail already
+   * behaves this way (always resolves, never errors on an unknown email),
+   * so surfacing anything more specific here would just be us re-adding
+   * the account-enumeration leak Supabase's own API avoids.
+   */
+  async function handleForgotPassword(e: FormEvent) {
+    e.preventDefault();
+    setError(null);
+    setStatus(null);
+    setLoading(true);
+
+    const supabase = getSupabaseBrowserClient();
+    // Lands on /reset-password (see src/app/reset-password/page.tsx) after
+    // /auth/confirm exchanges the recovery token — same route/mechanism as
+    // sign-up confirmation, just a different `next`.
+    const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/auth/confirm?next=${encodeURIComponent("/reset-password")}`,
+    });
+
+    setLoading(false);
+    if (resetError) {
+      setError(resetError.message);
+      return;
+    }
+    setStatus("If an account exists for that email, a password reset link is on its way.");
+  }
+
+  const heading =
+    mode === "sign-up" ? "Create your account" : mode === "forgot-password" ? "Reset your password" : "Sign in";
+
   return (
     <div className="container auth-page">
       <div className="auth-card-wrap">
-        <h1 style={{ textAlign: "center" }}>{mode === "sign-up" ? "Create your account" : "Sign in"}</h1>
+        <h1 style={{ textAlign: "center" }}>{heading}</h1>
         <p className="muted" style={{ textAlign: "center" }}>
-          {isExtensionSource
-            ? "Signing in for the AI Checker extension."
-            : "Save your check history, manage billing, and keep your credits in sync across devices."}
+          {mode === "forgot-password"
+            ? "Enter your email and we'll send you a link to set a new password."
+            : isExtensionSource
+              ? "Signing in for the AI Checker extension."
+              : "Save your check history, manage billing, and keep your credits in sync across devices."}
         </p>
 
-        <form onSubmit={handleSubmit} style={{ maxWidth: 360, margin: "0 auto" }}>
-          <div className="card">
-            <label htmlFor="email">Email</label>
-            <input
-              id="email"
-              type="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              style={{ width: "100%", padding: 8, marginTop: 4, marginBottom: 12 }}
-            />
-            <label htmlFor="password">Password</label>
-            <input
-              id="password"
-              type="password"
-              required
-              minLength={6}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              style={{ width: "100%", padding: 8, marginTop: 4, marginBottom: 12 }}
-            />
-            <button type="submit" className="cta-button" disabled={loading} style={{ width: "100%", border: "none" }}>
-              {loading ? "Please wait…" : mode === "sign-up" ? "Sign up" : "Sign in"}
-            </button>
-          </div>
-        </form>
+        {mode === "forgot-password" ? (
+          <form onSubmit={handleForgotPassword} style={{ maxWidth: 360, margin: "0 auto" }}>
+            <div className="card">
+              <label htmlFor="email">Email</label>
+              <input
+                id="email"
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                style={{ width: "100%", padding: 8, marginTop: 4, marginBottom: 12 }}
+              />
+              <button type="submit" className="cta-button" disabled={loading} style={{ width: "100%", border: "none" }}>
+                {loading ? "Sending…" : "Send reset link"}
+              </button>
+            </div>
+          </form>
+        ) : (
+          <form onSubmit={handleSubmit} style={{ maxWidth: 360, margin: "0 auto" }}>
+            <div className="card">
+              <label htmlFor="email">Email</label>
+              <input
+                id="email"
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                style={{ width: "100%", padding: 8, marginTop: 4, marginBottom: 12 }}
+              />
+              <label htmlFor="password">Password</label>
+              <input
+                id="password"
+                type="password"
+                required
+                minLength={6}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                style={{ width: "100%", padding: 8, marginTop: 4, marginBottom: 12 }}
+              />
+              {mode === "sign-in" && (
+                <button
+                  type="button"
+                  className="link-button"
+                  style={{ fontSize: 13, display: "block", marginBottom: 12 }}
+                  onClick={() => {
+                    setMode("forgot-password");
+                    setError(null);
+                    setStatus(null);
+                  }}
+                >
+                  Forgot password?
+                </button>
+              )}
+              <button type="submit" className="cta-button" disabled={loading} style={{ width: "100%", border: "none" }}>
+                {loading ? "Please wait…" : mode === "sign-up" ? "Sign up" : "Sign in"}
+              </button>
+            </div>
+          </form>
+        )}
 
         {error && (
           <div className="auth-status error">
@@ -163,20 +230,33 @@ function LoginForm() {
         )}
 
         <p className="muted" style={{ textAlign: "center" }}>
-          {mode === "sign-in" ? (
+          {mode === "sign-in" && (
             <>
               No account?{" "}
               <button className="link-button" onClick={() => setMode("sign-up")}>
                 Sign up
               </button>
             </>
-          ) : (
+          )}
+          {mode === "sign-up" && (
             <>
               Already have an account?{" "}
               <button className="link-button" onClick={() => setMode("sign-in")}>
                 Sign in
               </button>
             </>
+          )}
+          {mode === "forgot-password" && (
+            <button
+              className="link-button"
+              onClick={() => {
+                setMode("sign-in");
+                setError(null);
+                setStatus(null);
+              }}
+            >
+              Back to sign in
+            </button>
           )}
         </p>
       </div>
