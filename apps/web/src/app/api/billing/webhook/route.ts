@@ -34,10 +34,14 @@ async function handleInvoicePaid(admin: ReturnType<typeof getSupabaseAdmin>, inv
     return;
   }
 
+  // Matches either column — a renewal/purchase can be on the monthly OR
+  // the annual price (see the pricing page's billing-interval toggle),
+  // and monthly_credits (what actually gets granted) is the same either
+  // way, so which column matched doesn't need to be distinguished here.
   const { data: plan } = await admin
     .from("plans")
     .select("id, monthly_credits")
-    .eq("stripe_price_id", priceId)
+    .or(`stripe_price_id.eq.${priceId},stripe_price_id_annual.eq.${priceId}`)
     .single<{ id: string; monthly_credits: number }>();
   if (!plan) {
     console.error(`invoice.paid: no plan found for stripe_price_id ${priceId}`);

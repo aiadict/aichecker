@@ -3,7 +3,15 @@
 import { useState } from "react";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 
-export default function UpgradeButton({ planKey, label }: { planKey: "pro" | "business"; label: string }) {
+export default function UpgradeButton({
+  planKey,
+  billingInterval,
+  label,
+}: {
+  planKey: "pro" | "business";
+  billingInterval: "month" | "year";
+  label: string;
+}) {
   const [loading, setLoading] = useState(false);
 
   async function handleClick() {
@@ -21,7 +29,7 @@ export default function UpgradeButton({ planKey, label }: { planKey: "pro" | "bu
     const res = await fetch("/api/billing/checkout", {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.access_token}` },
-      body: JSON.stringify({ planKey }),
+      body: JSON.stringify({ planKey, billingInterval }),
     });
     const data = await res.json();
 

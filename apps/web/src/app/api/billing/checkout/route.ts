@@ -19,19 +19,24 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
 
-  const { planKey } = (await req.json()) as { planKey?: string };
+  const { planKey, billingInterval } = (await req.json()) as {
+    planKey?: string;
+    billingInterval?: "month" | "year";
+  };
   if (planKey !== "pro" && planKey !== "business") {
     return NextResponse.json({ error: "invalid_plan" }, { status: 400 });
   }
+  const interval = billingInterval === "year" ? "year" : "month";
 
   const admin = getSupabaseAdmin();
   const { data: plan } = await admin
     .from("plans")
-    .select("stripe_price_id")
+    .select("stripe_price_id, stripe_price_id_annual")
     .eq("key", planKey)
-    .single<{ stripe_price_id: string | null }>();
+    .single<{ stripe_price_id: string | null; stripe_price_id_annual: string | null }>();
 
-  if (!plan?.stripe_price_id) {
+  const priceId = interval === "year" ? plan?.stripe_price_id_annual : plan?.stripe_price_id;
+  if (!priceId) {
     return NextResponse.json({ error: "plan_not_configured" }, { status: 500 });
   }
 
@@ -47,7 +52,7 @@ export async function POST(req: NextRequest) {
   const params: Stripe.Checkout.SessionCreateParams = {
     mode: "subscription",
     client_reference_id: user.id,
-    line_items: [{ price: plan.stripe_price_id, quantity: 1 }],
+    line_items: [{ price: priceId, quantity: 1 }],
     subscription_data: { metadata: { supabase_user_id: user.id } },
     success_url: `${APP_URL}/dashboard?checkout=success`,
     cancel_url: `${APP_URL}/pricing?checkout=canceled`,

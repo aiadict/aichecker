@@ -38,9 +38,11 @@ export interface Plan {
   name: string;
   monthlyCredits: number;
   dailyCap: number | null;
-  priceCents: number;
+  priceCents: number; // the monthly price
+  priceCentsAnnual: number | null; // the full yearly charge, not priceCents * 12
   billingInterval: "month" | "year";
   seatsIncluded: number;
+  isFeatured: boolean;
   features: {
     history: boolean;
     shareableLinks: boolean;
