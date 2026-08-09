@@ -5,6 +5,10 @@ import { API_BASE_URL } from "../../lib/config";
 export default function SettingsTab() {
   const [settings, setSettingsState] = useState<ExtensionSettings | null>(null);
   const [signedIn, setSignedIn] = useState(false);
+  // Read live from the installed manifest rather than a hardcoded string —
+  // the old "v0.1.0" literal here had already drifted from package.json's
+  // real version (1.0.0) with no way to notice short of manually checking.
+  const version = chrome.runtime.getManifest().version;
 
   useEffect(() => {
     getSettings().then(setSettingsState);
@@ -56,7 +60,7 @@ export default function SettingsTab() {
           Go to werida.io
         </a>
       </p>
-      <p className="muted">v0.1.0</p>
+      <p className="muted">v{version}</p>
     </div>
   );
 }
