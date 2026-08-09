@@ -66,7 +66,7 @@ export default function Header() {
       <span className="credits-row-left">
         {outOfCredits && (
           <a className="upgrade-pill" href={`${API_BASE_URL}/pricing`} target="_blank" rel="noreferrer">
-            Change to Premium
+            Upgrade to Premium
           </a>
         )}
       </span>
