@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { GeistSans } from "geist/font/sans";
+import SiteNav from "./components/SiteNav";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -19,17 +20,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           node, not hydration errors generally. */}
       <body suppressHydrationWarning>
         <div className="container">
-          <nav className="site-nav">
-            <Link href="/" className="brand">
-              <img src="/logo.svg" width={22} height={22} alt="" />
-              AI Checker
-            </Link>
-            <div className="site-nav-links">
-              <Link href="/pricing">Pricing</Link>
-              <Link href="/support">Support</Link>
-              <Link href="/dashboard">Dashboard</Link>
-            </div>
-          </nav>
+          <SiteNav />
         </div>
         {children}
         <div className="container">
@@ -39,7 +30,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               <Link href="/privacy">Privacy Policy</Link>
               <Link href="/terms">Terms of Service</Link>
             </div>
-            <p>© {new Date().getFullYear()} AI Checker. Detection powered by the Pangram API.</p>
+            <p>© {new Date().getFullYear()} AI Checker.</p>
           </footer>
         </div>
       </body>

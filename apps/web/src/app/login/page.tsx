@@ -129,8 +129,25 @@ function LoginForm() {
           </div>
         </form>
 
-        {error && <p style={{ color: "#b91c1c", textAlign: "center" }}>{error}</p>}
-        {status && <p style={{ color: "#166534", textAlign: "center" }}>{status}</p>}
+        {error && (
+          <div className="auth-status error">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+              <circle cx="12" cy="12" r="9" />
+              <path d="M12 8v5" strokeLinecap="round" />
+              <circle cx="12" cy="16" r="1" fill="currentColor" stroke="none" />
+            </svg>
+            <span>{error}</span>
+          </div>
+        )}
+        {status && (
+          <div className="auth-status success">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+              <circle cx="12" cy="12" r="9" />
+              <path d="M8 12.5l2.5 2.5L16 9.5" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            <span>{status}</span>
+          </div>
+        )}
 
         <p className="muted" style={{ textAlign: "center" }}>
           {mode === "sign-in" ? (
