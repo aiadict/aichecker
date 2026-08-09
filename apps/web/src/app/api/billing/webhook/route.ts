@@ -29,8 +29,26 @@ async function handleInvoicePaid(admin: ReturnType<typeof getSupabaseAdmin>, inv
   const customerId = typeof invoice.customer === "string" ? invoice.customer : invoice.customer?.id;
   const line = invoice.lines?.data?.[0];
   const priceId = line?.pricing?.price_details?.price ?? undefined;
-  if (!customerId || !priceId) {
-    console.error("invoice.paid missing customer or price id", { customerId, priceId });
+
+  // The reliable way to identify which user this invoice belongs to: set
+  // directly on the Checkout Session at creation (subscription_data.metadata
+  // in api/billing/checkout/route.ts), carried onto the Subscription and
+  // from there onto every invoice for it. Deliberately NOT resolved via a
+  // subscriptions.stripe_customer_id lookup — that column is written by
+  // handleCheckoutSessionCompleted, a SEPARATE webhook event Stripe does
+  // not guarantee arrives (or finishes processing) before this one.
+  // Confirmed live during the first real end-to-end test: invoice.paid was
+  // delivered and processed one second before checkout.session.completed
+  // had committed, so a customer-id lookup here found no row at all and
+  // silently dropped the credit grant.
+  const userId = invoice.parent?.subscription_details?.metadata?.supabase_user_id;
+  const subscriptionId =
+    line?.parent?.type === "subscription_item_details"
+      ? line.parent.subscription_item_details?.subscription
+      : undefined;
+
+  if (!customerId || !priceId || !userId) {
+    console.error("invoice.paid missing customer, price id, or user id", { customerId, priceId, userId });
     return;
   }
 
@@ -48,16 +66,6 @@ async function handleInvoicePaid(admin: ReturnType<typeof getSupabaseAdmin>, inv
     return;
   }
 
-  const { data: sub } = await admin
-    .from("subscriptions")
-    .select("user_id")
-    .eq("stripe_customer_id", customerId)
-    .single<{ user_id: string }>();
-  if (!sub) {
-    console.error(`invoice.paid: no subscription row found for stripe customer ${customerId}`);
-    return;
-  }
-
   const periodEndUnix = line?.period?.end;
   const periodEnd = periodEndUnix
     ? new Date(periodEndUnix * 1000).toISOString()
@@ -68,8 +76,18 @@ async function handleInvoicePaid(admin: ReturnType<typeof getSupabaseAdmin>, inv
     // A successful invoice always means the subscription is in good
     // standing going forward — clear cancel_at_period_end in case this is a
     // renewal after the user changed their mind and resumed via the Portal.
-    .update({ plan_id: plan.id, status: "active", current_period_end: periodEnd, cancel_at_period_end: false })
-    .eq("user_id", sub.user_id);
+    // Also (re)writes stripe_customer_id/stripe_subscription_id here rather
+    // than trusting handleCheckoutSessionCompleted to have done it first —
+    // this handler is now fully self-sufficient regardless of event order.
+    .update({
+      plan_id: plan.id,
+      status: "active",
+      current_period_end: periodEnd,
+      cancel_at_period_end: false,
+      stripe_customer_id: customerId,
+      ...(subscriptionId ? { stripe_subscription_id: subscriptionId } : {}),
+    })
+    .eq("user_id", userId);
 
   await admin
     .from("credit_balances")
@@ -80,7 +98,7 @@ async function handleInvoicePaid(admin: ReturnType<typeof getSupabaseAdmin>, inv
       period_start: new Date().toISOString(),
       period_end: periodEnd,
     })
-    .eq("user_id", sub.user_id);
+    .eq("user_id", userId);
 }
 
 async function handleCheckoutSessionCompleted(
