@@ -49,7 +49,20 @@ function LoginForm() {
     const supabase = getSupabaseBrowserClient();
     const { data, error: authError } =
       mode === "sign-up"
-        ? await supabase.auth.signUp({ email, password })
+        ? await supabase.auth.signUp({
+            email,
+            password,
+            options: {
+              // Points Supabase's confirmation email at our own server-side
+              // exchange route (see src/app/auth/confirm/route.ts) instead
+              // of its default client-side-only auto-detect, and carries
+              // through where to land afterwards — back to the extension
+              // handoff if that's where sign-up started, same as sign-in.
+              emailRedirectTo: `${window.location.origin}/auth/confirm?next=${encodeURIComponent(
+                isExtensionSource ? "/login?source=extension" : redirectTo
+              )}`,
+            },
+          })
         : await supabase.auth.signInWithPassword({ email, password });
 
     setLoading(false);
