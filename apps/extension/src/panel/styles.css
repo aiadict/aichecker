@@ -39,13 +39,17 @@ body {
 .panel-root { display: flex; flex-direction: column; height: 100%; }
 
 .credits-row {
-  text-align: right;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
   font-size: 12px;
   color: var(--muted);
   padding: 12px 16px 0;
   flex-shrink: 0;
 }
 .credits-row strong { color: var(--fg); }
+.credits-row-right { text-align: right; }
 
 .tabpanel {
   flex: 1;
@@ -247,6 +251,23 @@ textarea {
   line-height: 1.6;
 }
 .signin-pill:hover { background: var(--brand-dark); }
+
+/* Same treatment as .signin-pill (small solid brand pill) — kept as its
+   own class rather than reused, since it's a different action shown at a
+   different moment (only once a Free-plan user has actually run out),
+   not something to conflate with the sign-in flow. */
+.upgrade-pill {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: var(--brand);
+  color: white;
+  font-size: 12px;
+  font-weight: 600;
+  text-decoration: none;
+  line-height: 1.6;
+}
+.upgrade-pill:hover { background: var(--brand-dark); }
 
 .badge { padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 700; }
 .badge.ai { background: #fee2e2; color: #b91c1c; }

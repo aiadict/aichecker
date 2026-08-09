@@ -51,36 +51,60 @@ export default function Header() {
   const dailyRemaining =
     me?.plan.dailyCap != null ? Math.max(me.plan.dailyCap - me.checksToday, 0) : null;
 
+  // Only for Free-plan users who've actually hit a wall — out of monthly
+  // credits, or out of today's checks — not shown proactively while
+  // there's still room left, and not shown to Pro/Business users who
+  // already pay. Both Pro and Business have no daily_cap at all (see
+  // supabase/seed.sql), so upgrading genuinely clears either wall.
+  const outOfCredits =
+    signedIn &&
+    me?.plan.key === "free" &&
+    (me.creditsRemaining <= 0 || (me.plan.dailyCap != null && me.checksToday >= me.plan.dailyCap));
+
   return (
     <div className="credits-row">
-      {signedIn && me ? (
-        <>
-          Credits{" "}
-          <strong>
-            {me.creditsRemaining}/{me.plan.monthlyCredits}
-          </strong>
-          {dailyRemaining != null && (
-            <>
-              {" "}
-              · <strong>{dailyRemaining}</strong> left today
-            </>
-          )}
-        </>
-      ) : signedIn ? (
-        <span className="muted">Loading…</span>
-      ) : (
-        <>
-          {trial && trial.trialCreditsRemaining > 0 && (
-            <>
-              <strong>{trial.trialCreditsRemaining}</strong> trial{" "}
-              {trial.trialCreditsRemaining === 1 ? "credit" : "credits"} left ·{" "}
-            </>
-          )}
-          <a className="signin-pill" href={`${API_BASE_URL}/login?source=extension`} target="_blank" rel="noreferrer">
-            Sign in
+      <span className="credits-row-left">
+        {outOfCredits && (
+          <a className="upgrade-pill" href={`${API_BASE_URL}/pricing`} target="_blank" rel="noreferrer">
+            Upgrade to Pro
           </a>
-        </>
-      )}
+        )}
+      </span>
+      <span className="credits-row-right">
+        {signedIn && me ? (
+          <>
+            Credits{" "}
+            <strong>
+              {me.creditsRemaining}/{me.plan.monthlyCredits}
+            </strong>
+            {dailyRemaining != null && (
+              <>
+                {" "}
+                · <strong>{dailyRemaining}</strong> left today
+              </>
+            )}
+          </>
+        ) : signedIn ? (
+          <span className="muted">Loading…</span>
+        ) : (
+          <>
+            {trial && trial.trialCreditsRemaining > 0 && (
+              <>
+                <strong>{trial.trialCreditsRemaining}</strong> trial{" "}
+                {trial.trialCreditsRemaining === 1 ? "credit" : "credits"} left ·{" "}
+              </>
+            )}
+            <a
+              className="signin-pill"
+              href={`${API_BASE_URL}/login?source=extension`}
+              target="_blank"
+              rel="noreferrer"
+            >
+              Sign in
+            </a>
+          </>
+        )}
+      </span>
     </div>
   );
 }
