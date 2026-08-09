@@ -52,7 +52,7 @@ async function openSidePanelWithSelection(text: string, sourceUrl: string, windo
     console.error("chrome.sidePanel.open() failed", err);
     return;
   }
-  await setPendingSelection(text, sourceUrl);
+  await setPendingSelection(text, sourceUrl, windowId);
 }
 
 chrome.contextMenus.onClicked.addListener(async (info, tab) => {

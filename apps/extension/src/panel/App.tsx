@@ -20,24 +20,41 @@ export default function App() {
 
   useEffect(() => {
     // Set by background/index.ts's openSidePanelWithSelection() — both the
-    // floating icon and the right-click menu land here.
-    function loadPendingSelection() {
-      consumePendingSelection().then((pending) => {
-        if (pending?.text) {
-          setPrefillText(pending.text);
-          setAutoRunToken((t) => t + 1);
-          setTab("check");
-        }
-      });
-    }
+    // floating icon and the right-click menu land here. Scoped to this
+    // panel's own window: chrome.windows.getCurrent(), called from inside a
+    // side panel, resolves to the window that panel is attached to. Without
+    // this, two side panels open on two screens both raced to consume the
+    // same unscoped entry and both auto-ran the same check (see storage.ts).
+    let unsubscribe: (() => void) | undefined;
+    let cancelled = false;
 
-    // Once for whatever was already waiting when the panel mounted, and
-    // again any time a new one arrives while it's already open — unlike
-    // the old popup (always a fresh mount), the side panel is persistent,
-    // so a selection made while it's sitting open needs a live update, not
-    // just a one-time read.
-    loadPendingSelection();
-    return onPendingSelectionSet(loadPendingSelection);
+    chrome.windows.getCurrent().then((win) => {
+      if (cancelled || win.id === undefined) return;
+      const windowId = win.id;
+
+      function loadPendingSelection() {
+        consumePendingSelection(windowId).then((pending) => {
+          if (pending?.text) {
+            setPrefillText(pending.text);
+            setAutoRunToken((t) => t + 1);
+            setTab("check");
+          }
+        });
+      }
+
+      // Once for whatever was already waiting when the panel mounted, and
+      // again any time a new one arrives while it's already open — unlike
+      // the old popup (always a fresh mount), the side panel is persistent,
+      // so a selection made while it's sitting open needs a live update, not
+      // just a one-time read.
+      loadPendingSelection();
+      unsubscribe = onPendingSelectionSet(windowId, loadPendingSelection);
+    });
+
+    return () => {
+      cancelled = true;
+      unsubscribe?.();
+    };
   }, []);
 
   return (

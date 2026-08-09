@@ -80,27 +80,45 @@ export async function setSettings(settings: Partial<ExtensionSettings>): Promise
  * in, so this is read both once on mount AND live via onPendingSelectionSet
  * below (see panel/App.tsx) — a mount-only read would miss any selection
  * made while the panel was already sitting open.
+ *
+ * Keyed by windowId: chrome.storage.session is extension-global, not
+ * per-window. With the extension's side panel open on two screens at once,
+ * a single unscoped key meant both panels' onChanged listeners raced to
+ * read-then-remove the same entry — both won the read before either's
+ * removal landed, so both auto-ran the same check (confirmed live: two
+ * side panels, one selection, credits_remaining dropped by 2 instead of
+ * 1). Scoping the key to the target window's id means only the side panel
+ * actually attached to that window ever sees the change.
  */
-export async function setPendingSelection(text: string, sourceUrl: string): Promise<void> {
-  await chrome.storage.session.set({ [KEYS.pendingSelection]: { text, sourceUrl } });
+function pendingSelectionKey(windowId: number): string {
+  return `${KEYS.pendingSelection}:${windowId}`;
 }
 
-export async function consumePendingSelection(): Promise<{ text: string; sourceUrl: string } | null> {
-  const { [KEYS.pendingSelection]: pending } = await chrome.storage.session.get(KEYS.pendingSelection);
+export async function setPendingSelection(text: string, sourceUrl: string, windowId: number): Promise<void> {
+  await chrome.storage.session.set({ [pendingSelectionKey(windowId)]: { text, sourceUrl } });
+}
+
+export async function consumePendingSelection(
+  windowId: number
+): Promise<{ text: string; sourceUrl: string } | null> {
+  const key = pendingSelectionKey(windowId);
+  const { [key]: pending } = await chrome.storage.session.get(key);
   if (pending) {
-    await chrome.storage.session.remove(KEYS.pendingSelection);
+    await chrome.storage.session.remove(key);
   }
   return (pending as { text: string; sourceUrl: string } | undefined) ?? null;
 }
 
 /**
- * Notifies `callback` whenever a new pending selection is written (not on
- * the removal consumePendingSelection does right after reading it — only
- * on an actual new value arriving). Returns an unsubscribe function.
+ * Notifies `callback` whenever a new pending selection is written for this
+ * specific window (not on the removal consumePendingSelection does right
+ * after reading it — only on an actual new value arriving). Returns an
+ * unsubscribe function.
  */
-export function onPendingSelectionSet(callback: () => void): () => void {
+export function onPendingSelectionSet(windowId: number, callback: () => void): () => void {
+  const key = pendingSelectionKey(windowId);
   function listener(changes: { [key: string]: chrome.storage.StorageChange }, areaName: string) {
-    if (areaName === "session" && changes[KEYS.pendingSelection]?.newValue) {
+    if (areaName === "session" && changes[key]?.newValue) {
       callback();
     }
   }
