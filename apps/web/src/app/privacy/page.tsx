@@ -72,6 +72,7 @@ export default function PrivacyPage() {
         <li>Pangram Labs, for the actual AI/human detection.</li>
         <li>Supabase, for our database and sign-in.</li>
         <li>Stripe, for billing and payments.</li>
+        <li>Resend, for account emails like confirmations and password resets.</li>
         <li>Vercel, for hosting the website.</li>
       </ul>
       <p>
