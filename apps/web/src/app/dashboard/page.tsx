@@ -8,6 +8,7 @@ interface CreditBalanceWithPlanRow {
   credits_remaining: number;
   checks_today: number;
   plans: {
+    key: string;
     name: string;
     monthly_credits: number;
     daily_cap: number | null;
@@ -34,7 +35,7 @@ export default async function DashboardPage() {
 
   const { data } = await supabase
     .from("credit_balances")
-    .select("credits_remaining, checks_today, plans(name, monthly_credits, daily_cap)")
+    .select("credits_remaining, checks_today, plans(key, name, monthly_credits, daily_cap)")
     .eq("user_id", user.id)
     .single<CreditBalanceWithPlanRow>();
 
@@ -106,7 +107,13 @@ export default async function DashboardPage() {
           <Link className="cta-button" href="/pricing">
             Upgrade
           </Link>
-          <ManageBillingButton />
+          {/* Only meaningful once a real Stripe customer exists — set the
+              first time someone completes checkout (see handleCheckout
+              SessionCompleted in api/billing/webhook). A Free-plan user
+              has never gone through Checkout, so there's nothing to
+              manage yet; showing the button anyway was a guaranteed dead
+              click with no visual feedback. */}
+          {plan.key !== "free" && <ManageBillingButton />}
         </div>
       ) : (
         <p className="muted">Could not load your plan — try refreshing.</p>
