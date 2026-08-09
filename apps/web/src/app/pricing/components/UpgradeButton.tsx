@@ -37,7 +37,11 @@ export default function UpgradeButton({
       window.location.href = data.url;
     } else {
       setLoading(false);
-      alert("Something went wrong starting checkout. Please try again.");
+      if (data.error === "already_subscribed") {
+        alert("You already have an active plan. Manage or change it from \"Manage billing\" on your dashboard.");
+      } else {
+        alert("Something went wrong starting checkout. Please try again.");
+      }
     }
   }
 

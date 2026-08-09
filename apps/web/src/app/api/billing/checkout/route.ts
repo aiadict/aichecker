@@ -3,6 +3,7 @@ import type Stripe from "stripe";
 import { getAuthenticatedUser } from "@/lib/auth";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { getStripe } from "@/lib/stripe";
+import { hasRenewingSubscription } from "@/lib/subscriptions";
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
 
@@ -44,9 +45,37 @@ export async function POST(req: NextRequest) {
   // from a prior subscription) — avoids creating duplicate customers.
   const { data: existingSub } = await admin
     .from("subscriptions")
-    .select("stripe_customer_id")
+    .select("stripe_customer_id, status, cancel_at_period_end, plans(key)")
     .eq("user_id", user.id)
-    .single<{ stripe_customer_id: string | null }>();
+    .single<{
+      stripe_customer_id: string | null;
+      status: string;
+      cancel_at_period_end: boolean;
+      plans: { key: string } | { key: string }[];
+    }>();
+
+  // Reusing the customer above avoids a duplicate CUSTOMER, but nothing
+  // about that stops a duplicate SUBSCRIPTION — Checkout will happily
+  // create a brand new one for an existing customer regardless of what
+  // they're already subscribed to. Confirmed live: a customer went
+  // through Checkout twice (once via Apple Pay, once with a different
+  // card, after being unsure whether the first had actually gone
+  // through) and ended up with two separate $19.99/mo subscriptions
+  // billing in parallel — nothing here had ever stopped that.
+  const existingPlanKey = existingSub
+    ? Array.isArray(existingSub.plans)
+      ? existingSub.plans[0]?.key
+      : existingSub.plans?.key
+    : "free";
+  if (
+    hasRenewingSubscription({
+      status: existingSub?.status,
+      cancelAtPeriodEnd: existingSub?.cancel_at_period_end,
+      planKey: existingPlanKey,
+    })
+  ) {
+    return NextResponse.json({ error: "already_subscribed" }, { status: 409 });
+  }
 
   const stripe = getStripe();
   const params: Stripe.Checkout.SessionCreateParams = {
