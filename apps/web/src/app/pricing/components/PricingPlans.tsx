@@ -77,9 +77,17 @@ export default function PricingPlans({ plans }: { plans: PlanRow[] }) {
                     ${formatDollars(displayCents)}
                     <span style={{ fontSize: 15, fontWeight: 600 }}>/mo</span>
                   </p>
-                  {showAnnual && (
-                    <p className="muted" style={{ marginTop: -6, fontSize: 12.5 }}>
-                      billed ${formatDollars(plan.price_cents_annual!)}/year
+                  {plan.price_cents_annual != null && (
+                    // Always rendered (not just when showAnnual) so the card's
+                    // height stays identical between Monthly and Annual — only
+                    // toggling visibility, not presence, is what stops the
+                    // "Most popular" badge and cards from jumping when the
+                    // billing interval switches.
+                    <p
+                      className="muted"
+                      style={{ marginTop: -6, fontSize: 12.5, visibility: showAnnual ? "visible" : "hidden" }}
+                    >
+                      billed ${formatDollars(plan.price_cents_annual)}/year
                     </p>
                   )}
                 </>

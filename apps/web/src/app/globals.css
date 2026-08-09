@@ -151,13 +151,14 @@ nav.site-nav .brand img { border-radius: 5px; flex-shrink: 0; }
 .support-jumpnav a:hover { background: var(--brand); color: white; }
 
 .billing-toggle {
-  display: inline-flex;
+  display: flex;
+  width: fit-content;
   align-items: center;
   gap: 2px;
   background: var(--brand-soft);
   border-radius: 999px;
   padding: 4px;
-  margin: 8px 0 28px;
+  margin: 8px auto 28px;
 }
 .billing-toggle button {
   display: flex;
