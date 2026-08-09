@@ -17,9 +17,13 @@ import pkg from "./package.json";
 // faster review and a less alarming install prompt for users.
 export default defineManifest({
   manifest_version: 3,
-  name: "AI Checker",
-  description:
-    "Use AI Checker as a ChatGPT detector or as an AI generator checker to detect artificial intelligence in a paper, essay, or text.",
+  // __MSG_x__ placeholders are resolved from public/_locales/<lang>/messages.json
+  // at install/runtime, based on the browser's language — default_locale is
+  // required whenever any _locales directory is present, and is also the
+  // fallback for any locale Chrome supports that we haven't translated.
+  default_locale: "en",
+  name: "__MSG_appName__",
+  description: "__MSG_shortDesc__",
   version: pkg.version,
   icons: {
     16: "public/icons/icon16.png",
