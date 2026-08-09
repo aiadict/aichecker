@@ -19,7 +19,7 @@ export default defineManifest({
   manifest_version: 3,
   name: "AI Checker",
   description:
-    "Instantly check if text is AI-generated or human-written, anywhere on the web.",
+    "Use AI Checker as a ChatGPT detector or as an AI generator checker to detect artificial intelligence in a paper, essay, or text.",
   version: pkg.version,
   icons: {
     16: "public/icons/icon16.png",
