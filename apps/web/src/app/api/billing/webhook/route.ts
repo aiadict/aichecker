@@ -164,9 +164,22 @@ async function handleSubscriptionUpdated(admin: ReturnType<typeof getSupabaseAdm
     return;
   }
 
+  // Stripe has two independent, mutually-exclusive ways to schedule a
+  // future cancellation: cancel_at_period_end (a boolean) and cancel_at
+  // (an explicit future timestamp). Confirmed live: cancelling through the
+  // Customer Portal's "tell us why you're leaving" flow sets cancel_at,
+  // NOT cancel_at_period_end — so this column, which only ever looked at
+  // cancel_at_period_end, silently stayed false for a subscription that
+  // Stripe's own dashboard correctly showed as "Cancels Sep 9". Every
+  // consumer of this column (checkout's and delete-account's
+  // hasRenewingSubscription) actually wants to know "will this end on its
+  // own", so that's what gets stored here — not a literal passthrough of
+  // one specific Stripe field.
+  const willEnd = subscription.cancel_at_period_end || subscription.cancel_at != null;
+
   const { error } = await admin
     .from("subscriptions")
-    .update({ status: subscription.status, cancel_at_period_end: subscription.cancel_at_period_end })
+    .update({ status: subscription.status, cancel_at_period_end: willEnd })
     .eq("stripe_customer_id", customerId);
 
   if (error) {
