@@ -17,15 +17,20 @@ export interface PlanRow {
 // price/credit numbers have, so it stays hardcoded here rather than in the
 // database (see docs/architecture.md's 2026-08-09 pricing overhaul entry
 // for why the numeric fields DO come from the DB now).
+//
+// business's "Seat pooling" / "Admin controls" bullets and its "3 seats
+// included" note were pulled 2026-08-09 — seats_included/seats columns
+// exist on plans/subscriptions, but nothing in the app actually reads
+// them: no invite flow, no team-member table, no admin role. Advertising
+// unbuilt functionality on a live pricing page was worse than a shorter
+// list. Re-add once seat management is real.
 const FEATURES: Record<PlanRow["key"], string[]> = {
   free: ["Check for AI (paste, right-click, floating icon)", "Check history", "Shareable result links"],
   pro: ["Everything in Free", "12× the free plan's monthly words", "Priority support"],
-  business: ["Everything in Premium", "Seat pooling", "Admin controls"],
+  business: ["Everything in Premium"],
 };
 
-const NOTES: Partial<Record<PlanRow["key"], string>> = {
-  business: "3 seats included",
-};
+const NOTES: Partial<Record<PlanRow["key"], string>> = {};
 
 function formatDollars(cents: number): string {
   return (cents / 100).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
