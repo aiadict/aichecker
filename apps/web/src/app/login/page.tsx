@@ -74,8 +74,8 @@ function LoginForm() {
     setConfirmationFailedContext(isRecovery ? "recovery" : "other");
     setError(
       isRecovery
-        ? "This password reset link couldn't be verified — for security, reset links only work in the same browser you requested them from. Request a new one below."
-        : "This link couldn't be verified — it may have expired, already been used, or been opened in a different browser than the one that requested it."
+        ? "This password reset link couldn't be verified - for security, reset links only work in the same browser you requested them from. Request a new one below."
+        : "This link couldn't be verified - it may have expired, already been used, or been opened in a different browser than the one that requested it."
     );
     if (isRecovery) setMode("forgot-password");
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -149,7 +149,7 @@ function LoginForm() {
     }
 
     if (!data.session) {
-      setError("Something went wrong — no session was created. Please try again.");
+      setError("Something went wrong - no session was created. Please try again.");
       return;
     }
 

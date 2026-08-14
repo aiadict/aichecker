@@ -132,7 +132,7 @@ export default async function SharedCheckPage({ params }: { params: Promise<{ sl
 
         {!check.is_public && (
           <p className="muted" style={{ marginTop: 12 }}>
-            This result is private — only you can see this link.
+            This result is private - only you can see this link.
           </p>
         )}
       </div>

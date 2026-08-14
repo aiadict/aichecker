@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 export const metadata: Metadata = {
-  title: "Welcome — AI Checker",
-  description: "You're all set — here's how to check your first piece of text for AI.",
+  title: "Welcome - AI Checker",
+  description: "You're all set - here's how to check your first piece of text for AI.",
 };
 
 export default function WelcomePage() {
@@ -19,7 +19,7 @@ export default function WelcomePage() {
         <p className="muted">
           Select text on any page and click the floating icon that appears, or right-click and
           choose &quot;Check for AI Content.&quot; Either way, AI Checker opens with your text
-          ready — just click Check for AI.
+          ready - just click Check for AI.
         </p>
         <img
           className="welcome-step-img-full"

@@ -71,7 +71,7 @@ function ExtensionConnectedBody() {
             </svg>
             <span>
               You&apos;re signed in on werida.io. Now open the AI Checker extension and click Sign in
-              there with the same email and password — if it&apos;s already showing your credits, you&apos;re
+              there with the same email and password - if it&apos;s already showing your credits, you&apos;re
               all set.
             </span>
           </div>

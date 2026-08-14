@@ -4,9 +4,9 @@ import { API_BASE_URL } from "../lib/config";
 export function describeCheckError(response: Extract<CreateCheckResponse, { ok: false }>): string {
   switch (response.error) {
     case "insufficient_credits":
-      return "You're out of credits — upgrade to keep checking.";
+      return "You're out of credits - upgrade to keep checking.";
     case "daily_cap_reached":
-      return "Daily free-plan limit reached — try again tomorrow.";
+      return "Daily free-plan limit reached - try again tomorrow.";
     case "unauthorized":
       // CheckForAiTab special-cases this one with an inline Sign in link
       // instead of this plain string — kept here only so the switch stays

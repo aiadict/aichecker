@@ -33,7 +33,7 @@ export default async function AccountSettingsPage() {
       <div className="card">
         <h3>Your data</h3>
         <p className="muted">
-          Download every check you&apos;ve ever run, as a single JSON file — your text, results,
+          Download every check you&apos;ve ever run, as a single JSON file - your text, results,
           and timestamps.
         </p>
         <ExportDataButton />
@@ -42,7 +42,7 @@ export default async function AccountSettingsPage() {
       <div className="card" style={{ borderColor: "#fecaca" }}>
         <h3>Delete account</h3>
         <p className="muted">
-          Permanently deletes your account and everything tied to it — check history, settings,
+          Permanently deletes your account and everything tied to it - check history, settings,
           and billing link. This can&apos;t be undone.
           {planKey !== "free" && " Cancel your paid plan from the dashboard's \"Manage billing\" first."}
         </p>

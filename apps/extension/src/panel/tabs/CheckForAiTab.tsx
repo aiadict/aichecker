@@ -87,7 +87,7 @@ export default function CheckForAiTab({
               checks and used them", a different situation from any other
               unauthenticated attempt. */}
           {response.reason === "trial_exhausted" || response.reason === "anon_daily_cap_reached"
-            ? "You've used your 2 free checks — sign in to keep going."
+            ? "You've used your 2 free checks - sign in to keep going."
             : "Sign in to check for AI."}
         </p>
       )}

@@ -6,11 +6,11 @@ export default function HomePage() {
           Know instantly what&apos;s <em>human</em> or <em>AI</em>.
         </h1>
         <p>
-          AI Checker highlights AI-generated text anywhere on the web — just select and click the
+          AI Checker highlights AI-generated text anywhere on the web - just select and click the
           AI Checker icon.
         </p>
         <a className="cta-button" href="https://chromewebstore.google.com" target="_blank" rel="noreferrer">
-          Add to Chrome — it&apos;s free
+          Add to Chrome - it&apos;s free
         </a>
       </section>
 
@@ -26,7 +26,7 @@ export default function HomePage() {
         <div className="card">
           <h3>Check anywhere</h3>
           <p className="muted">
-            Highlight text on any page, right-click, and choose &quot;Check for AI Content&quot; — or
+            Highlight text on any page, right-click, and choose &quot;Check for AI Content&quot; - or
             click the floating icon that appears next to your selection.
           </p>
         </div>
@@ -40,7 +40,7 @@ export default function HomePage() {
         <div className="card">
           <h3>Built for real usage limits</h3>
           <p className="muted">
-            Free plan includes 10 checks a month. Upgrade to Pro or Business for more credits —
+            Free plan includes 10 checks a month. Upgrade to Pro or Business for more credits -
             see <a href="/pricing">pricing</a>.
           </p>
         </div>

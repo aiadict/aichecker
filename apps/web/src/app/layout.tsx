@@ -5,7 +5,7 @@ import SiteNav from "./components/SiteNav";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "AI Checker — know instantly what's human or AI",
+  title: "AI Checker - know instantly what's human or AI",
   description:
     "AI Checker detects AI-generated text anywhere on the web, powered by the Pangram AI detection API.",
 };

@@ -13,7 +13,7 @@ export default async function PricingPage() {
     <div className="container">
       <h1>Pricing</h1>
       <p className="muted" style={{ maxWidth: 560 }}>
-        Every plan includes the same detection quality — paste, right-click, or the floating
+        Every plan includes the same detection quality - paste, right-click, or the floating
         icon all work the same way. What changes is how many words you can check each month.
       </p>
       <PricingPlans plans={data ?? []} />

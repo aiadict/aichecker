@@ -12,7 +12,7 @@ export default function DeleteAccountButton() {
     if (
       !confirm(
         "Delete your account? This permanently removes your account, check history, and billing " +
-          "records after any required retention period — it can't be undone."
+          "records after any required retention period - it can't be undone."
       )
     ) {
       return;
