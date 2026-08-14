@@ -356,13 +356,21 @@ footer.site-footer { padding: 40px 0; color: var(--muted); font-size: 13px; }
   white-space: nowrap;
 }
 
+/* Top-anchored, not vertically centered — /login's content height changes
+   with the mode (Sign in has a "Forgot password?" link and a taller
+   error/status area that Sign up and Sign up don't), and centering a
+   variable-height block re-centers the whole thing on every height
+   change, which reads as the page jumping even though nothing below the
+   fold actually moved. Anchoring the top keeps the heading, subtitle, and
+   toggle buttons pinned in place regardless of what renders beneath them. */
 .auth-page {
   min-height: 60vh;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
+  padding-top: 64px;
 }
-.auth-card-wrap { width: 100%; max-width: 360px; padding: 40px 0; }
+.auth-card-wrap { width: 100%; max-width: 360px; padding: 0 0 40px; }
 
 .auth-status {
   display: flex;
