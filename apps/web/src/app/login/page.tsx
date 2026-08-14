@@ -118,6 +118,15 @@ function LoginForm() {
     }
 
     if (mode === "sign-up" && !data.session) {
+      // Tells the extension this device now has an account, immediately —
+      // see storage.ts's setHasEverSignedIn doc comment for why this can't
+      // just wait for the email-confirmation round trip (which depends on
+      // a redirect_to the user's browser/tab situation can easily break).
+      // Covers both branches below: a fresh signup pending confirmation,
+      // and a duplicate-email hit (that also means an account exists).
+      if (isExtensionSource) {
+        window.postMessage({ type: "ai-checker/signup-started" }, window.location.origin);
+      }
       // Supabase's signUp() deliberately returns success (no error) for an
       // email that already has a CONFIRMED account too — same response
       // shape as a genuine new signup, specifically to avoid leaking which

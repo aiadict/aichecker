@@ -138,12 +138,21 @@ document.addEventListener("mousedown", (e) => {
 if (window.location.origin === API_BASE_URL) {
   window.addEventListener("message", (event) => {
     if (event.origin !== API_BASE_URL) return;
-    if (event.data?.type !== "ai-checker/auth-success") return;
 
-    chrome.runtime.sendMessage({
-      type: "ai-checker/store-auth-session",
-      accessToken: event.data.accessToken,
-      refreshToken: event.data.refreshToken,
-    });
+    if (event.data?.type === "ai-checker/auth-success") {
+      chrome.runtime.sendMessage({
+        type: "ai-checker/store-auth-session",
+        accessToken: event.data.accessToken,
+        refreshToken: event.data.refreshToken,
+      });
+    }
+
+    // Fired the moment a sign-up succeeds or a duplicate-email is found on
+    // /login (see its doc comment for why this can't just wait for the
+    // real session handoff above) — this tab already has the account, so
+    // the next "Sign in" click should go to Sign-in, not Sign-up again.
+    if (event.data?.type === "ai-checker/signup-started") {
+      chrome.runtime.sendMessage({ type: "ai-checker/mark-signed-up" });
+    }
   });
 }

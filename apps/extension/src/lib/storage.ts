@@ -69,6 +69,21 @@ export async function getHasEverSignedIn(): Promise<boolean> {
 }
 
 /**
+ * Set as soon as a sign-up succeeds (or a duplicate-email is detected) on
+ * /login — see login/page.tsx's postMessage("ai-checker/signup-started").
+ * Deliberately NOT gated on the session handoff actually completing: that
+ * handoff requires the email confirmation link to land back in a tab with
+ * this content script AND Supabase's redirect_to to resolve to our own
+ * route rather than falling back to its bare Site URL, both of which can
+ * silently fail. Submitting the sign-up form itself is a much more
+ * reliable "this device now has an account" signal, available immediately
+ * in the same tab, well before email confirmation ever happens.
+ */
+export async function setHasEverSignedIn(): Promise<void> {
+  await chrome.storage.local.set({ [KEYS.hasEverSignedIn]: true });
+}
+
+/**
  * Random per-install identifier for the anonymous trial (see
  * lib/api.ts's X-Device-Id header and apps/web's /api/checks +
  * /api/trial). Lives in .local, not .sync, deliberately — it should NOT
