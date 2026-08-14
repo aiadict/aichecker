@@ -239,6 +239,27 @@ export async function POST(req: NextRequest) {
 
   const admin = getSupabaseAdmin();
 
+  // Idempotency guard: insert BEFORE processing, not after, so two nearly-
+  // simultaneous deliveries of the same event (Stripe's at-least-once
+  // semantics, or a manual "Resend" from the dashboard replaying a real
+  // historical event) can't both slip through the race window — the
+  // second insert hits the primary key and fails with 23505 before either
+  // has run any handler logic. Every handler today is already idempotent
+  // (absolute UPDATE...SET, never INSERT/increment) so this isn't fixing
+  // a live bug, it's making that safety explicit rather than incidental.
+  const { error: dedupError } = await admin
+    .from("processed_stripe_events")
+    .insert({ event_id: event.id, event_type: event.type });
+
+  if (dedupError) {
+    if (dedupError.code === "23505") {
+      return NextResponse.json({ received: true, duplicate: true });
+    }
+    // Any other insert failure (e.g. transient DB issue) shouldn't drop a
+    // legitimate event — log it and fall through to process normally.
+    console.error("Failed to record processed Stripe event (continuing anyway)", dedupError);
+  }
+
   try {
     switch (event.type) {
       case "checkout.session.completed":
