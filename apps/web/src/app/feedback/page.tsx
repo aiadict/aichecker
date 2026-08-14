@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useState, type FormEvent } from "react";
+import { Suspense, useEffect, useState, type FormEvent } from "react";
 import { useSearchParams } from "next/navigation";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 
@@ -32,6 +32,18 @@ function FeedbackForm() {
   const [loading, setLoading] = useState(false);
   const [done, setDone] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    // Convenience only — the field stays fully editable/clearable, since
+    // it's optional either way. Guarded on the field still being empty so
+    // this can't clobber anything the user already typed if the session
+    // check resolves after they've started filling the form in.
+    const supabase = getSupabaseBrowserClient();
+    supabase.auth.getSession().then(({ data }) => {
+      const sessionEmail = data.session?.user.email;
+      if (sessionEmail) setEmail((current) => current || sessionEmail);
+    });
+  }, []);
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
