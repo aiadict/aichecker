@@ -40,7 +40,10 @@ export async function POST(req: NextRequest) {
   // anonymous trial, or any non-extension caller. Same 401 as always, no
   // behavior change for them.
   if (!user && !deviceId) {
-    return NextResponse.json<CreateCheckResponse>({ ok: false, error: "unauthorized" }, { status: 401 });
+    return NextResponse.json<CreateCheckResponse>(
+      { ok: false, error: "unauthorized", reason: "no_device_id" },
+      { status: 401 }
+    );
   }
 
   const admin = getSupabaseAdmin();
@@ -49,7 +52,10 @@ export async function POST(req: NextRequest) {
   // Checked before even parsing the body — an off switch or an exhausted
   // trial should fail as cheaply as possible.
   if (isAnonymous && !(await isAnonymousTrialEnabled(admin))) {
-    return NextResponse.json<CreateCheckResponse>({ ok: false, error: "unauthorized" }, { status: 401 });
+    return NextResponse.json<CreateCheckResponse>(
+      { ok: false, error: "unauthorized", reason: "trial_disabled" },
+      { status: 401 }
+    );
   }
 
   const body = (await req.json()) as CreateCheckRequest;
@@ -74,8 +80,21 @@ export async function POST(req: NextRequest) {
       .maybeSingle();
     const trialRemaining = (trialRow?.credits_remaining as number | undefined) ?? 2;
 
-    if (trialRemaining <= 0 || (await anonymousDailySpendCapReached(admin))) {
-      return NextResponse.json<CreateCheckResponse>({ ok: false, error: "unauthorized" }, { status: 401 });
+    // Split rather than one combined check — these are two structurally
+    // different causes (this device's own trial vs. the shared daily spend
+    // cap across every anonymous device) and need distinct reasons so a
+    // failure here is actually diagnosable instead of just "unauthorized".
+    if (trialRemaining <= 0) {
+      return NextResponse.json<CreateCheckResponse>(
+        { ok: false, error: "unauthorized", reason: "trial_exhausted" },
+        { status: 401 }
+      );
+    }
+    if (await anonymousDailySpendCapReached(admin)) {
+      return NextResponse.json<CreateCheckResponse>(
+        { ok: false, error: "unauthorized", reason: "anon_daily_cap_reached" },
+        { status: 401 }
+      );
     }
   }
 
@@ -114,8 +133,22 @@ export async function POST(req: NextRequest) {
       .rpc("consume_trial_credit", { p_device_id: deviceId, p_credits_needed: creditsUsed })
       .single<ConsumeTrialCreditResult>();
 
-    if (consumeError || !consumeResult?.allowed) {
-      return NextResponse.json<CreateCheckResponse>({ ok: false, error: "unauthorized" }, { status: 401 });
+    // Split rather than one combined check — consumeError is a genuine
+    // RPC/infra failure, but !consumeResult?.allowed just means the
+    // pre-flight check above passed and a concurrent request spent the
+    // last credit first (a benign race, not a failure) — same underlying
+    // cause as trial_exhausted above, so reported the same way.
+    if (consumeError) {
+      return NextResponse.json<CreateCheckResponse>(
+        { ok: false, error: "unauthorized", reason: "rpc_failed" },
+        { status: 401 }
+      );
+    }
+    if (!consumeResult?.allowed) {
+      return NextResponse.json<CreateCheckResponse>(
+        { ok: false, error: "unauthorized", reason: "trial_exhausted" },
+        { status: 401 }
+      );
     }
 
     // Not persisted to checks/check_windows — anonymous checks aren't tied

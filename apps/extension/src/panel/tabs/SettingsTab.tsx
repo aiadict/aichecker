@@ -1,5 +1,12 @@
 import { useEffect, useState } from "react";
-import { getSettings, setSettings, getAuthToken, setAuthSession, type ExtensionSettings } from "../../lib/storage";
+import {
+  getSettings,
+  setSettings,
+  getAuthToken,
+  setAuthSession,
+  onAuthSessionChanged,
+  type ExtensionSettings,
+} from "../../lib/storage";
 import { API_BASE_URL } from "../../lib/config";
 
 export default function SettingsTab() {
@@ -12,7 +19,17 @@ export default function SettingsTab() {
 
   useEffect(() => {
     getSettings().then(setSettingsState);
-    getAuthToken().then((t) => setSignedIn(Boolean(t)));
+
+    // Once on mount, and again any time the stored session is set or
+    // cleared afterward — mirrors Header.tsx's pattern. Without this,
+    // signing in elsewhere (e.g. the /login?source=extension tab) only
+    // updated Header's credits row live; this tab kept showing "Sign in"
+    // until the user switched away and back, remounting it.
+    function refreshAuth() {
+      getAuthToken().then((t) => setSignedIn(Boolean(t)));
+    }
+    refreshAuth();
+    return onAuthSessionChanged(refreshAuth);
   }, []);
 
   async function toggleFloatingIcon() {
@@ -36,14 +53,13 @@ export default function SettingsTab() {
           <div>Account</div>
           <div className="muted">{signedIn ? "Signed in" : "Not signed in"}</div>
         </div>
-        {signedIn ? (
+        {/* Signed-out state deliberately has no button here — Header's own
+            Sign-in pill is already visible directly above, on every tab
+            including this one, so a second one was pure redundancy. */}
+        {signedIn && (
           <button className="primary-button" style={{ width: "auto", margin: 0 }} onClick={handleLogout}>
             Logout
           </button>
-        ) : (
-          <a className="signin-pill" href={`${API_BASE_URL}/login?source=extension`} target="_blank" rel="noreferrer">
-            Sign in
-          </a>
         )}
       </div>
 

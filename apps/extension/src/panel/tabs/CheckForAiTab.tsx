@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { createCheck } from "../../lib/api";
 import { notifyCreditsChanged } from "../../lib/events";
-import { API_BASE_URL } from "../../lib/config";
 import { countWords, creditsForWordCount, type CreateCheckResponse } from "@ai-checker/shared-types";
 import ResultCard, { describeCheckError } from "../../components/ResultCard";
 
@@ -64,19 +63,17 @@ export default function CheckForAiTab({
   return (
     <div className="check-tab">
       {response && !response.ok && response.error === "unauthorized" && (
-        <p
-          className="muted"
-          style={{ marginTop: 0, marginBottom: 12, display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}
-        >
-          Sign in to check for AI.
-          <a
-            className="signin-pill"
-            href={`${API_BASE_URL}/login?source=extension`}
-            target="_blank"
-            rel="noreferrer"
-          >
-            Sign in
-          </a>
+        <p className="muted" style={{ marginTop: 0, marginBottom: 12 }}>
+          {/* Header's own Sign-in pill is always visible directly above,
+              on every tab — no need to duplicate it here (see
+              apps/extension/src/panel/components/Header.tsx). Only the
+              wording changes based on `reason`: reaching the trial's own
+              limit or the shared daily cap both mean "you had free
+              checks and used them", a different situation from any other
+              unauthenticated attempt. */}
+          {response.reason === "trial_exhausted" || response.reason === "anon_daily_cap_reached"
+            ? "You've used your 2 free checks — sign in to keep going."
+            : "Sign in to check for AI."}
         </p>
       )}
       {response && !response.ok && response.error !== "unauthorized" && (

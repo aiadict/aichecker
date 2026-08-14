@@ -55,11 +55,16 @@ function LoginForm() {
             options: {
               // Points Supabase's confirmation email at our own server-side
               // exchange route (see src/app/auth/confirm/route.ts) instead
-              // of its default client-side-only auto-detect, and carries
-              // through where to land afterwards — back to the extension
-              // handoff if that's where sign-up started, same as sign-in.
+              // of its default client-side-only auto-detect. For the
+              // extension flow, lands on /extension-connected rather than
+              // back on this form — /auth/confirm is a pure server redirect
+              // with no client JS, so it can never run handleSubmit's
+              // postMessage handoff below; /extension-connected exists
+              // specifically to do that handoff after the fact instead of
+              // silently leaving the extension signed out while the web
+              // session is already live.
               emailRedirectTo: `${window.location.origin}/auth/confirm?next=${encodeURIComponent(
-                isExtensionSource ? "/login?source=extension" : redirectTo
+                isExtensionSource ? "/extension-connected?source=extension" : redirectTo
               )}`,
             },
           })
@@ -73,6 +78,19 @@ function LoginForm() {
     }
 
     if (mode === "sign-up" && !data.session) {
+      // Supabase's signUp() deliberately returns success (no error) for an
+      // email that already has a CONFIRMED account too — same response
+      // shape as a genuine new signup, specifically to avoid leaking which
+      // emails are registered via an explicit error. The documented way to
+      // tell the two apart on our side: a real new signup's user object has
+      // a non-empty identities array; an already-registered email's comes
+      // back empty. Confirmed live: without this check, re-signing-up with
+      // an existing email silently showed "check your email" with no email
+      // ever actually sent.
+      if (data.user?.identities?.length === 0) {
+        setError('An account with this email already exists. Sign in instead, or use "Forgot password?" if you don\'t remember it.');
+        return;
+      }
       setStatus("Check your email to confirm your account, then come back and sign in.");
       return;
     }

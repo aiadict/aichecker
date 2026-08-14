@@ -102,7 +102,15 @@ export type CreateCheckResponse =
   | { ok: true; result: CheckResult; creditsRemaining: number }
   | { ok: false; error: "insufficient_credits"; creditsRemaining: number }
   | { ok: false; error: "daily_cap_reached" }
-  | { ok: false; error: "unauthorized" }
+  | {
+      ok: false;
+      error: "unauthorized";
+      // Populated only by /api/checks' anonymous-trial branch — distinguishes
+      // otherwise-identical 401s (missing device id, trial kill-switch off,
+      // trial/cap exhausted, RPC failure) that used to collapse into the same
+      // response, indistinguishable from "not signed in" client-side.
+      reason?: "no_device_id" | "trial_disabled" | "trial_exhausted" | "anon_daily_cap_reached" | "rpc_failed";
+    }
   | { ok: false; error: "text_too_short" | "text_too_long" }
   | { ok: false; error: "upstream_error"; message: string };
 
