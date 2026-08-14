@@ -46,7 +46,7 @@ export default function RateUsPrompt() {
     } else {
       window.open(CHROME_STORE_URL, "_blank", "noopener");
     }
-    logRating({ id, rating: n });
+    logRating({ id, rating: n, appVersion: chrome.runtime.getManifest().version });
     setHasRated();
     setHasRatedState(true);
   }

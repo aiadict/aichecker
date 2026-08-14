@@ -137,6 +137,7 @@ export interface TrialStatusResponse {
 export interface LogRatingRequest {
   id: string;
   rating: number;
+  appVersion?: string;
 }
 
 const NON_HUMAN_LABELS: Prediction[] = ["ai", "mixed"];
