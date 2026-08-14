@@ -46,5 +46,11 @@ export async function GET(request: NextRequest) {
   console.error("Auth confirmation failed", error);
   const loginUrl = new URL("/login", origin);
   loginUrl.searchParams.set("error", "confirmation_failed");
+  // Lets /login infer which flow failed (password reset vs. everything
+  // else) from the same `next` value this route was originally given —
+  // more robust than trying to pass a `type` through, since a PKCE
+  // `code`-based exchange (unlike token_hash+type) doesn't reliably
+  // carry an explicit type at all.
+  loginUrl.searchParams.set("next", next);
   return NextResponse.redirect(loginUrl);
 }

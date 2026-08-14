@@ -1,10 +1,11 @@
 "use client";
 
-import { Suspense, useState, type FormEvent } from "react";
+import { Suspense, useEffect, useState, type FormEvent } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 
 type Mode = "sign-in" | "sign-up" | "forgot-password";
+type ErrorVariant = "generic" | "duplicate_email" | "confirmation_failed";
 
 export default function LoginPage() {
   return (
@@ -33,16 +34,55 @@ function LoginForm() {
   const isExtensionSource = searchParams.get("source") === "extension";
   const redirectTo = safeRedirectTarget(searchParams.get("redirectTo"));
 
-  const [mode, setMode] = useState<Mode>("sign-in");
+  // Defaults to whatever the extension's Header pill decided (see
+  // apps/extension/src/panel/components/Header.tsx's hasEverSignedIn
+  // check) — a device that's never actually signed in lands here on
+  // Sign-up instead of a Sign-in form asking for credentials it doesn't
+  // have yet. Only affects the STARTING mode; switching freely between
+  // sign-in/sign-up/forgot-password below is unchanged, so a wrong guess
+  // costs one click, not a dead end.
+  const [mode, setMode] = useState<Mode>(searchParams.get("mode") === "signup" ? "sign-up" : "sign-in");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [errorVariant, setErrorVariant] = useState<ErrorVariant>("generic");
+  // Which flow failed — decides what "Request a new link" should do
+  // below (send them to Forgot-password vs. Sign-up). Tracked
+  // separately from `mode` since the effect below may itself change
+  // `mode`, and inferring context back out of `mode` later would break
+  // the moment the user switches modes manually.
+  const [confirmationFailedContext, setConfirmationFailedContext] = useState<"recovery" | "other" | null>(null);
   const [status, setStatus] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    // /auth/confirm redirects here on a failed token/code exchange —
+    // most commonly a password-reset or signup-confirmation link opened
+    // in a different browser than the one that requested it (PKCE flow
+    // ties the exchange to the originating browser by design, as an
+    // anti-hijacking property — confirmed live by tracing exactly what
+    // Supabase's own redirect carries for a recovery link). This was
+    // previously silently ignored: the query param existed but nothing
+    // ever read it, leaving the user on a bare sign-in form with zero
+    // explanation for why they'd landed there.
+    if (searchParams.get("error") !== "confirmation_failed") return;
+    const failedNext = searchParams.get("next") ?? "";
+    const isRecovery = failedNext.includes("reset-password");
+    setErrorVariant("confirmation_failed");
+    setConfirmationFailedContext(isRecovery ? "recovery" : "other");
+    setError(
+      isRecovery
+        ? "This password reset link couldn't be verified — for security, reset links only work in the same browser you requested them from. Request a new one below."
+        : "This link couldn't be verified — it may have expired, already been used, or been opened in a different browser than the one that requested it."
+    );
+    if (isRecovery) setMode("forgot-password");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setError(null);
+    setErrorVariant("generic");
     setStatus(null);
     setLoading(true);
 
@@ -88,7 +128,8 @@ function LoginForm() {
       // an existing email silently showed "check your email" with no email
       // ever actually sent.
       if (data.user?.identities?.length === 0) {
-        setError('An account with this email already exists. Sign in instead, or use "Forgot password?" if you don\'t remember it.');
+        setErrorVariant("duplicate_email");
+        setError("An account with this email already exists.");
         return;
       }
       // Extension-sourced signups get an explicit instruction to return to
@@ -143,6 +184,7 @@ function LoginForm() {
   async function handleForgotPassword(e: FormEvent) {
     e.preventDefault();
     setError(null);
+    setErrorVariant("generic");
     setStatus(null);
     setLoading(true);
 
@@ -244,7 +286,58 @@ function LoginForm() {
               <path d="M12 8v5" strokeLinecap="round" />
               <circle cx="12" cy="16" r="1" fill="currentColor" stroke="none" />
             </svg>
-            <span>{error}</span>
+            {errorVariant === "duplicate_email" ? (
+              <span>
+                {error}{" "}
+                <button
+                  type="button"
+                  className="link-button"
+                  onClick={() => {
+                    setMode("sign-in");
+                    setError(null);
+                    setErrorVariant("generic");
+                  }}
+                >
+                  Sign in
+                </button>{" "}
+                instead, or{" "}
+                <button
+                  type="button"
+                  className="link-button"
+                  onClick={() => {
+                    setMode("forgot-password");
+                    setError(null);
+                    setErrorVariant("generic");
+                  }}
+                >
+                  reset your password
+                </button>{" "}
+                if you don&apos;t remember it.
+              </span>
+            ) : errorVariant === "confirmation_failed" ? (
+              <span>
+                {error}{" "}
+                {/* Recovery failures already sit on the forgot-password
+                    form (see the effect above) — its own "Send reset
+                    link" button already covers this, a second one here
+                    would be redundant. */}
+                {confirmationFailedContext === "recovery" ? null : (
+                  <button
+                    type="button"
+                    className="link-button"
+                    onClick={() => {
+                      setMode("sign-up");
+                      setError(null);
+                      setErrorVariant("generic");
+                    }}
+                  >
+                    Sign up again
+                  </button>
+                )}
+              </span>
+            ) : (
+              <span>{error}</span>
+            )}
           </div>
         )}
         {status && (
