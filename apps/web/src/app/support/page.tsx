@@ -148,7 +148,7 @@ export default function SupportPage() {
       <div className="card" style={{ marginTop: 8 }}>
         <h3>Still stuck?</h3>
         <p style={{ marginBottom: 0 }}>
-          Email <a href="mailto:support@werida.io">support@werida.io</a> a human reads
+          Email <a href="mailto:support@werida.io">support@werida.io</a> - a human reads
           every message.
         </p>
       </div>
