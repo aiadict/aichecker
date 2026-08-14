@@ -31,7 +31,7 @@ export default function SupportPage() {
         <h3>Get in touch</h3>
         <p>
           Email <a href="mailto:support@werida.io">support@werida.io</a> and we&apos;ll get back
-          to you. That&apos;s the fastest way to reach us right now — include what you were doing
+          to you. That&apos;s the fastest way to reach us right now - include what you were doing
           when something went wrong if you can, it helps a lot.
         </p>
       </div>
@@ -148,7 +148,7 @@ export default function SupportPage() {
       <div className="card" style={{ marginTop: 8 }}>
         <h3>Still stuck?</h3>
         <p style={{ marginBottom: 0 }}>
-          Email <a href="mailto:support@werida.io">support@werida.io</a> — a real person reads
+          Email <a href="mailto:support@werida.io">support@werida.io</a> a human reads
           every message.
         </p>
       </div>
