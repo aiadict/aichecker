@@ -2,12 +2,11 @@ import { useEffect, useState } from "react";
 import Header from "./components/Header";
 import CheckForAiTab from "./tabs/CheckForAiTab";
 import HistoryTab from "./tabs/HistoryTab";
-import RateUsTab from "./tabs/RateUsTab";
 import SettingsTab from "./tabs/SettingsTab";
 import { consumePendingSelection, onPendingSelectionSet } from "../lib/storage";
 import { API_BASE_URL } from "../lib/config";
 
-type TabKey = "check" | "history" | "rate" | "settings";
+type TabKey = "check" | "history" | "settings";
 
 export default function App() {
   const [tab, setTab] = useState<TabKey>("check");
@@ -64,7 +63,6 @@ export default function App() {
       <div className="tabpanel">
         {tab === "check" && <CheckForAiTab prefillText={prefillText} autoRunToken={autoRunToken} />}
         {tab === "history" && <HistoryTab />}
-        {tab === "rate" && <RateUsTab />}
         {tab === "settings" && <SettingsTab />}
       </div>
       <nav className="icon-bar">
@@ -107,17 +105,6 @@ export default function App() {
           </svg>
           <span>Contact</span>
         </a>
-
-        <button
-          className={`icon-bar-item ${tab === "rate" ? "active" : ""}`}
-          onClick={() => setTab("rate")}
-          aria-label="Rate us"
-        >
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round">
-            <path d="M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z" />
-          </svg>
-          <span>Rate us</span>
-        </button>
 
         <button
           className={`icon-bar-item ${tab === "settings" ? "active" : ""}`}

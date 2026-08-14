@@ -16,6 +16,7 @@ const KEYS = {
   settings: "settings",
   pendingSelection: "pendingSelection",
   deviceId: "deviceId",
+  hasRated: "hasRated",
 } as const;
 
 export interface AuthSession {
@@ -60,6 +61,24 @@ export async function getOrCreateDeviceId(): Promise<string> {
   const id = crypto.randomUUID();
   await chrome.storage.local.set({ [KEYS.deviceId]: id });
   return id;
+}
+
+/**
+ * Whether the user has ever clicked a star on the "Enjoying AI Checker?"
+ * prompt (see panel/components/RateUsPrompt.tsx) — clicking any star
+ * (1-5) counts as "rated" and hides the prompt for good, since that
+ * click already redirects them to the feedback form or the Chrome Web
+ * Store review page; there's nothing more for the prompt itself to do.
+ * Lives in .local like everything else here — no reason for it to
+ * follow a Google account across machines.
+ */
+export async function getHasRated(): Promise<boolean> {
+  const { [KEYS.hasRated]: value } = await chrome.storage.local.get(KEYS.hasRated);
+  return value === true;
+}
+
+export async function setHasRated(): Promise<void> {
+  await chrome.storage.local.set({ [KEYS.hasRated]: true });
 }
 
 export async function getSettings(): Promise<ExtensionSettings> {

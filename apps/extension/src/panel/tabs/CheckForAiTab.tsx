@@ -4,6 +4,7 @@ import { notifyCreditsChanged } from "../../lib/events";
 import { onAuthSessionChanged } from "../../lib/storage";
 import { countWords, creditsForWordCount, type CreateCheckResponse } from "@ai-checker/shared-types";
 import ResultCard, { describeCheckError } from "../../components/ResultCard";
+import RateUsPrompt from "../components/RateUsPrompt";
 
 // Word-based, not character-based — matches the backend's own minimum
 // (apps/web/src/app/api/checks/route.ts) exactly, via the same countWords
@@ -131,6 +132,8 @@ export default function CheckForAiTab({
       <button className="primary-button" disabled={belowMinimum || loading} onClick={() => handleCheck()}>
         {loading ? "Checking…" : "Check for AI"}
       </button>
+
+      <RateUsPrompt />
     </div>
   );
 }
