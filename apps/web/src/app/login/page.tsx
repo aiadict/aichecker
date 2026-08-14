@@ -91,7 +91,17 @@ function LoginForm() {
         setError('An account with this email already exists. Sign in instead, or use "Forgot password?" if you don\'t remember it.');
         return;
       }
-      setStatus("Check your email to confirm your account, then come back and sign in.");
+      // Extension-sourced signups get an explicit instruction to return to
+      // the extension specifically, not just "sign in" — confirming the
+      // email signs the user in here on werida.io only (see
+      // extension-connected/page.tsx's doc comment for why that can't be
+      // made fully automatic), and "come back and sign in" alone left
+      // users unsure where "back" even meant.
+      setStatus(
+        isExtensionSource
+          ? "Check your email to confirm your account. Once confirmed, open the AI Checker extension and click Sign in there to finish."
+          : "Check your email to confirm your account, then come back and sign in."
+      );
       return;
     }
 

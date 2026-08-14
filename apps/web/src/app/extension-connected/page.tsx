@@ -29,8 +29,11 @@ export default function ExtensionConnectedPage() {
  * different browser/device than the one with the extension installed
  * (common — e.g. a phone's Mail app), this page still succeeds on the
  * web side but there's no content script listening there to catch the
- * message. Copy below accounts for that instead of promising the
- * extension is definitely signed in.
+ * message. The postMessage handoff above is therefore treated as
+ * best-effort, not guaranteed — copy below always leads with "open the
+ * extension and click Sign in" as the one path that reliably works
+ * (same one already proven live), rather than implying the extension is
+ * definitely signed in already.
  */
 function ExtensionConnectedBody() {
   const [checking, setChecking] = useState(true);
@@ -67,9 +70,9 @@ function ExtensionConnectedBody() {
               <path d="M8 12.5l2.5 2.5L16 9.5" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
             <span>
-              You&apos;re signed in on werida.io. If you&apos;re viewing this in the same browser as the
-              AI Checker extension, it&apos;s signed in too — otherwise, open the extension and sign in
-              there.
+              You&apos;re signed in on werida.io. Now open the AI Checker extension and click Sign in
+              there with the same email and password — if it&apos;s already showing your credits, you&apos;re
+              all set.
             </span>
           </div>
         ) : (
