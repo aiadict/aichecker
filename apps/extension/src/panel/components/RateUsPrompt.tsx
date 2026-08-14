@@ -22,6 +22,14 @@ export default function RateUsPrompt() {
   // value loads.
   const [hasRated, setHasRatedState] = useState<boolean | null>(null);
   const [hovered, setHovered] = useState(0);
+  // Select-then-confirm, not a single click — clicking a star only
+  // "locks" the display at that count (persisting after the mouse
+  // leaves, unlike the plain hover preview); clicking a DIFFERENT star
+  // just moves the lock. Only clicking the star that's already locked a
+  // second time actually fires the redirect. Guards against exactly the
+  // kind of misclick that's otherwise irreversible here — a wrong star
+  // hit immediately opens a new tab and logs a rating with no undo.
+  const [lockedRating, setLockedRating] = useState(0);
 
   useEffect(() => {
     getHasRated().then(setHasRatedState);
@@ -39,7 +47,7 @@ export default function RateUsPrompt() {
   // unawaited; if the user later writes a comment on /feedback, that
   // page reuses this same id so the two merge into one row instead of
   // creating a second (see supabase/migrations/20260814000002_feedback_ratings.sql).
-  function handleClick(n: number) {
+  function confirmRating(n: number) {
     const id = crypto.randomUUID();
     if (n <= 3) {
       window.open(`${API_BASE_URL}/feedback?rating=${n}&id=${id}`, "_blank", "noopener");
@@ -51,21 +59,32 @@ export default function RateUsPrompt() {
     setHasRatedState(true);
   }
 
+  function handleStarClick(n: number) {
+    if (n === lockedRating) {
+      confirmRating(n);
+    } else {
+      setLockedRating(n);
+    }
+  }
+
   if (hasRated !== false) return null;
+
+  const displayCount = hovered || lockedRating;
 
   return (
     <div style={{ textAlign: "center", marginTop: 20 }}>
       <p style={{ margin: "0 0 10px", fontWeight: 600, fontSize: 13.5 }}>Enjoying AI Checker?</p>
       <div style={{ display: "flex", justifyContent: "center", gap: 8 }} onMouseLeave={() => setHovered(0)}>
         {[1, 2, 3, 4, 5].map((n) => {
-          const filled = n <= hovered;
+          const filled = n <= displayCount;
+          const isConfirmStep = n === lockedRating;
           return (
             <button
               key={n}
               type="button"
-              aria-label={`${n} star${n === 1 ? "" : "s"}`}
+              aria-label={isConfirmStep ? `Confirm ${n} star${n === 1 ? "" : "s"}` : `Rate ${n} star${n === 1 ? "" : "s"}`}
               onMouseEnter={() => setHovered(n)}
-              onClick={() => handleClick(n)}
+              onClick={() => handleStarClick(n)}
               style={{ background: "none", border: "none", padding: 0, cursor: "pointer", lineHeight: 0 }}
             >
               <svg
@@ -83,6 +102,11 @@ export default function RateUsPrompt() {
           );
         })}
       </div>
+      {lockedRating > 0 && (
+        <p className="muted" style={{ fontSize: 11.5, margin: "8px 0 0" }}>
+          Click again to confirm
+        </p>
+      )}
     </div>
   );
 }
