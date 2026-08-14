@@ -9,7 +9,12 @@ export default function HomePage() {
           AI Checker highlights AI-generated text anywhere on the web - just select and click the
           AI Checker icon.
         </p>
-        <a className="cta-button" href="https://chromewebstore.google.com" target="_blank" rel="noreferrer">
+        <a
+          className="cta-button"
+          href="https://chromewebstore.google.com/detail/ai-checker/onmgheoplmjcaamolnfecbpanekfjlnl"
+          target="_blank"
+          rel="noreferrer"
+        >
           Add to Chrome - it&apos;s free
         </a>
       </section>
