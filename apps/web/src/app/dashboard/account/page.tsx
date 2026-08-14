@@ -42,8 +42,9 @@ export default async function AccountSettingsPage() {
       <div className="card" style={{ borderColor: "#fecaca" }}>
         <h3>Delete account</h3>
         <p className="muted">
-          Permanently deletes your account and everything tied to it - check history, settings,
-          and billing link. This can&apos;t be undone.
+          Permanently deletes your account and everything tied to it - check history, remaining
+          credits, settings, and billing link. This can&apos;t be undone, and re-registering with
+          the same email later starts over at 0 credits.
           {planKey !== "free" && " Cancel your paid plan from the dashboard's \"Manage billing\" first."}
         </p>
         <DeleteAccountButton />

@@ -11,8 +11,9 @@ export default function DeleteAccountButton() {
   async function handleDelete() {
     if (
       !confirm(
-        "Delete your account? This permanently removes your account, check history, and billing " +
-          "records after any required retention period - it can't be undone."
+        "Delete your account? This permanently removes your account, check history, and remaining " +
+          "credits, and billing records after any required retention period - it can't be undone. " +
+          "Re-registering with the same email later starts over at 0 credits."
       )
     ) {
       return;
