@@ -79,7 +79,7 @@ export default async function DashboardPage() {
             already happened, so this stays a permanent, low-key nudge
             rather than something we try to conditionally show/hide. */}
         <p style={{ margin: 0, color: "var(--brand)", fontSize: 13.5, fontWeight: 500 }}>
-          Using the extension? Click Sign in in its panel too.
+          You&apos;re logged in here — click &quot;Sign in&quot; in the extension too.
         </p>
       </div>
 
