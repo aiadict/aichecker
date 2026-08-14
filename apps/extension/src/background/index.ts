@@ -3,7 +3,7 @@
 // chrome.sidePanel.open() directly), and handles the auth session handoff
 // from the /login page.
 
-import { setAuthSession, setHasEverSignedIn, setPendingSelection } from "../lib/storage";
+import { setAuthSession, setPendingSelection } from "../lib/storage";
 import { API_BASE_URL } from "../lib/config";
 
 const CONTEXT_MENU_ID = "ai-checker-check-selection";
@@ -79,11 +79,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       });
       sendResponse({ ok: true });
     })();
-    return true;
-  }
-
-  if (message?.type === "ai-checker/mark-signed-up") {
-    setHasEverSignedIn().then(() => sendResponse({ ok: true }));
     return true;
   }
 

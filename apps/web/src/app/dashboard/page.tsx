@@ -67,7 +67,21 @@ export default async function DashboardPage() {
         <h1>Dashboard</h1>
         <SignOutButton />
       </div>
-      <p className="muted">{user.email}</p>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", flexWrap: "wrap", gap: "4px 16px" }}>
+        <p className="muted" style={{ margin: 0 }}>
+          {user.email}
+        </p>
+        {/* Being signed in here (a real cookie session on werida.io) doesn't
+            mean the extension itself is signed in — that's a separate,
+            device-local session the extension only picks up once the user
+            clicks Sign in inside its own panel and enters credentials. No
+            reliable signal exists on this side to tell whether that's
+            already happened, so this stays a permanent, low-key nudge
+            rather than something we try to conditionally show/hide. */}
+        <p style={{ margin: 0, color: "var(--brand)", fontSize: 13.5, fontWeight: 500 }}>
+          Using the extension? Click Sign in in its panel too.
+        </p>
+      </div>
 
       {paymentIssue && (
         <div className="card" style={{ borderColor: "#b91c1c", background: "#fef2f2" }}>

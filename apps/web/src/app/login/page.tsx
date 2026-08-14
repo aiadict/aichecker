@@ -34,14 +34,16 @@ function LoginForm() {
   const isExtensionSource = searchParams.get("source") === "extension";
   const redirectTo = safeRedirectTarget(searchParams.get("redirectTo"));
 
-  // Defaults to whatever the extension's Header pill decided (see
-  // apps/extension/src/panel/components/Header.tsx's hasEverSignedIn
-  // check) — a device that's never actually signed in lands here on
-  // Sign-up instead of a Sign-in form asking for credentials it doesn't
-  // have yet. Only affects the STARTING mode; switching freely between
-  // sign-in/sign-up/forgot-password below is unchanged, so a wrong guess
-  // costs one click, not a dead end.
-  const [mode, setMode] = useState<Mode>(searchParams.get("mode") === "signup" ? "sign-up" : "sign-in");
+  // Always starts on Sign-in. An earlier version guessed sign-in vs.
+  // sign-up per device (via the extension's hasEverSignedIn flag), but
+  // that guess depended on a session handoff that turned out to be
+  // unreliable — confirmed live that Supabase's confirmation email never
+  // actually carries our custom redirect through, so a device that HAD
+  // signed up still got sent back to Sign-up. Dropped in favor of the
+  // auth-mode-toggle buttons below being equally prominent either way —
+  // a true first-timer is one obvious click from Sign-up, no guessing
+  // required, and it can't ever be wrong.
+  const [mode, setMode] = useState<Mode>("sign-in");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -118,15 +120,6 @@ function LoginForm() {
     }
 
     if (mode === "sign-up" && !data.session) {
-      // Tells the extension this device now has an account, immediately —
-      // see storage.ts's setHasEverSignedIn doc comment for why this can't
-      // just wait for the email-confirmation round trip (which depends on
-      // a redirect_to the user's browser/tab situation can easily break).
-      // Covers both branches below: a fresh signup pending confirmation,
-      // and a duplicate-email hit (that also means an account exists).
-      if (isExtensionSource) {
-        window.postMessage({ type: "ai-checker/signup-started" }, window.location.origin);
-      }
       // Supabase's signUp() deliberately returns success (no error) for an
       // email that already has a CONFIRMED account too — same response
       // shape as a genuine new signup, specifically to avoid leaking which
@@ -227,6 +220,37 @@ function LoginForm() {
               ? "Signing in for the AI Checker extension."
               : "Save your check history, manage billing, and keep your credits in sync across devices."}
         </p>
+
+        {mode !== "forgot-password" && (
+          <div className="auth-mode-toggle" role="tablist" aria-label="Sign in or sign up" style={{ maxWidth: 360, margin: "0 auto" }}>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={mode === "sign-in"}
+              className={`auth-mode-btn${mode === "sign-in" ? " active" : ""}`}
+              onClick={() => {
+                setMode("sign-in");
+                setError(null);
+                setStatus(null);
+              }}
+            >
+              Sign in
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={mode === "sign-up"}
+              className={`auth-mode-btn${mode === "sign-up" ? " active" : ""}`}
+              onClick={() => {
+                setMode("sign-up");
+                setError(null);
+                setStatus(null);
+              }}
+            >
+              Sign up
+            </button>
+          </div>
+        )}
 
         {mode === "forgot-password" ? (
           <form onSubmit={handleForgotPassword} style={{ maxWidth: 360, margin: "0 auto" }}>
@@ -359,24 +383,8 @@ function LoginForm() {
           </div>
         )}
 
-        <p className="muted" style={{ textAlign: "center" }}>
-          {mode === "sign-in" && (
-            <>
-              No account?{" "}
-              <button className="link-button" onClick={() => setMode("sign-up")}>
-                Sign up
-              </button>
-            </>
-          )}
-          {mode === "sign-up" && (
-            <>
-              Already have an account?{" "}
-              <button className="link-button" onClick={() => setMode("sign-in")}>
-                Sign in
-              </button>
-            </>
-          )}
-          {mode === "forgot-password" && (
+        {mode === "forgot-password" && (
+          <p className="muted" style={{ textAlign: "center" }}>
             <button
               className="link-button"
               onClick={() => {
@@ -387,8 +395,8 @@ function LoginForm() {
             >
               Back to sign in
             </button>
-          )}
-        </p>
+          </p>
+        )}
       </div>
     </div>
   );

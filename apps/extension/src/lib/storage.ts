@@ -17,7 +17,6 @@ const KEYS = {
   pendingSelection: "pendingSelection",
   deviceId: "deviceId",
   hasRated: "hasRated",
-  hasEverSignedIn: "hasEverSignedIn",
 } as const;
 
 export interface AuthSession {
@@ -36,51 +35,13 @@ export async function getAuthSession(): Promise<AuthSession | null> {
   return (session as AuthSession | undefined) ?? null;
 }
 
-/**
- * Stored by the background worker after the /login page hands off a
- * session — see src/content/index.ts. Also flips hasEverSignedIn the
- * first time a real session lands, permanently — see
- * getHasEverSignedIn's doc comment for why this needs to be one-way
- * (never reset on logout).
- */
+/** Stored by the background worker after the /login page hands off a session — see src/content/index.tsx. */
 export async function setAuthSession(session: AuthSession | null): Promise<void> {
   if (session) {
-    await chrome.storage.local.set({ [KEYS.authSession]: session, [KEYS.hasEverSignedIn]: true });
+    await chrome.storage.local.set({ [KEYS.authSession]: session });
   } else {
     await chrome.storage.local.remove(KEYS.authSession);
   }
-}
-
-/**
- * Whether this install has EVER completed a real sign-in — used to pick
- * the Sign-in pill's destination mode (see Header.tsx). A brand new user
- * clicking "Sign in" with no account yet lands on a sign-in FORM asking
- * for credentials they don't have, which isn't obvious to switch away
- * from (confirmed confusing in practice) — defaulting straight to
- * Sign-up fixes that for genuine first-timers. Deliberately never reset
- * on logout: once we know this device has a real account, a later
- * logged-out state almost always means "log back into that account", not
- * "create a new one" — resetting the flag on logout would wrongly send a
- * returning user back to a sign-up form instead.
- */
-export async function getHasEverSignedIn(): Promise<boolean> {
-  const { [KEYS.hasEverSignedIn]: value } = await chrome.storage.local.get(KEYS.hasEverSignedIn);
-  return value === true;
-}
-
-/**
- * Set as soon as a sign-up succeeds (or a duplicate-email is detected) on
- * /login — see login/page.tsx's postMessage("ai-checker/signup-started").
- * Deliberately NOT gated on the session handoff actually completing: that
- * handoff requires the email confirmation link to land back in a tab with
- * this content script AND Supabase's redirect_to to resolve to our own
- * route rather than falling back to its bare Site URL, both of which can
- * silently fail. Submitting the sign-up form itself is a much more
- * reliable "this device now has an account" signal, available immediately
- * in the same tab, well before email confirmation ever happens.
- */
-export async function setHasEverSignedIn(): Promise<void> {
-  await chrome.storage.local.set({ [KEYS.hasEverSignedIn]: true });
 }
 
 /**

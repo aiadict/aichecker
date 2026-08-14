@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { getAuthToken, getHasEverSignedIn, onAuthSessionChanged } from "../../lib/storage";
+import { getAuthToken, onAuthSessionChanged } from "../../lib/storage";
 import { onCreditsChanged } from "../../lib/events";
 import { getMe, getTrialStatus } from "../../lib/api";
 import { API_BASE_URL } from "../../lib/config";
@@ -14,14 +14,6 @@ export default function Header() {
   const [signedIn, setSignedIn] = useState<boolean | null>(null);
   const [me, setMe] = useState<MeResponse | null>(null);
   const [trial, setTrial] = useState<TrialStatusResponse | null>(null);
-  // Defaults false (assume first-timer) rather than true — a brief
-  // false-negative (an existing user momentarily seeing a Sign-up-mode
-  // link before this loads) is a lot cheaper than the reverse.
-  const [hasEverSignedIn, setHasEverSignedIn] = useState(false);
-
-  useEffect(() => {
-    getHasEverSignedIn().then(setHasEverSignedIn);
-  }, []);
 
   useEffect(() => {
     function refresh() {
@@ -104,7 +96,7 @@ export default function Header() {
             )}
             <a
               className="signin-pill"
-              href={`${API_BASE_URL}/login?source=extension${hasEverSignedIn ? "" : "&mode=signup"}`}
+              href={`${API_BASE_URL}/login?source=extension`}
               target="_blank"
               rel="noreferrer"
             >
