@@ -4,6 +4,7 @@ import type {
   CheckResult,
   MeResponse,
   TrialStatusResponse,
+  LogRatingRequest,
 } from "@ai-checker/shared-types";
 import { API_BASE_URL, SUPABASE_URL, SUPABASE_ANON_KEY } from "./config";
 import { getAuthSession, setAuthSession, getOrCreateDeviceId, type AuthSession } from "./storage";
@@ -123,5 +124,24 @@ export async function getTrialStatus(): Promise<TrialStatusResponse> {
   const res = await authedFetch("/api/trial");
   if (!res.ok) return { trialCreditsRemaining: 0 };
   return res.json();
+}
+
+/**
+ * Fire-and-forget — callers deliberately don't await this before calling
+ * window.open() for the star-click redirect (see RateUsTab.tsx), since
+ * that has to run synchronously inside the click handler or Chrome's
+ * popup blocker can silently kill it. Errors are swallowed: a failed
+ * rating log shouldn't surface as a visible failure for what the user
+ * already sees as "done" (the new tab opened).
+ */
+export async function logRating(req: LogRatingRequest): Promise<void> {
+  try {
+    await authedFetch("/api/feedback/rating", {
+      method: "POST",
+      body: JSON.stringify(req),
+    });
+  } catch {
+    // Swallowed — see doc comment above.
+  }
 }
 

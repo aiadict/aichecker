@@ -14,3 +14,9 @@ export const SUPABASE_URL: string =
 export const SUPABASE_ANON_KEY: string =
   (import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined) ??
   "sb_publishable_WiOtk1G-MjjvYAxhugzwew_wvROODhO";
+
+// Used by RateUsTab's 4-5 star click — there's no documented, Google-
+// supported way to pre-fill a star count on this page, so it just links
+// straight to the listing; the user clicks "Rate and review" themselves.
+export const CHROME_STORE_URL =
+  "https://chromewebstore.google.com/detail/ai-checker/onmgheoplmjcaamolnfecbpanekfjlnl";

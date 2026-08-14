@@ -126,6 +126,19 @@ export interface TrialStatusResponse {
   trialCreditsRemaining: number;
 }
 
+// Backs the extension's "Rate us" tab — see apps/extension/src/panel/tabs/
+// RateUsTab.tsx and apps/web/src/app/api/feedback/rating/route.ts. `id` is
+// generated client-side (crypto.randomUUID()) at the moment of the star
+// click, not returned from the server — window.open() has to run
+// synchronously inside the click handler to avoid the popup blocker, so
+// there's no round-trip to wait on first. The same id is reused if the
+// user later writes a comment on apps/web's /feedback page, so the API
+// route upserts onto one row per rating instead of inserting a second one.
+export interface LogRatingRequest {
+  id: string;
+  rating: number;
+}
+
 const NON_HUMAN_LABELS: Prediction[] = ["ai", "mixed"];
 
 /**
