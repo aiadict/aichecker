@@ -69,7 +69,7 @@ export default function SettingsTab() {
         // for why that handoff can't be made fully automatic) — this is
         // the recovery path, reusing the Sign-in pill above rather than a
         // second button, since it's the exact same destination.
-        <p className="muted" style={{ fontSize: 12.5, marginTop: -8, marginBottom: 16 }}>
+        <p style={{ fontSize: 12.5, marginTop: -8, marginBottom: 16, color: "var(--brand)", fontWeight: 600 }}>
           Just signed up? Confirm your email, then tap Sign in above — the same email and password
           you just used.
         </p>

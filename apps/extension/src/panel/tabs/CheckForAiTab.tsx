@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { createCheck } from "../../lib/api";
 import { notifyCreditsChanged } from "../../lib/events";
+import { onAuthSessionChanged } from "../../lib/storage";
 import { countWords, creditsForWordCount, type CreateCheckResponse } from "@ai-checker/shared-types";
 import ResultCard, { describeCheckError } from "../../components/ResultCard";
 
@@ -59,6 +60,19 @@ export default function CheckForAiTab({
     handleCheck(prefillText);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [autoRunToken]);
+
+  useEffect(() => {
+    // Clears a stale "sign in to keep going" message the moment the user
+    // actually signs in elsewhere (e.g. the /login?source=extension tab)
+    // — mirrors Header.tsx/SettingsTab.tsx's own onAuthSessionChanged
+    // subscription. Without this, the old unauthorized response just sat
+    // here until the user switched tabs and back, since nothing in this
+    // component was watching auth state. Only clears an unauthorized
+    // error specifically — a result card or a different error stays put.
+    return onAuthSessionChanged(() => {
+      setResponse((prev) => (prev && !prev.ok && prev.error === "unauthorized" ? null : prev));
+    });
+  }, []);
 
   return (
     <div className="check-tab">
