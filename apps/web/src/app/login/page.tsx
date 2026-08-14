@@ -212,8 +212,13 @@ function LoginForm() {
   return (
     <div className="container auth-page">
       <div className="auth-card-wrap">
-        <h1 style={{ textAlign: "center" }}>{heading}</h1>
-        <p className="muted" style={{ textAlign: "center" }}>
+        {/* Left-aligned, not centered — centered text of varying length
+            (e.g. "Sign in" vs "Create your account") visibly shifts its
+            own left edge every time the mode toggles below, which reads
+            as the whole page "jumping". Left-aligning pins that edge in
+            place, matching the card/toggle/form beneath it. */}
+        <h1>{heading}</h1>
+        <p className="muted">
           {mode === "forgot-password"
             ? "Enter your email and we'll send you a link to set a new password."
             : isExtensionSource
