@@ -1,7 +1,7 @@
 "use client";
 
 import { Suspense, useEffect, useState, type FormEvent } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 
 type Mode = "sign-in" | "sign-up" | "forgot-password";
@@ -29,7 +29,6 @@ function safeRedirectTarget(value: string | null): string {
 }
 
 function LoginForm() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const isExtensionSource = searchParams.get("source") === "extension";
   const redirectTo = safeRedirectTarget(searchParams.get("redirectTo"));
@@ -173,7 +172,19 @@ function LoginForm() {
       return;
     }
 
-    router.push(redirectTo);
+    // A plain router.push() here can silently do nothing: Next.js's client
+    // Router Cache can already hold a stale, pre-sign-in result for this
+    // exact URL (the site nav prefetches /dashboard in the background on
+    // every page load, which redirects to /login since the user wasn't
+    // authenticated yet at that point) — router.push() then reuses that
+    // cached redirect instead of re-fetching, landing back on /login with
+    // no visible error. Confirmed live with a real sign-in: the auth
+    // cookie was set correctly, but the app bounced right back to /login
+    // anyway, and only a manual full-page refresh (which bypasses the
+    // Router Cache entirely) picked up the new session. A hard navigation
+    // sidesteps the cache the same way a manual refresh does — guaranteed
+    // to hit the server fresh with the cookie that was just set.
+    window.location.href = redirectTo;
   }
 
   /**

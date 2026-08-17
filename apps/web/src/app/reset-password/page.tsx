@@ -1,7 +1,6 @@
 "use client";
 
 import { Suspense, useEffect, useState, type FormEvent } from "react";
-import { useRouter } from "next/navigation";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 
 export default function ResetPasswordPage() {
@@ -13,7 +12,6 @@ export default function ResetPasswordPage() {
 }
 
 function ResetPasswordForm() {
-  const router = useRouter();
   // Landed on here via /auth/confirm exchanging a recovery token into a
   // real session (see src/app/login/page.tsx's handleForgotPassword) —
   // that exchange is what actually authorizes the updateUser call below,
@@ -54,7 +52,14 @@ function ResetPasswordForm() {
       return;
     }
     setDone(true);
-    setTimeout(() => router.push("/dashboard"), 1500);
+    // Hard navigation, not router.push() — see login/page.tsx's matching
+    // comment. Same class of bug: a stale, pre-auth Router Cache entry for
+    // /dashboard (from the nav bar's background prefetch, before this
+    // password update established a real session) can make a soft push
+    // silently bounce back to /login instead of landing on /dashboard.
+    setTimeout(() => {
+      window.location.href = "/dashboard";
+    }, 1500);
   }
 
   if (checkingSession) return null;
