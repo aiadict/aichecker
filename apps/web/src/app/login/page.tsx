@@ -3,6 +3,7 @@
 import { Suspense, useEffect, useState, type FormEvent } from "react";
 import { useSearchParams } from "next/navigation";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
+import { postExtensionAuthSuccess } from "@/lib/extension-handoff";
 
 type Mode = "sign-in" | "sign-up" | "forgot-password";
 type ErrorVariant = "generic" | "duplicate_email" | "confirmation_failed";
@@ -188,14 +189,13 @@ function LoginForm() {
       // localStorage read) is used because the extension's isolated-world
       // content script can't read this page's localStorage directly, but it
       // shares the DOM/window and so can receive same-window messages.
-      window.postMessage(
-        {
-          type: "ai-checker/auth-success",
-          accessToken: data.session.access_token,
-          refreshToken: data.session.refresh_token,
-        },
-        window.location.origin
-      );
+      // postExtensionAuthSuccess resends for ~2s rather than once — see its
+      // own doc comment for the document_idle race this guards against
+      // (confirmed live on /extension-connected's OAuth landing case;
+      // this call site has a much wider natural margin since it only fires
+      // after a real user types credentials and clicks Submit, but costs
+      // nothing to harden the same way for a fast password-manager autofill).
+      postExtensionAuthSuccess(data.session);
       setStatus("Signed in! You can close this tab and return to the extension.");
       return;
     }

@@ -3,6 +3,7 @@
 import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
+import { postExtensionAuthSuccess } from "@/lib/extension-handoff";
 
 export default function ExtensionConnectedPage() {
   return (
@@ -34,6 +35,12 @@ export default function ExtensionConnectedPage() {
  * extension and click Sign in" as the one path that reliably works
  * (same one already proven live), rather than implying the extension is
  * definitely signed in already.
+ *
+ * postExtensionAuthSuccess (not a single postMessage call) — see its own
+ * doc comment. Confirmed live: this page reaching "connected" doesn't by
+ * itself mean the extension caught the message, since landing here from
+ * an OAuth redirect chain gives the content script's document_idle
+ * injection zero of the natural margin a typed-out /login submit has.
  */
 function ExtensionConnectedBody() {
   const [checking, setChecking] = useState(true);
@@ -44,14 +51,7 @@ function ExtensionConnectedBody() {
     supabase.auth.getSession().then(({ data }) => {
       const session = data.session;
       if (session) {
-        window.postMessage(
-          {
-            type: "ai-checker/auth-success",
-            accessToken: session.access_token,
-            refreshToken: session.refresh_token,
-          },
-          window.location.origin
-        );
+        postExtensionAuthSuccess(session);
         setConnected(true);
       }
       setChecking(false);
@@ -61,7 +61,7 @@ function ExtensionConnectedBody() {
   return (
     <div className="container auth-page">
       <div className="auth-card-wrap">
-        <h1 style={{ textAlign: "center" }}>Email confirmed</h1>
+        <h1 style={{ textAlign: "center" }}>You&apos;re signed in</h1>
 
         {checking ? null : connected ? (
           <div className="auth-status success">
@@ -70,9 +70,8 @@ function ExtensionConnectedBody() {
               <path d="M8 12.5l2.5 2.5L16 9.5" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
             <span>
-              You&apos;re signed in on werida.io. Now open the AI Checker extension and click Sign in
-              there with the same email and password - if it&apos;s already showing your credits, you&apos;re
-              all set.
+              You&apos;re signed in on werida.io. Open the AI Checker extension - it should already be
+              showing your credits. If it still says &quot;Sign in,&quot; click that and sign in there too.
             </span>
           </div>
         ) : (
