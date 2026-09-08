@@ -34,9 +34,7 @@ export default async function HistoryPage() {
     <div className="container">
       <h1>All Checks</h1>
       {checks.length === 0 ? (
-        <p className="muted">
-          No checks yet. Run one from the extension, or <code>POST /api/checks</code> locally.
-        </p>
+        <p className="muted">No checks yet. Run one from the AI Checker extension to see it here.</p>
       ) : (
         <table>
           <thead>
