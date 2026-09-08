@@ -39,12 +39,31 @@ The extension never implements its own OAuth/password UI. Instead:
 
 1. Extension's Settings tab "Sign in" opens `apps/web`'s `/login?source=extension` in a new tab.
 2. `/login` (`apps/web/src/app/login/page.tsx`) is a client component that calls Supabase Auth
-   directly (email/password today; the same handoff works for any provider added later) using
-   the browser client (`lib/supabase/client.ts`, public anon/publishable key — safe to ship).
-3. On success, if `source=extension`, the page does `window.postMessage({ type:
-   "ai-checker/auth-success", accessToken, refreshToken }, origin)` **on itself** — not a
-   redirect, not localStorage.
-4. `apps/extension`'s content script (`src/content/index.ts`) is injected on `<all_urls>`
+   directly — email/password, or "Continue with Google" (added 2026-09-08, Supabase's `google`
+   provider, Google Cloud project `ai-checker-werida`) — using the browser client
+   (`lib/supabase/client.ts`, public anon/publishable key — safe to ship). Same handoff either
+   way; a third provider added later needs zero new plumbing here.
+3. On success (email/password: same page load; Google: after the OAuth redirect chain lands back
+   on `/auth/confirm?next=...`, which exchanges the code server-side and redirects onward), if
+   `source=extension`, the relevant page calls `postExtensionAuthSuccess`
+   (`apps/web/src/lib/extension-handoff.ts`) — `window.postMessage({ type:
+   "ai-checker/auth-success", accessToken, refreshToken }, origin)` **on itself**, resent every
+   250ms for ~2s rather than once. Not a redirect, not localStorage.
+   - Email/password sign-in does this directly in `/login`'s `handleSubmit`.
+   - Google (and email-confirmation-based sign-up) land on `/extension-connected` first — a
+     dedicated page whose only job is running this same handoff using the session `/auth/confirm`
+     already established via `Set-Cookie`, since `/auth/confirm` itself is a pure server redirect
+     with no client JS to send anything.
+   - The resend-for-2s behavior (not a single send) exists because of a real, live-confirmed race:
+     `apps/extension`'s content script registers its `postMessage` listener at `run_at:
+     "document_idle"` (`manifest.config.ts`), scheduled independently of the page's own React
+     hydration. `/login`'s handoff only fires after a user types credentials and clicks Submit —
+     several seconds of natural margin. `/extension-connected`'s fires on mount, straight off an
+     OAuth redirect chain, with none — confirmed live: the page reached its own "connected" success
+     state (proving the session + a single postMessage did fire) while the extension stayed signed
+     out, because the message went out before the content script had finished injecting. Resending
+     is safe (the background handler just re-stores the same tokens) and needs no ack/handshake.
+4. `apps/extension`'s content script (`src/content/index.tsx`) is injected on `<all_urls>`
    already; when its own `window.location.origin` matches our web app's origin, it adds a
    `message` listener for exactly this event and relays it to the background worker via
    `chrome.runtime.sendMessage`, which persists it (`lib/storage.ts`'s `setAuthSession`).
@@ -53,6 +72,12 @@ The extension never implements its own OAuth/password UI. Instead:
 5. Every subsequent extension → `apps/web` API call sends the stored `accessToken` as
    `Authorization: Bearer <token>`; `apps/web/src/lib/auth.ts`'s `getAuthenticatedUser` verifies
    it against Supabase Auth (`supabase.auth.getUser(token)`) on every request.
+
+**Adding Google sign-in required zero `apps/extension` changes** — confirmed, not just
+anticipated: the postMessage listener is origin-gated, not provider- or path-gated, and
+`/extension-connected` already existed (built for the email-confirmation case) with the exact
+contract Google's redirect-based flow also needed. The only real bug surfaced was the timing race
+in point 3 above, fixed entirely in `apps/web`.
 
 **Token refresh (done):** `apps/extension/src/lib/api.ts`'s `authedFetch` retries once on a 401 —
 it calls Supabase's `token?grant_type=refresh_token` endpoint directly (no SDK needed, keeps the
