@@ -1,27 +1,47 @@
-import { useEffect, useState } from "react";
-import { createCheck } from "../../lib/api";
+import { useEffect, useRef, useState } from "react";
+import { createCheck, parseFile } from "../../lib/api";
 import { notifyCreditsChanged } from "../../lib/events";
 import { onAuthSessionChanged } from "../../lib/storage";
 import { countWords, creditsForWordCount, type CreateCheckResponse } from "@ai-checker/shared-types";
 import ResultCard, { describeCheckError } from "../../components/ResultCard";
 import RateUsPrompt from "../components/RateUsPrompt";
+import PanelSectionHeader from "../components/PanelSectionHeader";
+import ResizeHintBanner from "../components/ResizeHintBanner";
 
 // Word-based, not character-based — matches the backend's own minimum
 // (apps/web/src/app/api/checks/route.ts) exactly, via the same countWords
 // helper, so the button's enabled state and the server's validation can
 // never disagree on what "50 words" means.
 const MIN_WORDS = 50;
+// Character-based, mirroring apps/web/src/app/api/checks/route.ts's own
+// MAX_CHARS exactly — a payload-size guard, not a detection-quality one,
+// so it's checked separately from MIN_WORDS above.
+const MAX_CHARS = 50_000;
+
+const ALLOWED_EXTENSIONS = [".pdf", ".doc", ".docx", ".txt"];
+const MAX_FILE_BYTES = 10 * 1024 * 1024; // 10MB — mirrors apps/web/src/app/api/parse-file/route.ts
+
+function fileExtension(name: string): string {
+  const lower = name.toLowerCase();
+  return lower.includes(".") ? lower.slice(lower.lastIndexOf(".")) : "";
+}
 
 export default function CheckForAiTab({
   prefillText,
   autoRunToken,
+  standalone,
 }: {
   prefillText: string;
   autoRunToken?: number;
+  standalone: boolean;
 }) {
   const [text, setText] = useState(prefillText);
   const [loading, setLoading] = useState(false);
   const [response, setResponse] = useState<CreateCheckResponse | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [dragActive, setDragActive] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (prefillText) setText(prefillText);
@@ -30,6 +50,7 @@ export default function CheckForAiTab({
   const wordCount = countWords(text);
   const credits = creditsForWordCount(wordCount);
   const belowMinimum = wordCount < MIN_WORDS;
+  const aboveMaximum = text.length > MAX_CHARS;
 
   // Accepts an override so an auto-run (below) doesn't depend on `text`
   // state having already caught up to a just-arrived prefillText in the
@@ -47,6 +68,63 @@ export default function CheckForAiTab({
     } finally {
       setLoading(false);
     }
+  }
+
+  async function handleFile(file: File) {
+    setUploadError(null);
+
+    const ext = fileExtension(file.name);
+    if (!ALLOWED_EXTENSIONS.includes(ext)) {
+      setUploadError("Unsupported file type. Upload a PDF, DOCX, or TXT file.");
+      return;
+    }
+    if (file.size > MAX_FILE_BYTES) {
+      setUploadError("That file is too large (max 10MB).");
+      return;
+    }
+
+    setUploading(true);
+    const res = await parseFile(file);
+    setUploading(false);
+
+    if (!res.ok) {
+      switch (res.error) {
+        case "unrecognized_text":
+          setUploadError("Text can't be recognized - upload valid text file.");
+          break;
+        case "legacy_doc_unsupported":
+          setUploadError("We can't read old .doc files - please save this as .docx or .pdf and try again.");
+          break;
+        case "file_too_large":
+          setUploadError("That file is too large (max 10MB).");
+          break;
+        case "unsupported_type":
+          setUploadError("Unsupported file type. Upload a PDF, DOCX, or TXT file.");
+          break;
+        case "upstream_error":
+          setUploadError(res.message);
+          break;
+        default:
+          setUploadError("Something went wrong reading that file. Please try again.");
+      }
+      return;
+    }
+
+    setText(res.text);
+    setResponse(null);
+  }
+
+  function handleFileInputChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = ""; // allows re-selecting the same file consecutively
+    if (file) handleFile(file);
+  }
+
+  function handleDrop(e: React.DragEvent<HTMLDivElement>) {
+    e.preventDefault();
+    setDragActive(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file) handleFile(file);
   }
 
   useEffect(() => {
@@ -77,6 +155,8 @@ export default function CheckForAiTab({
 
   return (
     <div className="check-tab">
+      <PanelSectionHeader title="Check text" standalone={standalone} />
+
       {response && !response.ok && response.error === "unauthorized" && (
         <p className="muted" style={{ marginTop: 0, marginBottom: 12 }}>
           {/* Header's own Sign-in pill is always visible directly above,
@@ -98,12 +178,52 @@ export default function CheckForAiTab({
       )}
 
       {response?.ok && (
-        <ResultCard result={response.result} onClose={() => setResponse(null)} />
+        <ResultCard result={response.result} onClose={() => setResponse(null)} standalone={standalone} />
       )}
 
-      <div className="textarea-wrap">
+      <div className="check-text-label-row">
+        <span className="check-text-label">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="1.8">
+            <path d="M7 3h7l5 5v13a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z" strokeLinejoin="round" />
+            <path d="M14 3v5h5" strokeLinejoin="round" />
+          </svg>
+          Your text
+        </span>
+        <button
+          type="button"
+          className="upload-file-btn"
+          disabled={uploading}
+          onClick={() => fileInputRef.current?.click()}
+        >
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.8">
+            <path d="M12 16V4" strokeLinecap="round" />
+            <path d="M7 9l5-5 5 5" strokeLinecap="round" strokeLinejoin="round" />
+            <path d="M4 16v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+          {uploading ? "Uploading…" : "Upload file"}
+        </button>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept=".pdf,.doc,.docx,.txt"
+          style={{ display: "none" }}
+          onChange={handleFileInputChange}
+        />
+      </div>
+
+      {uploadError && <p className="upload-error">{uploadError}</p>}
+
+      <div
+        className={`textarea-wrap${dragActive ? " drag-active" : ""}`}
+        onDragOver={(e) => {
+          e.preventDefault();
+          setDragActive(true);
+        }}
+        onDragLeave={() => setDragActive(false)}
+        onDrop={handleDrop}
+      >
         <textarea
-          placeholder="Paste a paragraph from an article, essay, or email to check it for AI"
+          placeholder={"Paste your text here…\nArticles, essays, emails, and more."}
           value={text}
           onChange={(e) => setText(e.target.value)}
         />
@@ -128,12 +248,20 @@ export default function CheckForAiTab({
       {text.length > 0 && belowMinimum && (
         <p className="min-words-hint">Minimum 50 words required for accurate detection</p>
       )}
+      {aboveMaximum && (
+        <p className="min-words-hint">This text is too long — please trim it before checking</p>
+      )}
 
-      <button className="primary-button" disabled={belowMinimum || loading} onClick={() => handleCheck()}>
+      <button
+        className="primary-button"
+        disabled={belowMinimum || aboveMaximum || loading}
+        onClick={() => handleCheck()}
+      >
         {loading ? "Checking…" : "Check for AI"}
       </button>
 
       <RateUsPrompt />
+      {!standalone && <ResizeHintBanner />}
     </div>
   );
 }

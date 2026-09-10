@@ -5,6 +5,7 @@ import type {
   MeResponse,
   TrialStatusResponse,
   LogRatingRequest,
+  ParseFileResponse,
 } from "@ai-checker/shared-types";
 import { API_BASE_URL, SUPABASE_URL, SUPABASE_ANON_KEY } from "./config";
 import { getAuthSession, setAuthSession, getOrCreateDeviceId, type AuthSession } from "./storage";
@@ -62,7 +63,12 @@ function buildRequest(
     {
       ...init,
       headers: {
-        "Content-Type": "application/json",
+        // FormData bodies (parseFile's file upload) must NOT get an explicit
+        // Content-Type here — fetch sets multipart/form-data with the
+        // correct boundary param itself only when this header is left
+        // unset; hardcoding "application/json" for every call, like before,
+        // would silently corrupt every file upload's request body.
+        ...(init?.body instanceof FormData ? {} : { "Content-Type": "application/json" }),
         // Read only by the server when there's no session — identifies the
         // anonymous trial's one-time 2 credits (see /api/checks, /api/trial).
         // Harmless no-op otherwise, so it's always sent rather than only
@@ -105,6 +111,24 @@ export async function createCheck(req: CreateCheckRequest): Promise<CreateCheckR
     body: JSON.stringify(req),
   });
   return res.json();
+}
+
+/**
+ * Backs the Check tab's "Upload file" button and drag-and-drop — sends the
+ * raw file to apps/web's /api/parse-file (see that route's doc comment),
+ * which extracts and returns plain text to populate the textarea with.
+ * Uploading never itself spends a credit; only the later "Check for AI"
+ * click on the resulting text does, same as if it had been typed/pasted.
+ */
+export async function parseFile(file: File): Promise<ParseFileResponse> {
+  const formData = new FormData();
+  formData.append("file", file);
+  try {
+    const res = await authedFetch("/api/parse-file", { method: "POST", body: formData });
+    return await res.json();
+  } catch {
+    return { ok: false, error: "upstream_error", message: "Network error while uploading the file." };
+  }
 }
 
 export async function listRecentChecks(limit = 5): Promise<CheckResult[]> {

@@ -38,6 +38,69 @@ body {
 
 .panel-root { display: flex; flex-direction: column; height: 100%; }
 
+/* "Open web checker" (see PanelSectionHeader.tsx) opens this exact same
+   page in a full tab instead of the narrow side panel — full width would
+   stretch the textarea edge-to-edge across a wide monitor, so this caps
+   it to a comfortable reading/editing column and centers it on a pale
+   background, matching the .feedback-page-wrap/.uninstall treatment
+   apps/web already uses for its own single-column pages. */
+body:has(.panel-root.standalone) { background: #f6f8fb; }
+.panel-root.standalone {
+  max-width: 720px;
+  width: 100%;
+  margin: 0 auto;
+  background: var(--bg);
+  box-shadow: 0 4px 20px rgba(15, 23, 42, 0.06);
+  border-left: 1px solid var(--border);
+  border-right: 1px solid var(--border);
+}
+
+.panel-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+.panel-section-header h2 { font-size: 18px; margin: 0; }
+.open-web-checker-link {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--brand);
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.open-web-checker-link:hover { color: var(--brand-dark); }
+
+.resize-hint-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-top: 12px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: var(--brand-soft);
+  color: var(--brand-dark);
+  font-size: 12px;
+  line-height: 1.4;
+}
+.resize-hint-banner svg { flex-shrink: 0; margin-top: 1px; }
+.resize-hint-banner span { flex: 1; }
+.resize-hint-banner button {
+  background: none;
+  border: none;
+  color: var(--brand-dark);
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 0 0 4px;
+  flex-shrink: 0;
+}
+
 .credits-row {
   display: flex;
   align-items: center;
@@ -65,7 +128,53 @@ body {
    button to the bottom once the textarea has soaked up the extra room. */
 .check-tab { display: flex; flex-direction: column; flex: 1; min-height: 0; }
 
+/* "Your text" (left, small file icon) / "Upload file" (right) — sits
+   directly above the textarea, acting as its label bar. Its own row, not
+   inside .textarea-wrap, since it never needs to participate in the
+   drag-and-drop drop target the way the textarea itself does below. */
+.check-text-label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  flex-shrink: 0;
+}
+.check-text-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--muted);
+}
+.upload-file-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--fg);
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.upload-file-btn:hover { border-color: var(--brand); color: var(--brand-dark); }
+.upload-file-btn:disabled { cursor: default; opacity: 0.6; }
+
+.upload-error { font-size: 12px; color: #b91c1c; margin: 0 0 8px; }
+
 .textarea-wrap { position: relative; flex: 1; min-height: 80px; display: flex; }
+
+/* Shown while a dragged file is over the textarea — the drop itself is
+   handled on .textarea-wrap (see CheckForAiTab.tsx) since a plain
+   <textarea> can't otherwise signal "this is a valid drop target" beyond
+   the browser's default (and unstyleable) drag cursor. */
+.textarea-wrap.drag-active textarea {
+  border-color: var(--brand);
+  background: var(--brand-soft);
+}
 
 textarea {
   width: 100%;
@@ -133,10 +242,10 @@ textarea {
 
 .result-card {
   position: relative;
-  margin-top: 16px;
   border: 1px solid var(--border);
   border-radius: 10px;
-  padding: 14px;
+  padding: 14px 14px 0;
+  overflow: hidden;
 }
 .result-close {
   all: unset;
@@ -160,6 +269,29 @@ textarea {
 .result-card .verdict.human { color: #15803d; }
 .result-card .verdict.mixed { color: #b45309; }
 .result-card .pct { font-size: 28px; font-weight: 800; margin: 6px 0; }
+
+/* Full-bleed within .result-card's rounded corners (that's why .result-card
+   itself has no bottom padding — see above) so this reads as a distinct
+   footer bar, matching the design brief, rather than just more card
+   content. */
+.result-card-footer {
+  margin: 14px -14px 0;
+  padding: 10px 14px;
+  border-top: 1px solid var(--border);
+  background: var(--brand-soft);
+}
+.result-card-footer a {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--brand-dark);
+  font-size: 12.5px;
+  font-weight: 600;
+  text-decoration: none;
+}
+.result-card-footer a:hover { text-decoration: underline; }
+.result-card-footer a svg:first-child { flex-shrink: 0; }
+.result-card-footer a svg:last-child { flex-shrink: 0; margin-left: auto; }
 
 .breakdown-bar {
   display: flex;

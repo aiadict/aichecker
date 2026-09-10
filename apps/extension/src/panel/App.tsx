@@ -8,6 +8,12 @@ import { API_BASE_URL } from "../lib/config";
 
 type TabKey = "check" | "history" | "settings";
 
+// Set only when opened via PanelSectionHeader's "Open web checker" link
+// (a full tab, not the side panel) - see that file's doc comment. Read
+// once at module scope since it's fixed for the lifetime of this page
+// (there's no in-page navigation that would change it).
+const isStandalone = new URLSearchParams(window.location.search).get("standalone") === "1";
+
 export default function App() {
   const [tab, setTab] = useState<TabKey>("check");
   const [prefillText, setPrefillText] = useState("");
@@ -58,10 +64,12 @@ export default function App() {
   }, []);
 
   return (
-    <div className="panel-root">
+    <div className={`panel-root${isStandalone ? " standalone" : ""}`}>
       <Header />
       <div className="tabpanel">
-        {tab === "check" && <CheckForAiTab prefillText={prefillText} autoRunToken={autoRunToken} />}
+        {tab === "check" && (
+          <CheckForAiTab prefillText={prefillText} autoRunToken={autoRunToken} standalone={isStandalone} />
+        )}
         {tab === "history" && <HistoryTab />}
         {tab === "settings" && <SettingsTab />}
       </div>

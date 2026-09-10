@@ -17,7 +17,10 @@ const KEYS = {
   pendingSelection: "pendingSelection",
   deviceId: "deviceId",
   hasRated: "hasRated",
+  resizeHintViews: "resizeHintViews",
 } as const;
+
+const RESIZE_HINT_MAX_VIEWS = 3;
 
 export interface AuthSession {
   accessToken: string;
@@ -79,6 +82,37 @@ export async function getHasRated(): Promise<boolean> {
 
 export async function setHasRated(): Promise<void> {
   await chrome.storage.local.set({ [KEYS.hasRated]: true });
+}
+
+interface ResizeHintState {
+  views: number;
+  dismissed: boolean;
+}
+
+/**
+ * The panel-resize tip (see panel/components/ResizeHintBanner.tsx) shows
+ * for the first RESIZE_HINT_MAX_VIEWS times the Check tab mounts, or until
+ * explicitly dismissed, whichever comes first — Chrome's side panel resize
+ * handle is native browser UI with no way for the extension to annotate it
+ * directly, so this in-panel banner is the only lever available to surface
+ * it, and it shouldn't linger indefinitely once someone's likely seen it.
+ */
+export async function shouldShowResizeHint(): Promise<boolean> {
+  const { [KEYS.resizeHintViews]: state } = await chrome.storage.local.get(KEYS.resizeHintViews);
+  const { views, dismissed } = (state as ResizeHintState | undefined) ?? { views: 0, dismissed: false };
+  return !dismissed && views < RESIZE_HINT_MAX_VIEWS;
+}
+
+export async function recordResizeHintView(): Promise<void> {
+  const { [KEYS.resizeHintViews]: state } = await chrome.storage.local.get(KEYS.resizeHintViews);
+  const { views, dismissed } = (state as ResizeHintState | undefined) ?? { views: 0, dismissed: false };
+  await chrome.storage.local.set({ [KEYS.resizeHintViews]: { views: views + 1, dismissed } });
+}
+
+export async function dismissResizeHint(): Promise<void> {
+  const { [KEYS.resizeHintViews]: state } = await chrome.storage.local.get(KEYS.resizeHintViews);
+  const { views } = (state as ResizeHintState | undefined) ?? { views: 0, dismissed: false };
+  await chrome.storage.local.set({ [KEYS.resizeHintViews]: { views, dismissed: true } });
 }
 
 export async function getSettings(): Promise<ExtensionSettings> {
