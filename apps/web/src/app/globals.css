@@ -511,3 +511,51 @@ footer.site-footer { padding: 40px 0; color: var(--muted); font-size: 13px; }
 }
 
 .feedback-field-error { color: #b91c1c; font-size: 12.5px; margin-top: 4px; }
+
+/* /uninstall — same pale-background treatment as /feedback (reuses
+   .feedback-page-wrap directly), but two stacked cards instead of one:
+   a "hero" card with a brand-colored top accent bar (Google-Forms-style,
+   deliberately — familiar shape for a one-question survey, without
+   actually being Google Forms, see BUILD-PLAYBOOK.md/internal decisions
+   on why this project builds its own feedback pages instead), then a
+   plain card holding the single question + an underline-style input
+   (not boxed) to keep it visually light for a one-field form. */
+.uninstall-hero-card {
+  width: 100%;
+  max-width: 640px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-top: 4px solid var(--brand);
+  border-radius: 12px;
+  padding: 26px 30px;
+  margin: 0 auto 16px;
+}
+.uninstall-question-card {
+  width: 100%;
+  max-width: 640px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 26px 30px;
+  margin: 0 auto 20px;
+}
+.uninstall-answer-input {
+  display: block;
+  width: 100%;
+  border: none;
+  border-bottom: 1.5px solid var(--border);
+  padding: 8px 2px;
+  margin-top: 20px;
+  font-family: inherit;
+  font-size: 15px;
+  color: var(--fg);
+  background: transparent;
+}
+.uninstall-answer-input:focus { outline: none; border-bottom-color: var(--brand); }
+.uninstall-actions {
+  max-width: 640px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}

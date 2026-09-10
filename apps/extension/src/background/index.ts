@@ -3,10 +3,24 @@
 // chrome.sidePanel.open() directly), and handles the auth session handoff
 // from the /login page.
 
-import { setAuthSession, setPendingSelection } from "../lib/storage";
+import { setAuthSession, setPendingSelection, getOrCreateDeviceId } from "../lib/storage";
 import { API_BASE_URL } from "../lib/config";
 
 const CONTEXT_MENU_ID = "ai-checker-check-selection";
+
+// chrome.runtime.setUninstallURL opens this in a new background tab the
+// moment the user removes the extension - see apps/web/src/app/uninstall's
+// doc comment. Its target is a static string Chrome caps at 255 chars, set
+// in advance rather than computed at the actual moment of uninstall (there
+// is no "about to uninstall" event to hook), so this just re-sets it with
+// whatever's known right now every time the service worker wakes up -
+// cheap, idempotent, and keeps it current if the device id wasn't created
+// yet the first time this ran. device_id is a random per-install id (see
+// getOrCreateDeviceId), not anything tied to a signed-in account - by the
+// time this page loads the extension itself is already gone.
+getOrCreateDeviceId().then((deviceId) => {
+  chrome.runtime.setUninstallURL(`${API_BASE_URL}/uninstall?device_id=${encodeURIComponent(deviceId)}`);
+});
 
 chrome.runtime.onInstalled.addListener((details) => {
   chrome.contextMenus.create({
