@@ -118,6 +118,25 @@ export type ShareCheckResponse =
   | { ok: true; shareSlug: string }
   | { ok: false; error: "unauthorized" | "not_found" };
 
+/**
+ * Backs the Check tab's "Upload file" button / drag-and-drop (see
+ * apps/web/src/app/api/parse-file/route.ts and
+ * apps/extension/src/lib/api.ts's parseFile). Deliberately returns the
+ * full extracted text with no server-side length rejection — the existing
+ * 50-word/50,000-char rules on the check itself (already enforced both
+ * client- and server-side) apply identically whether the text came from
+ * typing, pasting, or a parsed file, so this endpoint's only job is text
+ * extraction, not re-implementing those rules a second time.
+ */
+export type ParseFileResponse =
+  | { ok: true; text: string }
+  | { ok: false; error: "unrecognized_text" }
+  | { ok: false; error: "unsupported_type" }
+  | { ok: false; error: "legacy_doc_unsupported" }
+  | { ok: false; error: "file_too_large" }
+  | { ok: false; error: "unauthorized" }
+  | { ok: false; error: "upstream_error"; message: string };
+
 // Anonymous, pre-signup trial credits — see api/trial and api/checks'
 // unauthenticated branch. Keyed on a client-generated device ID, not a
 // user; 0 once exhausted or once the anonymous_trial_enabled app_config
