@@ -28,6 +28,14 @@ export default function WelcomePage() {
         />
       </div>
 
+      <p className="welcome-tip">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.8">
+          <path d="M8 5 4 12l4 7M16 5l4 7-4 7" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+        Tip: the panel is a bit narrow by default - drag its left edge to make it wider. More room
+        makes reading and editing your text easier.
+      </p>
+
       <div className="welcome-cta">
         <Link className="cta-button" href="/dashboard">
           Go to your dashboard
