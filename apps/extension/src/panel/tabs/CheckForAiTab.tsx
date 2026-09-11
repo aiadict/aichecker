@@ -155,7 +155,13 @@ export default function CheckForAiTab({
 
   return (
     <div className="check-tab">
-      <PanelSectionHeader title="Check text" standalone={standalone} />
+      {/* Hidden while a result is showing — ResultCard renders its own
+          "Your result" / "Open web checker" header directly below this
+          slot, and showing both stacked was a real, live-caught bug (two
+          "Open web checker" links on screen at once). Reappears the
+          moment the result is dismissed (onClose below sets response back
+          to null), so there's still always exactly one header visible. */}
+      {!response?.ok && <PanelSectionHeader title="Check text" standalone={standalone} />}
 
       {response && !response.ok && response.error === "unauthorized" && (
         <p className="muted" style={{ marginTop: 0, marginBottom: 12 }}>
