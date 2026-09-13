@@ -19,12 +19,12 @@ export default function SiteNav() {
 
   return (
     <nav className="site-nav">
-      <div className="site-nav-left">
-        <Link href="/" className="brand" onClick={close}>
-          <img src="/logo.svg" width={22} height={22} alt="" />
-          AI Checker
-        </Link>
+      <Link href="/" className="brand" onClick={close}>
+        <img src="/logo.svg" width={22} height={22} alt="" />
+        AI Checker
+      </Link>
 
+      <div className="site-nav-right">
         <div className={`site-nav-links${open ? " open" : ""}`}>
           <Link href="/pricing" onClick={close}>
             Pricing
@@ -36,9 +36,7 @@ export default function SiteNav() {
             Support
           </Link>
         </div>
-      </div>
 
-      <div className="site-nav-right">
         <a className="cta-button site-nav-cta" href={CHROME_STORE_URL} target="_blank" rel="noreferrer">
           Add to Chrome
           {/* Hidden below 640px (see globals.css) - at phone widths, this

@@ -8,7 +8,6 @@ import {
   type Prediction,
 } from "@ai-checker/shared-types";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { CHROME_STORE_URL } from "@/lib/constants";
 import DeleteCheckButton from "./components/DeleteCheckButton";
 import ShareResultButton from "./components/ShareResultButton";
 import PositionalBar from "./components/PositionalBar";
@@ -92,19 +91,6 @@ export default async function SharedCheckPage({ params }: { params: Promise<{ sl
   return (
     <div className="container">
       <h1>Check result</h1>
-
-      {/* Shown to every visitor, owner included - the point is visibility
-          for whoever a shared link reaches, most of whom arrive with no
-          account and no extension installed yet (that's the whole reason
-          this exists: docs/product-spec.md's growth thesis is organic
-          traffic finding this exact kind of public result page). */}
-      <div className="history-cta-banner">
-        <span>Want to check your own text for AI?</span>
-        <a className="cta-button" href={CHROME_STORE_URL} target="_blank" rel="noreferrer" style={{ marginTop: 0 }}>
-          Add to Chrome - it&apos;s free
-        </a>
-      </div>
-
       <div className="card">
         <p className={`pill ${check.prediction_short}`}>{check.prediction}</p>
 

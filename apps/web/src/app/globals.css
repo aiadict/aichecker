@@ -44,12 +44,11 @@ nav.site-nav .brand {
 }
 nav.site-nav .brand img { border-radius: 5px; flex-shrink: 0; }
 
-/* Brand + Pricing/Dashboard/Support clustered together on the left;
-   the Chrome install CTA stands alone on the right (.site-nav-right) -
-   .site-nav's own space-between now applies between these two groups
-   instead of between the brand and the links directly. */
-.site-nav-left { display: flex; align-items: center; gap: 28px; min-width: 0; }
-.site-nav-right { display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
+/* Brand alone on the left; Pricing/Dashboard/Support + the Chrome
+   install CTA together on the right (.site-nav-right) - conventional
+   header pattern, and more intuitive than clustering the nav links with
+   the brand (tried that first; didn't read as clearly as this). */
+.site-nav-right { display: flex; align-items: center; gap: 28px; flex-shrink: 0; }
 .site-nav-cta {
   margin-top: 0;
   padding: 9px 16px;
@@ -151,21 +150,6 @@ nav.site-nav .brand img { border-radius: 5px; flex-shrink: 0; }
   margin-bottom: 16px;
   scroll-margin-top: 20px;
 }
-
-/* /history/[slug]'s install prompt — shown to every visitor a shared
-   result link reaches, most with no account/extension yet. */
-.history-cta-banner {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  flex-wrap: wrap;
-  background: var(--brand-soft);
-  border-radius: 12px;
-  padding: 16px 20px;
-  margin-bottom: 20px;
-}
-.history-cta-banner span { font-weight: 600; color: var(--fg); }
 
 .support-jumpnav {
   display: flex;
