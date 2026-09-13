@@ -203,6 +203,29 @@ function labelForScore(score: number): Prediction {
   return "mixed";
 }
 
+// Deliberately stricter than the per-sentence thresholds above — calling
+// the ENTIRE document "fully human-written" or "fully AI-generated" is a
+// much stronger claim than labeling one sentence, and needs a genuinely
+// dominant majority, not just whichever fraction happens to be largest.
+// Live-caught bug this fixes: a 29% AI / 12% Assisted / 59% Human
+// document previously got predictionShort "human" (human was merely the
+// largest of the three fractions) paired with "We believe that this text
+// is fully human-written" - directly contradicted by the very breakdown
+// bar and highlighted text shown right below it on the same page.
+const DOCUMENT_DOMINANT_THRESHOLD = 0.85;
+
+function documentPredictionShort(fractionAi: number, fractionHuman: number): Prediction {
+  if (fractionHuman >= DOCUMENT_DOMINANT_THRESHOLD) return "human";
+  if (fractionAi >= DOCUMENT_DOMINANT_THRESHOLD) return "ai";
+  return "mixed";
+}
+
+function documentPredictionText(predictionShort: Prediction): string {
+  if (predictionShort === "human") return "We believe that this text is fully human-written.";
+  if (predictionShort === "ai") return "We believe that this text is fully AI-generated.";
+  return "We believe that this text is a mix of AI and human-written content.";
+}
+
 function mapChunksToResult(fullText: string, chunks: TruthScanChunk[], wordCount: number): TruthScanPredictResult {
   const windows: CheckWindow[] = [];
   let cursor = 0;
@@ -241,19 +264,8 @@ function mapChunksToResult(fullText: string, chunks: TruthScanChunk[], wordCount
   const fractionAiAssisted = wordsWithLabel("mixed") / totalWords;
   const fractionHuman = wordsWithLabel("human") / totalWords;
 
-  const predictionShort: Prediction =
-    fractionHuman >= fractionAi && fractionHuman >= fractionAiAssisted
-      ? "human"
-      : fractionAi >= fractionAiAssisted
-        ? "ai"
-        : "mixed";
-
-  const prediction =
-    predictionShort === "human"
-      ? "We believe that this text is fully human-written."
-      : predictionShort === "ai"
-        ? "We believe that this text is fully AI-generated."
-        : "We believe that this text is a mix of AI and human-written content.";
+  const predictionShort = documentPredictionShort(fractionAi, fractionHuman);
+  const prediction = documentPredictionText(predictionShort);
 
   return {
     prediction,
@@ -277,13 +289,19 @@ function mapChunksToResult(fullText: string, chunks: TruthScanChunk[], wordCount
 function mockPredict(text: string, wordCount: number): TruthScanPredictResult {
   const hash = simpleHash(text);
   const score = wordCount === 0 ? 0 : (hash % 100) / 100;
-  const predictionShort = labelForScore(score);
+  // The single mock window's own label still uses the finer per-sentence
+  // threshold (matches what a real single-window response looks like);
+  // the document-level verdict below goes through the same stricter
+  // dominant-majority helper the real implementation uses, for
+  // consistency between the two.
+  const windowLabel = labelForScore(score);
+  const predictionShort = documentPredictionShort(windowLabel === "ai" ? 1 : 0, windowLabel === "human" ? 1 : 0);
 
   const windows: CheckWindow[] =
     wordCount > 0
       ? [
           {
-            label: predictionShort,
+            label: windowLabel,
             aiAssistanceScore: score,
             confidence: Math.abs(score - 0.5) * 2,
             startChar: 0,
@@ -294,12 +312,7 @@ function mockPredict(text: string, wordCount: number): TruthScanPredictResult {
       : [];
 
   return {
-    prediction:
-      predictionShort === "human"
-        ? "We believe that this text is fully human-written."
-        : predictionShort === "ai"
-          ? "We believe that this text is fully AI-generated."
-          : "We believe that this text is a mix of AI and human-written content.",
+    prediction: documentPredictionText(predictionShort),
     predictionShort,
     fractionAi: predictionShort === "ai" ? 1 : 0,
     fractionHuman: predictionShort === "human" ? 1 : 0,
