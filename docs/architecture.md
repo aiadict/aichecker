@@ -384,11 +384,13 @@ domain), no logic/workflow changes.
   `#3d6fe0` rounded-square chip — user's own concept after rejecting three abstract alternatives
   (a split-circle mark, a checkmark, and minimal text-bars) as "not what I had in mind," then
   five weight/color variants of this one. Source lives at
-  `apps/extension/public/icons/source.svg` (32×32, plain rect/circle/line — no complex path
-  data, so it stays crisp at 16px); rasterized to `icon16/48/128.png` via `rsvg-convert` (`brew
-  install librsvg`, no npm dependency needed for a one-off raster). Same source copied verbatim
-  to `apps/web/src/app/icon.svg` — Next's automatic favicon convention picks it up with zero
-  config; there was no favicon at all before this.
+  `apps/extension/design/icon-source.svg` (32×32, plain rect/circle/line — no complex path
+  data, so it stays crisp at 16px) — kept outside `public/` so it isn't picked up by Vite's
+  wholesale `public/` → `dist/` copy and doesn't end up shipped inside the packaged extension;
+  rasterized to `icon16/48/128.png` via `rsvg-convert` (`brew install librsvg`, no npm dependency
+  needed for a one-off raster). Same source copied verbatim to `apps/web/src/app/icon.svg` —
+  Next's automatic favicon convention picks it up with zero config; there was no favicon at all
+  before this.
 - **Typography**: Geist. Web uses the `geist` npm package's `GeistSans` export directly (not
   `next/font/google`) applied via `className` on `<html>` in `layout.tsx`. Extension popup
   self-hosts the single variable-weight woff2 (`node_modules/geist/dist/fonts/geist-sans/
