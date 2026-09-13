@@ -1,4 +1,12 @@
-import { synthesizeInsight, type CheckResult, type CreateCheckResponse } from "@ai-checker/shared-types";
+import { useState } from "react";
+import {
+  synthesizeInsight,
+  buildHighlightSegments,
+  overallConfidence,
+  confidenceLabel,
+  type CheckResult,
+  type CreateCheckResponse,
+} from "@ai-checker/shared-types";
 import { API_BASE_URL } from "../lib/config";
 import PanelSectionHeader from "../panel/components/PanelSectionHeader";
 
@@ -41,6 +49,10 @@ export default function ResultCard({
   standalone: boolean;
 }) {
   const insight = synthesizeInsight(result.windows);
+  const confidence = overallConfidence(result.windows);
+  const confLabel = confidenceLabel(confidence);
+  const [showHighlighted, setShowHighlighted] = useState(false);
+  const segments = buildHighlightSegments(result.fullText, result.windows);
 
   return (
     <div style={{ marginBottom: 16 }}>
@@ -52,11 +64,14 @@ export default function ResultCard({
           </button>
         )}
         <div className={`verdict ${result.predictionShort}`}>{SHORT_LABEL[result.predictionShort]}</div>
-        <div className="pct">{Math.round((result.fractionAi + result.fractionAiAssisted) * 100)}%</div>
+        <div className="pct">
+          {Math.round((result.fractionAi + result.fractionAiAssisted) * 100)}%
+          <span className={`confidence-badge ${confLabel.toLowerCase()}`}>{confLabel} confidence</span>
+        </div>
         <div className="muted">
           of this text shows AI involvement{" "}
           <span
-            title="Powered by Pangram's AI detection model. Text is split into windows and each is scored for AI involvement; this percentage is a probabilistic estimate, not certain proof."
+            title="Text is split into segments and each is scored for AI involvement; this percentage is a probabilistic estimate, not certain proof. Confidence reflects how clear-cut that scoring was for this particular text — a low-confidence result is worth double-checking."
             style={{ cursor: "help" }}
           >
             ⓘ
@@ -86,6 +101,34 @@ export default function ResultCard({
           <p className="muted" style={{ marginTop: 8 }}>
             {insight}
           </p>
+        )}
+
+        <button
+          type="button"
+          className="link-button"
+          style={{ marginTop: 8, display: "block" }}
+          onClick={() => setShowHighlighted((v) => !v)}
+        >
+          {showHighlighted ? "Hide" : "Show"} highlighted text {showHighlighted ? "▴" : "▾"}
+        </button>
+        {showHighlighted && (
+          // Collapsed by default, not shown automatically — the same text is
+          // already visible, editable, right below this card in the
+          // textarea. Showing a second (highlighted, read-only) copy here
+          // too is only worth the duplication when someone actually wants
+          // to see which sentences were flagged before deciding what to
+          // edit, not on every single result.
+          <div className="checked-text" style={{ marginTop: 8 }}>
+            {segments.map((seg, i) =>
+              seg.label && seg.label !== "human" ? (
+                <mark key={i} className={`hl-${seg.label}`}>
+                  {seg.text}
+                </mark>
+              ) : (
+                <span key={i}>{seg.text}</span>
+              )
+            )}
+          </div>
         )}
 
         {result.shareSlug && (
