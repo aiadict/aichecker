@@ -1,8 +1,16 @@
 import { notFound } from "next/navigation";
-import { buildHighlightSegments, synthesizeInsight, type CheckWindow, type Prediction } from "@ai-checker/shared-types";
+import {
+  buildHighlightSegments,
+  synthesizeInsight,
+  overallConfidence,
+  confidenceLabel,
+  type CheckWindow,
+  type Prediction,
+} from "@ai-checker/shared-types";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import DeleteCheckButton from "./components/DeleteCheckButton";
 import ShareResultButton from "./components/ShareResultButton";
+import PositionalBar from "./components/PositionalBar";
 
 interface WindowRow {
   label: string;
@@ -77,6 +85,8 @@ export default async function SharedCheckPage({ params }: { params: Promise<{ sl
   const windows = (windowRows ?? []).map(mapWindow);
   const segments = buildHighlightSegments(check.full_text, windows);
   const insight = synthesizeInsight(windows);
+  const confidence = overallConfidence(windows);
+  const confLabel = confidenceLabel(confidence);
 
   return (
     <div className="container">
@@ -84,7 +94,10 @@ export default async function SharedCheckPage({ params }: { params: Promise<{ sl
       <div className="card">
         <p className={`pill ${check.prediction_short}`}>{check.prediction}</p>
 
-        <div style={{ fontSize: 28, fontWeight: 800, margin: "8px 0 0" }}>{aiInvolvement}%</div>
+        <div style={{ fontSize: 28, fontWeight: 800, margin: "8px 0 0", display: "flex", alignItems: "baseline", gap: 8 }}>
+          {aiInvolvement}%
+          <span className={`confidence-badge ${confLabel.toLowerCase()}`}>{confLabel} confidence</span>
+        </div>
         <p className="muted" style={{ margin: 0 }}>
           of this text shows AI involvement
         </p>
@@ -114,6 +127,8 @@ export default async function SharedCheckPage({ params }: { params: Promise<{ sl
             {insight}
           </p>
         )}
+
+        <PositionalBar windows={windows} totalWords={check.word_count} />
 
         <p className="muted" style={{ marginTop: 16 }}>
           {check.word_count} words

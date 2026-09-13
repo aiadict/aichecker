@@ -228,6 +228,75 @@ export function buildHighlightSegments(fullText: string, windows: CheckWindow[])
   return segments;
 }
 
+export type ConfidenceLabel = "High" | "Medium" | "Low";
+
+/**
+ * Word-count-weighted average of each window's own confidence — same
+ * aggregation shape already used for fractionAi/fractionHuman/
+ * fractionAiAssisted. Shared by ResultCard.tsx (extension) and
+ * /history/[slug] (web) so both surfaces derive it identically rather
+ * than duplicating the math.
+ */
+export function overallConfidence(windows: CheckWindow[]): number {
+  const totalWords = windows.reduce((sum, w) => sum + w.wordCount, 0);
+  if (totalWords === 0) return 0;
+  return windows.reduce((sum, w) => sum + w.confidence * w.wordCount, 0) / totalWords;
+}
+
+/**
+ * Thresholds are this integration's own choice, not vendor-provided —
+ * same "provisional, tune once real traffic gives a bigger sample" caveat
+ * as packages/truthscan-client's AI/Human/Mixed score cutoffs. Picked
+ * against what's actually been observed live: TruthScan's per-sentence
+ * scores cluster heavily at the confident extremes, with genuinely
+ * ambiguous sentences (e.g. the Gettysburg Address's stylistically
+ * unusual opening line, confirmed across multiple tests) landing near 0.
+ */
+export function confidenceLabel(confidence: number): ConfidenceLabel {
+  if (confidence >= 0.6) return "High";
+  if (confidence >= 0.3) return "Medium";
+  return "Low";
+}
+
+export interface PositionalBlock {
+  label: Prediction;
+  startChar: number;
+  endChar: number;
+  wordCount: number;
+  confidence: number;
+}
+
+/**
+ * Merges adjacent same-label windows into one contiguous block — built
+ * for the /history/[slug] positional bar widget. TruthScan's per-sentence
+ * windows would otherwise render as a noisy hatch of many thin same-color
+ * segments (a 15-sentence human paragraph is 15 windows, not one); this
+ * collapses runs of the same label into a single block sized by their
+ * combined word count, matching how Pangram's own UI reads as clean
+ * colored regions rather than per-sentence stripes. The underlying
+ * per-sentence windows (unmerged) still back the highlighted-text view
+ * and per-sentence tooltips — no data is discarded, just presented
+ * differently for this one widget.
+ */
+export function buildPositionalBlocks(windows: CheckWindow[]): PositionalBlock[] {
+  const sorted = [...windows].sort((a, b) => a.startChar - b.startChar);
+  const blocks: PositionalBlock[] = [];
+
+  for (const w of sorted) {
+    const last = blocks[blocks.length - 1];
+    if (last && last.label === w.label) {
+      const mergedWords = last.wordCount + w.wordCount;
+      last.confidence =
+        mergedWords > 0 ? (last.confidence * last.wordCount + w.confidence * w.wordCount) / mergedWords : 0;
+      last.wordCount = mergedWords;
+      last.endChar = w.endChar;
+    } else {
+      blocks.push({ label: w.label, startChar: w.startChar, endChar: w.endChar, wordCount: w.wordCount, confidence: w.confidence });
+    }
+  }
+  return blocks;
+}
+
 export interface MeResponse {
   email: string;
   plan: {

@@ -266,6 +266,66 @@ nav.site-nav .brand img { border-radius: 5px; flex-shrink: 0; }
 .checked-text mark.hl-ai { background: #fecaca; }
 .checked-text mark.hl-mixed { background: #fde68a; }
 
+/* Same colors/naming as apps/extension's confidence badge — a check should
+   read identically whether viewed in the panel or on this shared page. */
+.confidence-badge {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 999px;
+}
+.confidence-badge.high { background: #dcfce7; color: #15803d; }
+.confidence-badge.medium { background: #fef3c7; color: #92400e; }
+.confidence-badge.low { background: #fee2e2; color: #b91c1c; }
+
+/* Positional bar (PositionalBar.tsx) — merged same-label blocks, colored
+   like .breakdown-bar's segments, with a hover tooltip per block showing
+   the label + confidence for that stretch of text. */
+.positional-bar-wrap { margin-top: 16px; }
+.positional-bar {
+  display: flex;
+  height: 20px;
+  border-radius: 5px;
+  overflow: visible;
+}
+.positional-bar-seg { position: relative; height: 100%; cursor: default; }
+.positional-bar-seg:first-child { border-top-left-radius: 5px; border-bottom-left-radius: 5px; }
+.positional-bar-seg:last-child { border-top-right-radius: 5px; border-bottom-right-radius: 5px; }
+.positional-bar-seg.ai { background: #c2410c; }
+.positional-bar-seg.mixed { background: #b45309; }
+.positional-bar-seg.human { background: #15803d; }
+.positional-bar-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 4px;
+}
+.positional-tooltip {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: #1a2233;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 5px 10px;
+  border-radius: 6px;
+  white-space: nowrap;
+  z-index: 10;
+  pointer-events: none;
+}
+.positional-tooltip::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 5px solid transparent;
+  border-top-color: #1a2233;
+}
+
 table { width: 100%; border-collapse: collapse; }
 th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid var(--border); font-size: 14px; }
 tr.clickable-row { cursor: pointer; }
