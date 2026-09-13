@@ -44,6 +44,19 @@ nav.site-nav .brand {
 }
 nav.site-nav .brand img { border-radius: 5px; flex-shrink: 0; }
 
+/* Brand + Pricing/Dashboard/Support clustered together on the left;
+   the Chrome install CTA stands alone on the right (.site-nav-right) -
+   .site-nav's own space-between now applies between these two groups
+   instead of between the brand and the links directly. */
+.site-nav-left { display: flex; align-items: center; gap: 28px; min-width: 0; }
+.site-nav-right { display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
+.site-nav-cta {
+  margin-top: 0;
+  padding: 9px 16px;
+  font-size: 13.5px;
+  white-space: nowrap;
+}
+
 .nav-hamburger {
   display: none;
   align-items: center;
@@ -71,6 +84,13 @@ nav.site-nav .brand img { border-radius: 5px; flex-shrink: 0; }
    earlier in the file does NOT win just because its condition is true. */
 @media (max-width: 640px) {
   .nav-hamburger { display: flex; }
+
+  /* Kept visible outside the collapsed menu, unlike Pricing/Dashboard/
+     Support — installs are the one action worth never hiding behind a
+     tap, even on the narrowest phones. Shrunk further than desktop so it
+     comfortably fits alongside the brand + hamburger on one line. */
+  .site-nav-cta { padding: 8px 12px; font-size: 12.5px; }
+  .site-nav-cta .cta-free-suffix { display: none; }
 
   .site-nav-links {
     display: none;
@@ -131,6 +151,21 @@ nav.site-nav .brand img { border-radius: 5px; flex-shrink: 0; }
   margin-bottom: 16px;
   scroll-margin-top: 20px;
 }
+
+/* /history/[slug]'s install prompt — shown to every visitor a shared
+   result link reaches, most with no account/extension yet. */
+.history-cta-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  background: var(--brand-soft);
+  border-radius: 12px;
+  padding: 16px 20px;
+  margin-bottom: 20px;
+}
+.history-cta-banner span { font-weight: 600; color: var(--fg); }
 
 .support-jumpnav {
   display: flex;

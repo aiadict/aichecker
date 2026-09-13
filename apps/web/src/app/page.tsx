@@ -1,3 +1,5 @@
+import { CHROME_STORE_URL } from "@/lib/constants";
+
 export default function HomePage() {
   return (
     <div className="container">
@@ -11,7 +13,7 @@ export default function HomePage() {
         </p>
         <a
           className="cta-button"
-          href="https://chromewebstore.google.com/detail/ai-checker/onmgheoplmjcaamolnfecbpanekfjlnl"
+          href={CHROME_STORE_URL}
           target="_blank"
           rel="noreferrer"
         >
