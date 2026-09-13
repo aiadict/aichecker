@@ -62,7 +62,9 @@ export default function SupportPage() {
           It&apos;s how much of the text our detection model believes shows signs of AI
           involvement, split into AI-generated, AI-assisted, and human-written. It&apos;s a strong
           signal, not a certainty - treat it as one input among several, especially for anything
-          with real consequences for someone (grading, hiring, and so on).
+          with real consequences for someone (grading, hiring, and so on). For a detailed,
+          section-by-section walkthrough of every part of a result, see{" "}
+          <Link href="/resultsupport">Understanding your result</Link>.
         </p>
       </div>
 
@@ -99,8 +101,8 @@ export default function SupportPage() {
         <h3>Is my text stored, or shared with anyone?</h3>
         <p>
           Your checked text is stored in your account (so your history means something), and sent
-          to Pangram, the detection service we use under the hood, solely to run the check - not
-          to train any model. It&apos;s never sold or used for anything else. Full details at{" "}
+          to our AI-detection provider solely to run the check - not to train any model.
+          It&apos;s never sold or used for anything else. Full details at{" "}
           <Link href="/privacy">privacy</Link>.
         </p>
       </div>
