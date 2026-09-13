@@ -2,7 +2,7 @@ export default function PrivacyPage() {
   return (
     <div className="container">
       <h1>Privacy Policy</h1>
-      <p className="muted">Last updated: September 10, 2026</p>
+      <p className="muted">Last updated: September 13, 2026</p>
 
       <p>
         AI Checker is built by a small team, and we&apos;d rather keep this policy readable than
@@ -18,8 +18,9 @@ export default function PrivacyPage() {
           in with Google.
         </li>
         <li>
-          <strong>The text you check.</strong> When you run a check, that text is sent to Pangram
-          Labs, the detection provider we use, purely to generate a result. If you keep the check
+          <strong>The text you check.</strong> When you run a check, that text is sent to our
+          AI-detection provider (currently TruthScan; Pangram Labs is also used) purely to
+          generate a result. If you keep the check
           in your history, we store it too, so you can look back at it later. If you upload a
           file instead of pasting text, we extract the text from it on our server and discard the
           file itself right after - we don&apos;t store the original file.

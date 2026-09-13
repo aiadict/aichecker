@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { PangramApiError, PangramClient } from "@ai-checker/pangram-client";
+import { TruthScanApiError, TruthScanClient } from "@ai-checker/truthscan-client";
 import {
   countWords,
   type CheckResult,
@@ -11,8 +12,14 @@ import { getAuthenticatedUser } from "@/lib/auth";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { insertCheck, listChecksForUser } from "@/lib/checks-repo";
 import { anonymousDailySpendCapReached, isAnonymousTrialEnabled } from "@/lib/anonymous-trial";
+import { getDetectionProvider } from "@/lib/detection-provider";
 
+// Both kept fully wired up rather than removing whichever isn't currently
+// active - getDetectionProvider's app_config flag is the whole point of
+// being able to flip back to Pangram instantly (no redeploy) if TruthScan
+// ever misbehaves on real traffic. See docs/architecture.md.
 const pangram = new PangramClient();
+const truthscan = new TruthScanClient();
 
 // Word-based, not character-based — short of ~50 words, Pangram's own
 // results get noticeably less reliable (seen live earlier: even a 256-word
@@ -98,17 +105,24 @@ export async function POST(req: NextRequest) {
     }
   }
 
+  const provider = await getDetectionProvider(admin);
+  const client = provider === "truthscan" ? truthscan : pangram;
+
   let prediction;
   try {
-    prediction = await pangram.predict(text);
+    prediction = await client.predict(text);
   } catch (err) {
     // Distinguish "our Pangram account itself is out of prepaid credits"
     // (402 — top up at pangram.com, nothing to do with THIS user's plan)
     // from any other upstream failure, so ops can tell them apart in logs.
+    // TruthScanApiError has no equivalent documented 402 case — treated as
+    // a generic upstream failure.
     if (err instanceof PangramApiError && err.status === 402) {
       console.error("Pangram account is out of prepaid API credits — top up at pangram.com.", err.body);
+    } else if (err instanceof TruthScanApiError) {
+      console.error("TruthScan request failed", err.message);
     } else {
-      console.error("Pangram request failed", err);
+      console.error(`${provider} request failed`, err);
     }
     return NextResponse.json<CreateCheckResponse>({
       ok: false,
@@ -117,12 +131,13 @@ export async function POST(req: NextRequest) {
     });
   }
 
-  const creditsUsed = pangram.creditsForWordCount(prediction.wordCount);
+  const creditsUsed = client.creditsForWordCount(prediction.wordCount);
 
-  // Our own cost tracking against Pangram — independent of what we charge
-  // the user, never exposed to any client (service-role only, no RLS
-  // policy). Shared by both the authenticated and anonymous branches below.
-  console.log(`Pangram model version served this check: ${prediction.modelVersion ?? "(none returned)"}`);
+  // Our own cost tracking against whichever vendor served this request —
+  // independent of what we charge the user, never exposed to any client
+  // (service-role only, no RLS policy). Shared by both the authenticated
+  // and anonymous branches below.
+  console.log(`${provider} model version served this check: ${prediction.modelVersion ?? "(none returned)"}`);
 
   if (isAnonymous) {
     // Atomic decrement, same locking pattern as consume_credit but with no
@@ -175,8 +190,9 @@ export async function POST(req: NextRequest) {
 
     await admin.from("api_usage_log").insert({
       check_id: null,
+      provider,
       pangram_credits_billed: creditsUsed,
-      cost_usd_estimate: creditsUsed * pangram.costPerCredit,
+      cost_usd_estimate: creditsUsed * client.costPerCredit,
       pangram_model_version: prediction.modelVersion ?? null,
     });
 
@@ -187,7 +203,8 @@ export async function POST(req: NextRequest) {
     });
   }
 
-  // --- authenticated flow, unchanged ---
+  // --- authenticated flow — credit consumption logic unchanged regardless
+  // of which provider served the prediction above ---
 
   // Atomic: locks the user's credit_balances row, resets daily/monthly
   // counters if expired, checks daily_cap + credits_remaining, and
@@ -235,8 +252,9 @@ export async function POST(req: NextRequest) {
 
   await admin.from("api_usage_log").insert({
     check_id: result.id,
+    provider,
     pangram_credits_billed: creditsUsed,
-    cost_usd_estimate: creditsUsed * pangram.costPerCredit,
+    cost_usd_estimate: creditsUsed * client.costPerCredit,
     pangram_model_version: prediction.modelVersion ?? null,
   });
 

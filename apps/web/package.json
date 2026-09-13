@@ -12,6 +12,7 @@
   "dependencies": {
     "@ai-checker/pangram-client": "*",
     "@ai-checker/shared-types": "*",
+    "@ai-checker/truthscan-client": "*",
     "@supabase/ssr": "^0.5.2",
     "@supabase/supabase-js": "^2.46.1",
     "geist": "^1.7.2",

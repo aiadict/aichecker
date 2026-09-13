@@ -54,8 +54,14 @@ legal advice — have an actual lawyer review the policies before publishing.
 
 ## Data handling commitments to make good on
 
-- Submitted text is sent to Pangram Labs (sub-processor) solely to generate the detection
-  result — not used to train any model (matches Pangram's own policy commitment).
+- Submitted text is sent to whichever AI-detection sub-processor is currently active
+  (`detection_provider` in `app_config` — TruthScan as of 2026-09-13; Pangram Labs kept fully
+  wired up as the instant-rollback path, see `docs/architecture.md`) solely to generate the
+  detection result — not used to train any model. `/privacy` names both as possible processors
+  rather than only the currently-active one, since the flag can flip without a policy update.
+  **Action taken for TruthScan specifically:** its dashboard's "Zero Data Retention" toggle was
+  turned on — off by default — so detection results/uploaded text aren't retained in TruthScan's
+  own history, matching the same non-training/non-retention commitment Pangram already made.
 - Account deletion removes check history and account data (matches the commitment in `/privacy`
   and `/terms`) — **now actually implemented**: `/dashboard/account` lets a user export their data
   as JSON or delete their account outright (`apps/web/src/app/api/account/delete/route.ts`),

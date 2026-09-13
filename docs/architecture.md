@@ -10,10 +10,12 @@ Storage), Stripe for billing, Chrome MV3 extension (Vite + React + `@crxjs/vite-
 ```
 apps/
   web/                  Next.js app: marketing, dashboard, auth, API routes, /privacy, /terms
-  extension/            Chrome MV3 extension — talks only to apps/web, never to Pangram directly
+  extension/            Chrome MV3 extension — talks only to apps/web, never to a detection API directly
 packages/
   shared-types/         Shared TS types (Plan, CheckResult, User, API request/response contracts)
   pangram-client/       Server-only Pangram API wrapper — imported by apps/web ONLY
+  truthscan-client/     Server-only TruthScan API wrapper — imported by apps/web ONLY; primary
+                         detection provider as of 2026-09-13, see "AI-detection provider" below
 supabase/
   migrations/           SQL schema (see below)
   seed.sql              Seeds the free/pro/business plan rows
@@ -24,13 +26,14 @@ scripts/
 
 ## The one hard security rule
 
-**The Pangram API key must never exist anywhere a browser extension bundle can be inspected.**
+**No AI-detection API key may ever exist anywhere a browser extension bundle can be inspected.**
 MV3 extension code is fully readable by any user via `chrome://extensions` → "Inspect". So:
 
-- `packages/pangram-client` is imported **only** from `apps/web`'s server-side code (API
-  routes). It reads `PANGRAM_API_KEY` from `process.env`, never from a request or client bundle.
-- `apps/extension` never imports `@ai-checker/pangram-client`. It only ever calls our own
-  backend (`apps/web`'s `/api/*` routes), authenticated with a Supabase session token cached in
+- `packages/pangram-client` and `packages/truthscan-client` are imported **only** from
+  `apps/web`'s server-side code (API routes). They read `PANGRAM_API_KEY` and
+  `TRUTHSCAN_API_KEY`/`TRUTHSCAN_ORG_ID` from `process.env`, never from a request or client bundle.
+- `apps/extension` never imports either client package. It only ever calls our own backend
+  (`apps/web`'s `/api/*` routes), authenticated with a Supabase session token cached in
   `chrome.storage.local`.
 
 ## Auth flow: extension sign-in
@@ -122,7 +125,8 @@ all its data were deleted afterward (`on delete cascade` from `auth.users` down 
    Supabase access token as a Bearer header.
 3. API route (`apps/web/src/app/api/checks/route.ts`):
    - Verifies auth via `getAuthenticatedUser` — returns `unauthorized` if missing/invalid.
-   - Calls `PangramClient.predict()`.
+   - Calls `getDetectionProvider()` to pick `PangramClient` or `TruthScanClient`, then that
+     client's `.predict()` — see "AI-detection provider" below for why there are two.
    - Calls the `consume_credit` Postgres function (`supabase/migrations/..._consume_credit_fn.sql`)
      via RPC — atomically resets expired daily/monthly counters, checks `daily_cap` and
      `credits_remaining`, and decrements, all under a row lock (`SELECT ... FOR UPDATE`) so two
@@ -134,6 +138,70 @@ all its data were deleted afterward (`on delete cascade` from `auth.users` down 
    extension's History tab) and `GET /api/me` (credits header). The `/dashboard` pages now read
    these same real tables too (via the RLS-scoped SSR client, not the admin client) —
    `lib/mock-store.ts` has been deleted, nothing references it anymore.
+
+## AI-detection provider: TruthScan primary, Pangram kept as instant rollback (2026-09-13)
+
+Switched `/api/checks`' primary detection vendor from Pangram to TruthScan, without removing
+Pangram — both `packages/pangram-client` and `packages/truthscan-client` implement the same
+`predict(text)` contract, and `getDetectionProvider()` (`apps/web/src/lib/detection-provider.ts`)
+picks between them by reading `app_config.detection_provider` (`"pangram" | "truthscan"`) on every
+request — same flip-without-a-redeploy pattern as `anonymous_trial_enabled`. Currently set to
+`"truthscan"`. Flipping it back to `"pangram"` is the rollback path if TruthScan misbehaves on
+real traffic; that's the entire reason Pangram's integration wasn't deleted.
+
+**Why switch at all** — live-tested, not assumed: submitted identical controlled mixed-authorship
+text (genuine AI-written paragraphs + real, verbatim public-domain human text — Jane Austen,
+Lincoln's Gettysburg Address, Dickens — at known character boundaries) to both. Pangram 3.3.2
+returned a single window covering the entire ~200-word mixed document, confidently (High
+confidence) labeling real Jane Austen text as "100% AI-Generated" — a genuine miss, not a vague
+call. This matches Pangram's own model card for 3.2 ("no change from 3.2" in 3.3): "shorter
+segments of human text interspersed with AI text may be classified as AI assisted, but Pangram
+will not be able to distinguish the human and AI parts at the word- or sentence-level" — accurate
+to ~50 words. At longer length (~750 words, above the documented 450-word threshold where 3.3.1's
+segmentation algorithm changes), Pangram partially recovered (3 windows, correct majority
+classification) but still misattributed the same famous opening sentence and overestimated the AI
+fraction by ~10 points. Pangram 4 fixes this (tokenwise CRF decoder, sentence-level output,
+"substantially improves heterogeneous-mixed text recall" per its own model card) but costs 10x
+Pangram 3's rate ($0.50 vs $0.05/1,000 words) — wholesale switching to it would flip Premium/
+Professional plan margins from thin-positive to catastrophically negative (see cost math below).
+
+TruthScan's WebSocket sentence-level channel (not its plain REST `/detect`, which returns only a
+single document-level score with no positional data at all) correctly localized every mixed-text
+boundary tested — including the exact case Pangram 3 missed — at $0.01-0.03/1,000 words depending
+on plan tier, cheaper than even Pangram 3. Confirmed live that the sentence-level channel carries
+no separate charge over the plain endpoint (two identical texts submitted once each way both
+deducted identical "scan" amounts in TruthScan's own billing ledger — direct evidence, not
+inference). Confirmed live that a Vercel Node.js function can hold this WebSocket connection open
+long enough to receive all streamed sentence results: ~1.3-1.5s total round trip for realistic
+document lengths (opened a real preview deployment, drove it with `vercel curl`) — no timeout or
+egress issues, `runtime = "nodejs"` is all that's needed (already the default everywhere else in
+this codebase).
+
+**What `TruthScanClient.predict()` does differently from Pangram's wrapper**: TruthScan's
+`/detect` score is deliberately not used at all. Instead, the per-sentence `document_chunk` scores
+(continuous 0-1) are thresholded into our own `ai`/`mixed`/`human` labels (provisional cutoffs:
+`≥0.7` AI, `≤0.3` human, `SCORE_AI_THRESHOLD`/`SCORE_HUMAN_THRESHOLD` in
+`packages/truthscan-client/src/index.ts` — tuned against a small hand-built test set, not
+vendor-guaranteed, revisit once real traffic gives a bigger sample), and `fractionAi`/
+`fractionAiAssisted`/`fractionHuman` are computed ourselves as word-count-weighted proportions
+across those buckets — not TruthScan's own cruder three-way Human/AI/Paraphrase label, which has
+no "Mixed" category at all. Per-sentence `confidence` is likewise derived (distance from the 0.5
+midpoint), since TruthScan doesn't return a separate confidence field the way Pangram does.
+
+**Zero `apps/extension` changes** — `CheckWindow`/`CheckResult` (`packages/shared-types`) already
+fully describe TruthScan's output; `ResultCard.tsx`, `buildHighlightSegments`, `synthesizeInsight`,
+and the DB schema are all provider-agnostic already. This was a backend-only swap; no new Chrome
+Web Store submission needed for it.
+
+**Known, accepted limitations, not fixed by this switch:** both vendors independently stumbled on
+the exact same unusually formal/rhetorical sentence (the Gettysburg Address's opening) — a shared
+blind spot across providers on that style of prose, not a TruthScan-specific defect. Non-English
+content is untested (TruthScan's model name `xlm_ud_detector` suggests multilingual support, but
+this hasn't been verified against the extension's 52 locales). TruthScan's real production rate
+limits at this app's actual traffic volume are untested. Pricing verified against the public
+per-word developer tier and an actual trial account's real billing ledger, not a signed contract —
+get a written quote for the tier actually used before treating margin math as final. Its dashboard
+had "Zero Data Retention" off by default; turned on before any real user text was sent through it.
 
 ## Database schema (Supabase Postgres)
 
