@@ -287,13 +287,29 @@ nav.site-nav .brand img { border-radius: 5px; flex-shrink: 0; }
   height: 20px;
   border-radius: 5px;
   overflow: visible;
+  border: 1px solid var(--border);
 }
-.positional-bar-seg { position: relative; height: 100%; cursor: default; }
+.positional-bar-seg {
+  position: relative;
+  height: 100%;
+  cursor: default;
+  border-right: 2px solid #fff;
+}
+.positional-bar-seg:last-child { border-right: none; }
 .positional-bar-seg:first-child { border-top-left-radius: 5px; border-bottom-left-radius: 5px; }
 .positional-bar-seg:last-child { border-top-right-radius: 5px; border-bottom-right-radius: 5px; }
-.positional-bar-seg.ai { background: #c2410c; }
-.positional-bar-seg.mixed { background: #b45309; }
-.positional-bar-seg.human { background: #15803d; }
+/* Deliberately pale/pastel — not the same saturated colors as
+   .breakdown-bar directly above, which reads left-to-right as
+   AI->Assisted->Human by fixed proportion. This bar reads left-to-right
+   as actual text position, which for most real checks puts the colors in
+   a different (sometimes opposite) order - two bold bars stacked with
+   contradicting color order looked like they disagreed with each other.
+   Softer tones (reusing the same shades already used for .checked-text's
+   highlight marks and the confidence badge) read as a distinct "map of
+   the text" rather than a second proportion bar. */
+.positional-bar-seg.ai { background: #fecaca; }
+.positional-bar-seg.mixed { background: #fde68a; }
+.positional-bar-seg.human { background: #bbf7d0; }
 .positional-bar-labels {
   display: flex;
   justify-content: space-between;
