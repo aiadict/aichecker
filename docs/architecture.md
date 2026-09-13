@@ -712,3 +712,16 @@ Existing users' `credit_balances.credits_remaining` isn't backfilled — someone
 whatever balance they already had (now displayed against the new "/25" denominator) until their
 next monthly reset actually tops them up to 25, same as any other live `monthly_credits` change
 always has.
+
+## Chrome Web Store release status
+
+- **v1.0.0** — approved and published (archived at `apps/extension/releases/v1.0.0/`).
+- **v1.1.0** — packaged and shipped (`apps/extension/releases/v1.1.0/`); superseded by v1.2.0
+  before it was otherwise noted here.
+- **v1.2.0** — packaged from a clean build (confidence badge + collapsible highlighted text,
+  History tab sign-in prompt, `/resultsupport` link) and **submitted to the Chrome Web Store for
+  review on 2026-09-13**. Per the dashboard's own confirmation dialog: status is checked on the
+  developer dashboard home page, and items staged to publish later expire 30 days after passing
+  review. Archive at `apps/extension/releases/v1.2.0/ai-checker-extension-v1.2.0.zip`. Until this
+  is approved, do not start bundling further extension-side changes into the same release —
+  treat the next version bump as a new, separate `v1.3.0` once v1.2.0 clears review.
