@@ -49,7 +49,13 @@ nav.site-nav .brand img { border-radius: 5px; flex-shrink: 0; }
    header pattern, and more intuitive than clustering the nav links with
    the brand (tried that first; didn't read as clearly as this). */
 .site-nav-right { display: flex; align-items: center; gap: 28px; flex-shrink: 0; }
-.site-nav-cta {
+/* .cta-button's own margin-top: 24px (further down this file, same 0,1,0
+   specificity as a bare .site-nav-cta rule) was winning on source order
+   alone - confirmed live, it was visibly pushing this button down below
+   the nav links instead of centering with them. Combined selector raises
+   specificity so this wins regardless of where either rule sits in the
+   file. */
+.cta-button.site-nav-cta {
   margin-top: 0;
   padding: 9px 16px;
   font-size: 13.5px;
@@ -88,7 +94,7 @@ nav.site-nav .brand img { border-radius: 5px; flex-shrink: 0; }
      Support — installs are the one action worth never hiding behind a
      tap, even on the narrowest phones. Shrunk further than desktop so it
      comfortably fits alongside the brand + hamburger on one line. */
-  .site-nav-cta { padding: 8px 12px; font-size: 12.5px; }
+  .cta-button.site-nav-cta { padding: 8px 12px; font-size: 12.5px; }
   .site-nav-cta .cta-free-suffix { display: none; }
 
   .site-nav-links {
