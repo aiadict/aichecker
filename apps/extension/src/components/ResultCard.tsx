@@ -145,7 +145,7 @@ export default function ResultCard({
         )}
 
         <div className="result-card-footer">
-          <a href={`${API_BASE_URL}/support#percentage`} target="_blank" rel="noreferrer">
+          <a href={`${API_BASE_URL}/resultsupport`} target="_blank" rel="noreferrer">
             <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="1.8">
               <path
                 d="M4 5.5C4 4.7 4.7 4 5.5 4H11v16H5.5A1.5 1.5 0 0 1 4 18.5v-13Z"
