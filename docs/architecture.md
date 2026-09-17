@@ -111,6 +111,54 @@ Separate from the extension's Bearer-token flow, but the same underlying Supabas
   request to a freshly-created (private) check's share link 404s; flipping `is_public` to `true`
   makes the same link visible to the same anonymous request, no code path change.
 
+### Password reset: cross-device fix (2026-09-17)
+
+**Bug**: "Forgot password" worked end-to-end only when the reset email was opened in the *same*
+browser that requested it — opened on a different device/browser (the common real case: email
+on a phone, password typed on a desktop), the user landed back on `/login` with "This password
+reset link couldn't be verified…" (`apps/web/src/app/login/page.tsx`'s `confirmation_failed`
+handling, added in an earlier pass to at least explain the failure, not fix it).
+
+**Root cause, confirmed via the live Supabase project config** (`GET
+/v1/projects/{ref}/config/auth`'s `mailer_templates_*_content` fields), not assumed: the signup
+**confirmation** email template was already a custom, on-brand one, and already linked with
+`{{ .RedirectTo }}&token_hash={{ .TokenHash }}&type=signup` — verified server-side via
+`supabase.auth.verifyOtp({ type, token_hash })` in `apps/web/src/app/auth/confirm/route.ts`,
+which needs no state from the requesting browser, so it already worked cross-device. The
+**recovery** (password reset) template, by contrast, was still the plain Supabase *default*
+template, linking with `{{ .ConfirmationURL }}` — which GoTrue renders as a PKCE `?code=...`
+link because the browser client (`lib/supabase/client.ts`, `@supabase/ssr`'s `createBrowserClient`)
+defaults to `flowType: 'pkce'`. A PKCE code can only be exchanged
+(`exchangeCodeForSession`) by the same browser holding the matching `code_verifier` — that's the
+entire cross-device failure, by PKCE's design, not a flaw in `/auth/confirm` itself (that route
+already had the `token_hash && type` → `verifyOtp` branch sitting right next to the `code` →
+`exchangeCodeForSession` one; recovery just never hit the branch that already worked).
+
+**Fix**: the recovery email template (Supabase Dashboard → Authentication → Email Templates →
+Reset Password) was updated to the same pattern as confirmation —
+`href="{{ .RedirectTo }}&token_hash={{ .TokenHash }}&type=recovery"` — and restyled to match
+confirmation's branded HTML (same logo SVG, `#3d6fe0` accent, card layout). **Zero app code
+changed** — `auth/confirm/route.ts`, `reset-password/page.tsx`, and `login/page.tsx`'s
+`handleForgotPassword` already fully supported this link shape; the recovery template had simply
+never been migrated to it. This is a Supabase project config change, not a deploy.
+
+**The one real tradeoff, accepted deliberately**: PKCE's code-exchange bound redemption to the
+requesting browser specifically as an anti-hijacking property (mere possession of a leaked link
+wasn't enough without also holding that browser's local `code_verifier`). Recovery now trades
+that away for the standard "whoever holds the (single-use, 1-hour-expiry) link can redeem it"
+model — the same model virtually every product's password-reset email has always used, and the
+same one our own signup confirmation already used. Judged worth it since the alternative
+actively broke the very common legitimate case (open the email on a phone, reset on a desktop).
+
+**Verified live, real cross-device test** (2026-09-17): requested a reset from one device,
+opened the email and completed the reset from a *different* device — worked. Same-device path
+still works unaffected.
+
+**Not fixed, deliberately**: `mailer_templates_magic_link_content` has the identical
+`{{ .ConfirmationURL }}` pattern and would have the same bug, but magic-link sign-in isn't used
+anywhere in the app (no `signInWithOtp` call exists) — dead template content, no live impact,
+left alone.
+
 ## Data flow: a "Check for AI" action
 
 **Verified end-to-end live** (2026-07-29): real signup → bootstrap trigger → real Pangram
