@@ -44,7 +44,7 @@ export default function SiteNav() {
       <div className="site-nav-right">
         <div className={`site-nav-links${open ? " open" : ""}`}>
           <Link href="/check" onClick={close}>
-            Check
+            AI Check
           </Link>
           {signedIn && (
             <Link href="/dashboard/history" onClick={close}>
