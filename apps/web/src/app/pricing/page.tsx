@@ -11,11 +11,16 @@ export default async function PricingPage() {
 
   return (
     <div className="container">
-      <h1>Pricing</h1>
-      <p className="muted" style={{ maxWidth: 560 }}>
-        Every plan includes the same detection quality - paste, right-click, or the floating
-        icon all work the same way. What changes is how many words you can check each month.
-      </p>
+      <div style={{ textAlign: "center" }}>
+        <h1>Pricing</h1>
+        <p style={{ fontSize: 22, fontWeight: 800, color: "var(--fg)", margin: "0 0 8px" }}>
+          Same AI detection quality on every plan.
+        </p>
+        <p className="muted" style={{ maxWidth: 560, margin: "0 auto" }}>
+          Paste text, right-click a selection, or use the floating icon. Choose the monthly word
+          allowance that suits you.
+        </p>
+      </div>
       <PricingPlans plans={data ?? []} />
     </div>
   );
