@@ -723,6 +723,9 @@ always has.
   review on 2026-09-13**. Per the dashboard's own confirmation dialog: status is checked on the
   developer dashboard home page, and items staged to publish later expire 30 days after passing
   review. Archive at `apps/extension/releases/v1.2.0/ai-checker-extension-v1.2.0.zip`.
+  **The Chrome Web Store listing's own "What's new" / description field was never updated for
+  this version** — the submission on 2026-09-13 went out without release notes. Still
+  outstanding as of v1.2.1; see the note below.
 - **v1.2.1** — in progress (2026-09-17), `package.json` bumped, **no release zip yet** —
   explicit user instruction: more fixes may land before packaging, so
   `apps/extension/releases/v1.2.1/` doesn't exist until asked for. First fix: the
@@ -731,6 +734,13 @@ always has.
   Check-for-AI button silently goes back to its resting state. Now its own bold, warning-red
   `.trial-exhausted-notice` class (same red already used for `badge.ai` /
   `confidence-badge.low`).
+
+**TODO when v1.2.1 is submitted: update the Chrome Web Store listing's "What's new" /
+description field for BOTH versions at once** — v1.2.0's release notes were never written
+(see above), so v1.2.1's submission is also the first chance to cover v1.2.0's changes
+(confidence badge + collapsible highlighted text, History tab sign-in prompt, `/resultsupport`
+link) alongside v1.2.1's own (bold red trial-exhausted notice, plus whatever else lands before
+packaging). Don't submit v1.2.1 without covering both.
 
 ## UI conventions: sticky, scroll-spied section nav (2026-09-17)
 
