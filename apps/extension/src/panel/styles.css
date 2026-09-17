@@ -473,8 +473,14 @@ textarea {
   font-weight: 700;
   white-space: nowrap;
 }
-.settings-signin-button { text-decoration: none; text-align: center; margin-top: 0; }
-.settings-signup-hint { margin: 10px 0 0; }
+.settings-signin-button {
+  text-decoration: none;
+  text-align: center;
+  margin-top: 0;
+  padding: 13px;
+  font-size: 15px;
+}
+.settings-signup-hint { margin: 16px 0 0; }
 
 .settings-row {
   display: flex;
@@ -507,7 +513,14 @@ textarea {
   pointer-events: none;
 }
 .switch-track {
-  display: block;
+  /* flex + align-items, not a block child's margin, centers the thumb
+     vertically - a block child's top margin with no border/padding on
+     this track would otherwise collapse straight through it (verified
+     live: the thumb sat flush at the top, 0px above / 6px below, instead
+     of the intended 3px/3px). Flex items never collapse margins with
+     their container, so this can't recur the same way. */
+  display: flex;
+  align-items: center;
   width: 38px;
   height: 22px;
   border-radius: 999px;
@@ -515,10 +528,10 @@ textarea {
   transition: background 0.15s ease;
 }
 .switch-thumb {
-  display: block;
   width: 16px;
   height: 16px;
-  margin: 3px;
+  margin-left: 3px;
+  flex-shrink: 0;
   border-radius: 50%;
   background: white;
   box-shadow: 0 1px 2px rgba(15, 23, 42, 0.25);
