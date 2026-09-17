@@ -191,8 +191,15 @@ export default function CheckPage() {
       <h1>Check your text for AI</h1>
       <p className="muted" style={{ maxWidth: 640 }}>
         Paste any text below - articles, essays, emails, and more - and see exactly how much of
-        it reads as AI-generated, with a sentence-level breakdown. No account needed to try it;{" "}
-        <Link href="/pricing">sign in</Link> for more credits and a saved history.
+        it reads as AI-generated, with a sentence-level breakdown.
+        {!signedIn && (
+          <>
+            {" "}
+            No account needed to try it;{" "}
+            <Link href={`/login?redirectTo=${encodeURIComponent("/check")}`}>sign in</Link> for
+            more credits and a saved history.
+          </>
+        )}
       </p>
 
       <div className="check-page-status">
