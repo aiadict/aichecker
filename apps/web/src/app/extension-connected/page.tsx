@@ -64,15 +64,32 @@ function ExtensionConnectedBody() {
         <h1 style={{ textAlign: "center" }}>You&apos;re signed in</h1>
 
         {checking ? null : connected ? (
-          <div className="auth-status success">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-              <circle cx="12" cy="12" r="9" />
-              <path d="M8 12.5l2.5 2.5L16 9.5" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-            <span>
-              You&apos;re signed in on werida.io. Open the AI Checker extension - it should already be
-              showing your credits. If it still says &quot;Sign in,&quot; click that and sign in there too.
-            </span>
+          <div className="connected-card">
+            <div className="connected-card-row connected-card-row-primary">
+              <span className="connected-card-icon connected-card-icon-success">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <path d="M6 12.5l4 4 8-8.5" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </span>
+              <div>
+                <div className="connected-card-title">Continue in the extension</div>
+                <p className="connected-card-desc">
+                  Open the AI Checker extension. Your credits should now appear there.
+                </p>
+              </div>
+            </div>
+            <div className="connected-card-row">
+              <span className="connected-card-icon connected-card-icon-info">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+                  <path d="M12 11v5" strokeLinecap="round" />
+                  <circle cx="12" cy="7.5" r="1" fill="currentColor" stroke="none" />
+                </svg>
+              </span>
+              <div>
+                <div className="connected-card-title">Still seeing &quot;Sign in&quot; in the extension?</div>
+                <p className="connected-card-desc">Click it and sign in there too.</p>
+              </div>
+            </div>
           </div>
         ) : (
           <div className="auth-status error">

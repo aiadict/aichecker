@@ -522,6 +522,40 @@ footer.site-footer { padding: 40px 0; color: var(--muted); font-size: 13px; }
 .auth-status.success { background: #f0fdf4; border: 1px solid #bbf7d0; color: #166534; }
 .auth-status.error { background: #fef2f2; border: 1px solid #fecaca; color: #b91c1c; }
 
+/* extension-connected's success state specifically - two stacked rows
+   (the action that actually matters, then a fallback for the one thing
+   that can still go wrong) read more like a real product state than one
+   flat colored banner trying to say both at once. */
+.connected-card {
+  margin-top: 16px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  text-align: left;
+}
+.connected-card-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 18px 20px;
+}
+.connected-card-row + .connected-card-row { border-top: 1px solid var(--border); }
+.connected-card-row-primary { background: #f0fdf4; }
+.connected-card-icon {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.connected-card-icon svg { width: 17px; height: 17px; }
+.connected-card-icon-success { background: #dcfce7; color: #15803d; }
+.connected-card-icon-info { background: #e2e8f0; color: var(--muted); }
+.connected-card-title { font-weight: 700; font-size: 15px; color: var(--fg); margin-bottom: 3px; }
+.connected-card-desc { color: var(--muted); font-size: 14px; margin: 0; line-height: 1.5; }
+
 /* Sign in / Sign up toggle — two equally-weighted buttons instead of a
    small "Already have an account? Sign in" link, so switching mode is
    obvious at a glance rather than something to notice and read. */
