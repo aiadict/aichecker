@@ -474,6 +474,11 @@ textarea {
   white-space: nowrap;
 }
 .settings-signin-button {
+  /* .primary-button's width: 100% does nothing on an <a> - anchors are
+     inline by default and ignore width entirely, which is exactly why
+     this hugged its text instead of matching .secondary-button's full
+     width (a <button>, block-ish by default). */
+  display: block;
   text-decoration: none;
   text-align: center;
   margin-top: 0;
