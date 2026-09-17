@@ -42,11 +42,9 @@ const SHORT_LABEL: Record<CheckResult["predictionShort"], string> = {
 export default function ResultCard({
   result,
   onClose,
-  standalone,
 }: {
   result: CheckResult;
   onClose?: () => void;
-  standalone: boolean;
 }) {
   const insight = synthesizeInsight(result.windows);
   const confidence = overallConfidence(result.windows);
@@ -56,7 +54,7 @@ export default function ResultCard({
 
   return (
     <div style={{ marginBottom: 16 }}>
-      <PanelSectionHeader title="Your result" standalone={standalone} />
+      <PanelSectionHeader title="Your result" />
       <div className="result-card" key={result.id}>
         {onClose && (
           <button className="result-close" onClick={onClose} aria-label="Dismiss result">

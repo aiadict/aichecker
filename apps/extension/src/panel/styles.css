@@ -38,23 +38,6 @@ body {
 
 .panel-root { display: flex; flex-direction: column; height: 100%; }
 
-/* "Open web checker" (see PanelSectionHeader.tsx) opens this exact same
-   page in a full tab instead of the narrow side panel — full width would
-   stretch the textarea edge-to-edge across a wide monitor, so this caps
-   it to a comfortable reading/editing column and centers it on a pale
-   background, matching the .feedback-page-wrap/.uninstall treatment
-   apps/web already uses for its own single-column pages. */
-body:has(.panel-root.standalone) { background: #f6f8fb; }
-.panel-root.standalone {
-  max-width: 720px;
-  width: 100%;
-  margin: 0 auto;
-  background: var(--bg);
-  box-shadow: 0 4px 20px rgba(15, 23, 42, 0.06);
-  border-left: 1px solid var(--border);
-  border-right: 1px solid var(--border);
-}
-
 .panel-section-header {
   display: flex;
   align-items: center;
@@ -114,19 +97,6 @@ body:has(.panel-root.standalone) { background: #f6f8fb; }
 .credits-row strong { color: var(--fg); }
 .credits-row-left { display: flex; align-items: center; gap: 10px; }
 .credits-row-right { text-align: right; }
-
-/* Only shown in the standalone (full-tab) case - see Header.tsx. Sized to
-   sit comfortably next to .credits-row's own 12px text without visually
-   outweighing it. */
-.standalone-brand {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 13.5px;
-  font-weight: 700;
-  color: var(--fg);
-}
-.standalone-brand-mark { width: 18px; height: 18px; flex-shrink: 0; }
 
 .tabpanel {
   flex: 1;

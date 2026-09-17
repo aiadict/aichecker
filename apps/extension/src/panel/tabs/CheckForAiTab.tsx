@@ -29,11 +29,9 @@ function fileExtension(name: string): string {
 export default function CheckForAiTab({
   prefillText,
   autoRunToken,
-  standalone,
 }: {
   prefillText: string;
   autoRunToken?: number;
-  standalone: boolean;
 }) {
   const [text, setText] = useState(prefillText);
   const [loading, setLoading] = useState(false);
@@ -161,7 +159,7 @@ export default function CheckForAiTab({
           "Open web checker" links on screen at once). Reappears the
           moment the result is dismissed (onClose below sets response back
           to null), so there's still always exactly one header visible. */}
-      {!response?.ok && <PanelSectionHeader title="Check text" standalone={standalone} />}
+      {!response?.ok && <PanelSectionHeader title="Check text" />}
 
       {response && !response.ok && response.error === "unauthorized" && (
         <>
@@ -193,9 +191,7 @@ export default function CheckForAiTab({
         </p>
       )}
 
-      {response?.ok && (
-        <ResultCard result={response.result} onClose={() => setResponse(null)} standalone={standalone} />
-      )}
+      {response?.ok && <ResultCard result={response.result} onClose={() => setResponse(null)} />}
 
       <div className="check-text-label-row">
         <span className="check-text-label">
@@ -277,7 +273,7 @@ export default function CheckForAiTab({
       </button>
 
       <RateUsPrompt />
-      {!standalone && <ResizeHintBanner />}
+      <ResizeHintBanner />
     </div>
   );
 }

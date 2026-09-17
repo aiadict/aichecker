@@ -7,9 +7,7 @@ import { shouldShowResizeHint, recordResizeHintView, dismissResizeHint } from ".
  * annotate directly, and genuinely easy to never notice (confirmed: not
  * something either of us thought to mention until this exact conversation).
  * Shown on the Check tab for the first few panel opens (see
- * shouldShowResizeHint's doc comment), or until dismissed. Not shown in
- * standalone mode (see App.tsx/PanelSectionHeader) - there's no resize
- * handle to point at in a normal browser tab.
+ * shouldShowResizeHint's doc comment), or until dismissed.
  */
 export default function ResizeHintBanner() {
   const [visible, setVisible] = useState(false);

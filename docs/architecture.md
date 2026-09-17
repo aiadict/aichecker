@@ -787,14 +787,22 @@ always has.
   of a bare checkbox) instead of its old plain stacked-rows layout — same underlying data and
   copy throughout, no hardcoded values. Extracted `lib/useAccountStatus.ts` out of `Header.tsx`
   so both it and the new Account card's credits badge read from one shared fetch instead of two
-  independent (and driftable) copies of the same logic.
+  independent (and driftable) copies of the same logic. Third change (2026-09-18): "Open web
+  checker" (`PanelSectionHeader.tsx`) now opens the real, hosted `werida.io/check` instead of
+  the extension's own internal `?standalone=1` page — see "Hosted web checker at /check" below
+  for the full story. This also removed the standalone-mode code it made dead: `isStandalone`
+  in `App.tsx`, `.panel-root.standalone`/`.standalone-brand*` CSS, and the `standalone` prop
+  previously threaded through `Header`/`CheckForAiTab`/`PanelSectionHeader`/`ResultCard`.
+  Verified live: a loaded unpacked copy's "Open web checker" opens `https://werida.io/check` in
+  a new tab.
 
 **TODO when v1.2.1 is submitted: update the Chrome Web Store listing's "What's new" /
 description field for BOTH versions at once** — v1.2.0's release notes were never written
 (see above), so v1.2.1's submission is also the first chance to cover v1.2.0's changes
 (confidence badge + collapsible highlighted text, History tab sign-in prompt, `/resultsupport`
-link) alongside v1.2.1's own (bold red trial-exhausted notice, plus whatever else lands before
-packaging). Don't submit v1.2.1 without covering both.
+link) alongside v1.2.1's own (bold red trial-exhausted notice, Settings tab redesign, "Open web
+checker" now pointing at the real werida.io/check, plus whatever else lands before packaging).
+Don't submit v1.2.1 without covering both.
 
 ## UI conventions: sticky, scroll-spied section nav (2026-09-17)
 
@@ -883,14 +891,15 @@ real detection quality with no friction, then convert to the extension for the f
 in-page flow.
 
 **Sequencing — deliberately staged, not big-bang**: this pass shipped `/check` itself plus the
-`CheckResultView` extraction and nav additions — **the extension's `PanelSectionHeader.tsx`
-was deliberately NOT touched yet**; "Open web checker" still opens the old internal
-`?standalone=1` page for now. That repoint, and the follow-up removal of the extension's
-now-dead standalone-mode code (`isStandalone` in `App.tsx`, `.panel-root.standalone`/
-`.standalone-brand*` CSS, the `standalone` prop threaded through `Header`/`CheckForAiTab`/
-`PanelSectionHeader`/`ResultCard`), are separate, later changes — kept small, independently
-verifiable, and reversible rather than shipping a brand-new feature and deleting working
-extension code in the same change.
+`CheckResultView` extraction and nav additions first — the extension's `PanelSectionHeader.tsx`
+was deliberately left untouched until `/check` had been confirmed solid in production. Once
+that held up (real anonymous checks, file upload, mobile, the History nav link, the sign-in
+nudge/link fixes above), a follow-up pass (2026-09-18) repointed "Open web checker" at
+`werida.io/check` and removed the standalone-mode code that repoint made dead (`isStandalone`
+in `App.tsx`, `.panel-root.standalone`/`.standalone-brand*` CSS, the `standalone` prop
+previously threaded through `Header`/`CheckForAiTab`/`PanelSectionHeader`/`ResultCard`) — see
+the Chrome Web Store release status section's v1.2.1 entry. Kept as two separate changes
+rather than one big-bang, so a problem in either was independently isolatable.
 
 **Abuse-surface note**: `/check` doesn't expose anything technically new (see "zero backend
 changes" above), but it does turn "reachable via curl if you know the shape" into "one click
