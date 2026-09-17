@@ -11,12 +11,12 @@ export default async function PricingPage() {
 
   return (
     <div className="container">
-      <div style={{ textAlign: "center" }}>
-        <h1>Pricing</h1>
-        <p style={{ fontSize: 22, fontWeight: 800, color: "var(--fg)", margin: "0 0 8px" }}>
+      <div style={{ textAlign: "center", paddingTop: 8, paddingBottom: 16 }}>
+        <h1 style={{ margin: "0 0 20px" }}>Pricing</h1>
+        <p style={{ fontSize: 22, fontWeight: 800, color: "var(--fg)", margin: "0 0 14px", lineHeight: 1.4 }}>
           Same AI detection quality on every plan.
         </p>
-        <p className="muted" style={{ maxWidth: 560, margin: "0 auto" }}>
+        <p className="muted" style={{ maxWidth: 560, margin: "0 auto", lineHeight: 1.7 }}>
           Paste text, right-click a selection, or use the floating icon. Choose the monthly word
           allowance that suits you.
         </p>

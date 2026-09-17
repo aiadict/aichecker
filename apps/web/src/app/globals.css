@@ -201,7 +201,7 @@ nav.site-nav .brand img { border-radius: 5px; flex-shrink: 0; }
   background: var(--brand-soft);
   border-radius: 999px;
   padding: 4px;
-  margin: 8px auto 28px;
+  margin: 20px auto 40px;
 }
 .billing-toggle button {
   display: flex;
