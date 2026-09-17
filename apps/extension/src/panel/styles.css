@@ -442,11 +442,105 @@ textarea {
 .badge.human { background: #dcfce7; color: #166534; }
 .badge.mixed { background: #fef3c7; color: #92400e; }
 
+.settings-page { display: flex; flex-direction: column; }
+.settings-title { font-size: 21px; font-weight: 800; margin: 4px 0 16px; letter-spacing: -0.01em; }
+
+.settings-card {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 14px;
+}
+/* The one card that needs to stand out — account/credit status is the
+   thing most worth a user's attention on this tab, everything else
+   (Preferences) is plain so it doesn't compete for it. */
+.settings-card-account { background: var(--brand-soft); border-color: transparent; }
+.settings-card-label { font-weight: 700; font-size: 14.5px; }
+.settings-card-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+.credits-badge {
+  flex-shrink: 0;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: var(--bg);
+  color: var(--brand-dark);
+  font-size: 11.5px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.settings-signin-button { text-decoration: none; text-align: center; margin-top: 0; }
+.settings-signup-hint { margin: 10px 0 0; }
+
 .settings-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 10px 0;
-  border-bottom: 1px solid var(--border);
 }
 .muted { color: var(--muted); font-size: 12px; }
+
+.secondary-button {
+  width: 100%;
+  padding: 9px;
+  border: 1.5px solid var(--brand);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--brand-dark);
+  font-weight: 600;
+  cursor: pointer;
+}
+.secondary-button:hover { background: var(--bg); border-color: var(--brand-dark); }
+
+/* Custom toggle switch replacing a bare <input type="checkbox"> in
+   Preferences — same on/off state and handler either way, just a control
+   that actually looks intentional next to the rest of this redesign. */
+.switch { position: relative; display: inline-block; flex-shrink: 0; }
+.switch input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+.switch-track {
+  display: block;
+  width: 38px;
+  height: 22px;
+  border-radius: 999px;
+  background: var(--border);
+  transition: background 0.15s ease;
+}
+.switch-thumb {
+  display: block;
+  width: 16px;
+  height: 16px;
+  margin: 3px;
+  border-radius: 50%;
+  background: white;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.25);
+  transition: transform 0.15s ease;
+}
+.switch input:checked + .switch-track { background: var(--brand); }
+.switch input:checked + .switch-track .switch-thumb { transform: translateX(16px); }
+.switch input:focus-visible + .switch-track { outline: 2px solid var(--brand-dark); outline-offset: 2px; }
+
+.settings-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 2px;
+}
+.settings-footer-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--brand);
+  font-size: 12.5px;
+  font-weight: 600;
+  text-decoration: none;
+}
+.settings-footer-link:hover { color: var(--brand-dark); text-decoration: underline; }

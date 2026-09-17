@@ -733,7 +733,13 @@ always has.
   keep going.") was easy to miss — plain `.muted` gray text, the only signal after the
   Check-for-AI button silently goes back to its resting state. Now its own bold, warning-red
   `.trial-exhausted-notice` class (same red already used for `badge.ai` /
-  `confidence-badge.low`).
+  `confidence-badge.low`). Second change: `SettingsTab.tsx` redesigned to match the rest of the
+  panel's card-based visual language (bordered/rounded `.settings-card`s, a filled
+  `.settings-card-account` card, a real `.credits-badge` pill, a proper `.switch` toggle instead
+  of a bare checkbox) instead of its old plain stacked-rows layout — same underlying data and
+  copy throughout, no hardcoded values. Extracted `lib/useAccountStatus.ts` out of `Header.tsx`
+  so both it and the new Account card's credits badge read from one shared fetch instead of two
+  independent (and driftable) copies of the same logic.
 
 **TODO when v1.2.1 is submitted: update the Chrome Web Store listing's "What's new" /
 description field for BOTH versions at once** — v1.2.0's release notes were never written
