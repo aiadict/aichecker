@@ -65,7 +65,7 @@ export default function App() {
 
   return (
     <div className={`panel-root${isStandalone ? " standalone" : ""}`}>
-      <Header />
+      <Header standalone={isStandalone} />
       <div className="tabpanel">
         {tab === "check" && (
           <CheckForAiTab prefillText={prefillText} autoRunToken={autoRunToken} standalone={isStandalone} />

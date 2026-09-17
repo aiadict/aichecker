@@ -112,7 +112,21 @@ body:has(.panel-root.standalone) { background: #f6f8fb; }
   flex-shrink: 0;
 }
 .credits-row strong { color: var(--fg); }
+.credits-row-left { display: flex; align-items: center; gap: 10px; }
 .credits-row-right { text-align: right; }
+
+/* Only shown in the standalone (full-tab) case - see Header.tsx. Sized to
+   sit comfortably next to .credits-row's own 12px text without visually
+   outweighing it. */
+.standalone-brand {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--fg);
+}
+.standalone-brand-mark { width: 18px; height: 18px; flex-shrink: 0; }
 
 .tabpanel {
   flex: 1;
