@@ -722,9 +722,15 @@ always has.
   History tab sign-in prompt, `/resultsupport` link) and **submitted to the Chrome Web Store for
   review on 2026-09-13**. Per the dashboard's own confirmation dialog: status is checked on the
   developer dashboard home page, and items staged to publish later expire 30 days after passing
-  review. Archive at `apps/extension/releases/v1.2.0/ai-checker-extension-v1.2.0.zip`. Until this
-  is approved, do not start bundling further extension-side changes into the same release —
-  treat the next version bump as a new, separate `v1.3.0` once v1.2.0 clears review.
+  review. Archive at `apps/extension/releases/v1.2.0/ai-checker-extension-v1.2.0.zip`.
+- **v1.2.1** — in progress (2026-09-17), `package.json` bumped, **no release zip yet** —
+  explicit user instruction: more fixes may land before packaging, so
+  `apps/extension/releases/v1.2.1/` doesn't exist until asked for. First fix: the
+  trial-exhausted message in `CheckForAiTab.tsx` ("You've used your 2 free checks - sign in to
+  keep going.") was easy to miss — plain `.muted` gray text, the only signal after the
+  Check-for-AI button silently goes back to its resting state. Now its own bold, warning-red
+  `.trial-exhausted-notice` class (same red already used for `badge.ai` /
+  `confidence-badge.low`).
 
 ## UI conventions: sticky, scroll-spied section nav (2026-09-17)
 

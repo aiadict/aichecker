@@ -165,6 +165,14 @@ body:has(.panel-root.standalone) { background: #f6f8fb; }
 
 .upload-error { font-size: 12px; color: #b91c1c; margin: 0 0 8px; }
 
+/* Free-trial-exhausted notice: after Checking... resolves back to a
+   plain "Check for AI" button, this line is the ONLY signal that
+   anything happened at all - it was easy to miss as ".muted" gray text
+   (12px, --muted color), reading like the checker silently did nothing
+   rather than "you're out of free checks." Bold + the same warning red
+   already used elsewhere (badge.ai, confidence-badge.low) fixes that. */
+.trial-exhausted-notice { font-size: 13px; font-weight: 700; color: #b91c1c; margin: 0 0 12px; }
+
 .textarea-wrap { position: relative; flex: 1; min-height: 80px; display: flex; }
 
 /* Shown while a dragged file is over the textarea — the drop itself is

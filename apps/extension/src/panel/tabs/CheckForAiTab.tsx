@@ -164,18 +164,28 @@ export default function CheckForAiTab({
       {!response?.ok && <PanelSectionHeader title="Check text" standalone={standalone} />}
 
       {response && !response.ok && response.error === "unauthorized" && (
-        <p className="muted" style={{ marginTop: 0, marginBottom: 12 }}>
+        <>
           {/* Header's own Sign-in pill is always visible directly above,
               on every tab — no need to duplicate it here (see
               apps/extension/src/panel/components/Header.tsx). Only the
               wording changes based on `reason`: reaching the trial's own
               limit or the shared daily cap both mean "you had free
               checks and used them", a different situation from any other
-              unauthenticated attempt. */}
-          {response.reason === "trial_exhausted" || response.reason === "anon_daily_cap_reached"
-            ? "You've used your 2 free checks - sign in to keep going."
-            : "Sign in to check for AI."}
-        </p>
+              unauthenticated attempt — and unlike a plain "sign in to
+              check" prompt, this one needs to visibly announce that
+              something DID happen (the check was blocked, not silently
+              dropped), so it gets its own bold red style instead of the
+              plain .muted treatment. */}
+          {response.reason === "trial_exhausted" || response.reason === "anon_daily_cap_reached" ? (
+            <p className="trial-exhausted-notice">
+              You&apos;ve used your 2 free checks - sign in to keep going.
+            </p>
+          ) : (
+            <p className="muted" style={{ marginTop: 0, marginBottom: 12 }}>
+              Sign in to check for AI.
+            </p>
+          )}
+        </>
       )}
       {response && !response.ok && response.error !== "unauthorized" && (
         <p className="muted" style={{ marginTop: 0, marginBottom: 12 }}>
