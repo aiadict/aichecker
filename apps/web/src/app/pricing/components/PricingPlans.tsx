@@ -98,7 +98,13 @@ export default function PricingPlans({ plans }: { plans: PlanRow[] }) {
                 </>
               )}
 
-              <p>{words} words / month</p>
+              {isFree ? (
+                <p>
+                  <span className="free-words-badge">{words} words / month</span>
+                </p>
+              ) : (
+                <p>{words} words / month</p>
+              )}
               {NOTES[plan.key] && <p className="muted">{NOTES[plan.key]}</p>}
 
               <ul>

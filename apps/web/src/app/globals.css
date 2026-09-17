@@ -230,6 +230,20 @@ nav.site-nav .brand img { border-radius: 5px; flex-shrink: 0; }
   border-radius: 999px;
 }
 
+/* Same pale-green/dark-green pair as .save-badge above, applied to the
+   Free plan's word allowance specifically - the free tier's real value is
+   easy to skim past next to two paid cards, this calls it out. No
+   font-size set, unlike .save-badge - inherits the surrounding <p>'s own
+   size instead of shrinking down to the toggle label's small size. */
+.free-words-badge {
+  display: inline-block;
+  background: #dcfce7;
+  color: #166534;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 999px;
+}
+
 .pricing-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
