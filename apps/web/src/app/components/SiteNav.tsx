@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
+import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import { CHROME_STORE_URL } from "@/lib/constants";
 
 // Below ~640px there isn't room for the wordmark plus three nav links on
@@ -12,6 +13,22 @@ import { CHROME_STORE_URL } from "@/lib/constants";
 // half of this.
 export default function SiteNav() {
   const [open, setOpen] = useState(false);
+  // Client-side only, deliberately - this component renders on every
+  // page via layout.tsx, including plain marketing pages that are
+  // statically prerendered today. Making the nav auth-aware server-side
+  // would force every page dynamic just to decide whether one link
+  // shows. A brief flash before this resolves is an accepted tradeoff,
+  // same as /check's own status row.
+  const [signedIn, setSignedIn] = useState(false);
+
+  useEffect(() => {
+    const supabase = getSupabaseBrowserClient();
+    supabase.auth.getSession().then(({ data }) => setSignedIn(Boolean(data.session)));
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => setSignedIn(Boolean(session)));
+    return () => subscription.unsubscribe();
+  }, []);
 
   function close() {
     setOpen(false);
@@ -29,6 +46,11 @@ export default function SiteNav() {
           <Link href="/check" onClick={close}>
             Check
           </Link>
+          {signedIn && (
+            <Link href="/dashboard/history" onClick={close}>
+              History
+            </Link>
+          )}
           <Link href="/pricing" onClick={close}>
             Pricing
           </Link>
