@@ -1,5 +1,18 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import SectionNav from "../components/SectionNav";
+
+const SECTIONS = [
+  { id: "percentage", label: "Percentage" },
+  { id: "word-minimum", label: "Word minimum" },
+  { id: "credits", label: "Credits" },
+  { id: "pinning", label: "Pinning" },
+  { id: "privacy", label: "Privacy" },
+  { id: "delete-account", label: "Deleting data" },
+  { id: "billing", label: "Billing" },
+  { id: "floating-icon", label: "Floating icon" },
+  { id: "extension-signin", label: "Extension sign-in" },
+];
 
 export const metadata: Metadata = {
   title: "Support - AI Checker",
@@ -15,17 +28,7 @@ export default function SupportPage() {
         below that is how to reach a real person.
       </p>
 
-      <nav className="support-jumpnav" aria-label="Jump to a question">
-        <a href="#percentage">Percentage</a>
-        <a href="#word-minimum">Word minimum</a>
-        <a href="#credits">Credits</a>
-        <a href="#pinning">Pinning</a>
-        <a href="#privacy">Privacy</a>
-        <a href="#delete-account">Deleting data</a>
-        <a href="#billing">Billing</a>
-        <a href="#floating-icon">Floating icon</a>
-        <a href="#extension-signin">Extension sign-in</a>
-      </nav>
+      <SectionNav sections={SECTIONS} />
 
       <div className="card">
         <h3>Get in touch</h3>

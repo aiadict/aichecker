@@ -725,3 +725,27 @@ always has.
   review. Archive at `apps/extension/releases/v1.2.0/ai-checker-extension-v1.2.0.zip`. Until this
   is approved, do not start bundling further extension-side changes into the same release —
   treat the next version bump as a new, separate `v1.3.0` once v1.2.0 clears review.
+
+## UI conventions: sticky, scroll-spied section nav (2026-09-17)
+
+**Standard component for in-page navigation on long single-page content: `apps/web/src/app/components/SectionNav.tsx`.**
+Renders a pill-style nav (same visual language as the old static `support-jumpnav` links) that
+goes `position: sticky` under the site header once scrolled to, and highlights whichever
+section is currently in view as the reader scrolls — no page reload, no separate route per
+section. In use on `/support` and `/resultsupport`.
+
+Modeled on a reference help-page the user liked (`AI_Checker_Understanding_Results.html`,
+supplied 2026-09-17) for the sticky + scroll-spy *behavior* specifically — the visual style
+(pill nav, brand colors) stayed ours rather than adopting that page's tab-underline look, to
+keep it consistent with the rest of the site.
+
+**Usage**: pass `sections={[{ id, label }, ...]}` matching `id`s already present on the
+page's own `.card` elements (or any element with that `id`) — the component does the sticky
+positioning and active-section tracking, the page just needs the anchors to exist. `.card`'s
+`scroll-margin-top` is set globally (84px) so an anchor jump clears the sticky bar; this is a
+harmless no-op on pages that don't use `SectionNav`.
+
+**Decision: this is the one nav pattern for this kind of page.** The next time a long,
+section-heavy help/reference page needs in-page navigation, reuse `SectionNav` rather than
+building a new one-off — don't hand-roll another static jump-nav or a different sticky
+implementation.

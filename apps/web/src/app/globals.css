@@ -154,16 +154,29 @@ nav.site-nav .brand img { border-radius: 5px; flex-shrink: 0; }
   border-radius: 12px;
   padding: 20px;
   margin-bottom: 16px;
-  scroll-margin-top: 20px;
+  /* Big enough to clear .section-nav's sticky bar when jumping to an
+     anchor - harmless no-op on pages that don't use it. */
+  scroll-margin-top: 84px;
 }
 
-.support-jumpnav {
+/* Sticky, scroll-spied section nav - see components/SectionNav.tsx.
+   Same pill look as the old static support-jumpnav, now sticky with an
+   .active state instead of just being a one-time set of jump links. */
+.section-nav {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: var(--bg);
+  padding: 12px 0;
+  margin: 20px 0 28px;
+  border-bottom: 1px solid var(--border);
+}
+.section-nav-links {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  margin: 20px 0 28px;
 }
-.support-jumpnav a {
+.section-nav-links a {
   display: inline-block;
   padding: 5px 12px;
   border-radius: 999px;
@@ -172,8 +185,13 @@ nav.site-nav .brand img { border-radius: 5px; flex-shrink: 0; }
   font-size: 13px;
   font-weight: 600;
   text-decoration: none;
+  transition: background 0.15s ease, color 0.15s ease;
 }
-.support-jumpnav a:hover { background: var(--brand); color: white; }
+.section-nav-links a:hover,
+.section-nav-links a.active {
+  background: var(--brand);
+  color: white;
+}
 
 .billing-toggle {
   display: flex;

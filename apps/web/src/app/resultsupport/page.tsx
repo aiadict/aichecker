@@ -1,6 +1,21 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { CHROME_STORE_URL } from "@/lib/constants";
+import SectionNav from "../components/SectionNav";
+
+const SECTIONS = [
+  { id: "verdict", label: "The verdict" },
+  { id: "percentage", label: "The percentage" },
+  { id: "breakdown", label: "AI / Assisted / Human" },
+  { id: "confidence", label: "Confidence" },
+  { id: "positional-bar", label: "Where in the text" },
+  { id: "highlighted-text", label: "Highlighted text" },
+  { id: "what-to-do", label: "What to do next" },
+  { id: "rechecking", label: "Why results change" },
+  { id: "false-positive", label: "Flagged your own writing?" },
+  { id: "limits", label: "What this can't tell you" },
+  { id: "more-questions", label: "More questions" },
+];
 
 export const metadata: Metadata = {
   title: "Understanding your result - AI Checker",
@@ -18,16 +33,7 @@ export default function ResultSupportPage() {
         at or what to do next.
       </p>
 
-      <nav className="support-jumpnav" aria-label="Jump to a section">
-        <a href="#verdict">The verdict</a>
-        <a href="#percentage">The percentage</a>
-        <a href="#breakdown">AI / Assisted / Human</a>
-        <a href="#confidence">Confidence</a>
-        <a href="#positional-bar">Where in the text</a>
-        <a href="#highlighted-text">Highlighted text</a>
-        <a href="#what-to-do">What to do next</a>
-        <a href="#limits">What this can&apos;t tell you</a>
-      </nav>
+      <SectionNav sections={SECTIONS} />
 
       <div className="card" id="verdict">
         <h3>The verdict at the top</h3>
@@ -177,6 +183,101 @@ export default function ResultSupportPage() {
           This is exactly why editing and re-checking both happen in the same panel, right next to
           each other, instead of being two separate steps.
         </p>
+
+        <h3 style={{ marginTop: 24 }}>What a useful rewrite actually looks like</h3>
+        <p className="muted" style={{ marginBottom: 12 }}>
+          The pattern that tends to get flagged is generic, safe-sounding phrasing that could apply
+          to almost anything. Swapping in specific, true details about your own situation is what
+          actually changes it - not just rewording the same generic sentence:
+        </p>
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Generic phrasing</th>
+              <th scope="col">Specific rewrite</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>&quot;This innovative solution enhances efficiency and improves outcomes.&quot;</td>
+              <td>&quot;This script cuts our invoice-matching time from 20 minutes to about 3.&quot;</td>
+            </tr>
+            <tr>
+              <td>&quot;Effective communication plays a crucial role in team success.&quot;</td>
+              <td>
+                &quot;We stopped missing handoffs once every task had one named owner and a due
+                date.&quot;
+              </td>
+            </tr>
+            <tr>
+              <td>&quot;The project provided valuable insights and learning experiences.&quot;</td>
+              <td>
+                &quot;Two suppliers fell through mid-project - next time I&apos;d lock in a backup
+                before setting the delivery date.&quot;
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <p className="muted" style={{ marginTop: 10 }}>
+          These are illustrations of the pattern, not a guarantee - use details only when
+          they&apos;re actually true for your situation.
+        </p>
+      </div>
+
+      <div className="card" id="rechecking">
+        <h3>Why did my percentage or highlights change after I edited the text?</h3>
+        <p>
+          Sentences aren&apos;t scored in isolation - the model reads each one together with the
+          text around it. That means editing or removing one sentence can shift the score of a
+          neighboring sentence too, even if that neighbor&apos;s own wording didn&apos;t change at
+          all, because the context it&apos;s being read alongside changed.
+        </p>
+        <p className="muted">
+          Practically: always recheck the <strong>complete</strong> passage after an edit, not just
+          the sentence you changed. And when comparing two versions of the same document, compare
+          them whole rather than pulling out a single sentence from each - a sentence in isolation
+          scores less reliably than the same sentence read in context.
+        </p>
+      </div>
+
+      <div className="card" id="false-positive">
+        <h3>I&apos;m confident I wrote every word myself - why was it flagged?</h3>
+        <p>
+          No detector, ours included, is right 100% of the time in both directions - text can score
+          higher than it should without actually being AI-written. Before assuming the tool got it
+          wrong, it&apos;s worth checking a few things:
+        </p>
+        <ul style={{ paddingLeft: 20, lineHeight: 1.9 }}>
+          <li>
+            Review the complete passage with its surrounding context, not a single sentence pulled
+            out on its own - see <Link href="#rechecking">why results change</Link> above.
+          </li>
+          <li>
+            Check for paste artifacts. Text copied from a PDF, Google Docs, or a CMS sometimes
+            carries broken paragraph breaks or stray formatting that can distort scoring - try
+            re-pasting as plain text and checking again.
+          </li>
+          <li>
+            Think about whether you ran the text through a grammar or rewriting tool. Suggestion-
+            based editors and &quot;improve my writing&quot; features can shift word-choice patterns
+            enough to read as AI-influenced, even with no full AI draft involved anywhere.
+          </li>
+          <li>
+            Very formal, repetitive, or old-fashioned prose - a heavily revised abstract, a legal
+            document, non-native-English phrasing - occasionally reads as more AI-like than it
+            should. This is a known limitation of statistical detectors generally, not unique to us.
+          </li>
+          <li>
+            Keep your drafts, notes, and version history. If this result matters for something with
+            real stakes - a grade, a job - your own working history is stronger evidence than
+            arguing with any single tool&apos;s score.
+          </li>
+        </ul>
+        <p className="muted">
+          Checked all of that and still think the result is simply wrong? Email{" "}
+          <a href="mailto:support@werida.io">support@werida.io</a> with a link to the result - we
+          do look at these individually.
+        </p>
       </div>
 
       <div className="card" id="limits">
@@ -190,6 +291,39 @@ export default function ResultSupportPage() {
           Treat every result as one input among several, especially for anything with real
           consequences for someone - grading, hiring, publishing decisions, and so on - rather than
           the sole basis for a decision.
+        </p>
+      </div>
+
+      <div className="card" id="more-questions">
+        <h3>A few more common questions</h3>
+
+        <p>
+          <strong>Will another AI detector give me the same score?</strong>
+          <br />
+          Not necessarily. Different detectors use different models and scoring methods, so a
+          percentage from one isn&apos;t directly comparable to a percentage from another. If
+          you&apos;re cross-checking a result somewhere, compare the explanations and flagged
+          passages, not just the headline number.
+        </p>
+
+        <p style={{ marginTop: 16 }}>
+          <strong>Will a paraphrasing or &quot;humanizer&quot; tool fix a flagged result?</strong>
+          <br />
+          Not reliably. Those tools change surface wording, but the underlying patterns our model
+          looks at can survive the rewrite - and running AI-generated text through a second AI tool
+          doesn&apos;t make it human-written. Genuinely rewriting the idea yourself (see{" "}
+          <Link href="#what-to-do">what to do next</Link>) is the only approach that actually
+          addresses the cause instead of the symptom.
+        </p>
+
+        <p style={{ marginTop: 16 }}>
+          <strong>Is this the same as a plagiarism checker?</strong>
+          <br />
+          No. This estimates AI involvement in the writing itself - it doesn&apos;t compare your
+          text against other sources the way a plagiarism checker does. Text can be 100% human-
+          written and still be plagiarized, or entirely original and still score as AI-influenced;
+          they&apos;re answering two different questions. Check quotations and citations
+          separately.
         </p>
       </div>
 
