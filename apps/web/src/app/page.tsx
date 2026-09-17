@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { CHROME_STORE_URL } from "@/lib/constants";
 
 export default function HomePage() {
@@ -19,6 +20,9 @@ export default function HomePage() {
         >
           Add to Chrome - it&apos;s free
         </a>
+        <p style={{ marginTop: 12 }}>
+          <Link href="/check">Or try it now in your browser →</Link>
+        </p>
       </section>
 
       <section style={{ paddingBottom: 40 }}>
@@ -47,7 +51,7 @@ export default function HomePage() {
         <div className="card">
           <h3>Built for real usage limits</h3>
           <p className="muted">
-            Free plan includes 10 checks a month. Upgrade to Pro or Business for more credits -
+            Free plan includes 25,000 words a month. Upgrade to Pro or Business for more credits -
             see <a href="/pricing">pricing</a>.
           </p>
         </div>

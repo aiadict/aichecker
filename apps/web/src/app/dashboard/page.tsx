@@ -134,6 +134,23 @@ export default async function DashboardPage() {
       )}
 
       <div className="dashboard-links">
+        <Link href="/check" className="dashboard-link-card">
+          <span className="dashboard-link-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" width="20" height="20">
+              <path d="M4 15h7" strokeLinecap="round" />
+              <path d="M4 18.5h4.5" strokeLinecap="round" />
+              <circle cx="15" cy="10" r="4.3" />
+              <line x1="18" y1="13" x2="20.5" y2="15.5" strokeLinecap="round" />
+            </svg>
+          </span>
+          <span>
+            <strong>Run a new check</strong>
+            <span className="muted" style={{ display: "block", fontSize: 13 }}>
+              Paste text and check it right here on the web
+            </span>
+          </span>
+          <span className="dashboard-link-chevron">→</span>
+        </Link>
         <Link href="/dashboard/history" className="dashboard-link-card">
           <span className="dashboard-link-icon">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" width="20" height="20">
@@ -180,8 +197,8 @@ export default async function DashboardPage() {
         {recentChecks.length === 0 ? (
           <div className="card" style={{ marginTop: 12 }}>
             <p className="muted" style={{ margin: 0 }}>
-              No checks yet. Select text on any page and click the AI Checker icon, or paste text
-              into the extension directly.
+              No checks yet. Select text on any page and click the AI Checker icon, paste text
+              into the extension directly, or <Link href="/check">run a check right here</Link>.
             </p>
           </div>
         ) : (

@@ -26,6 +26,9 @@ export default function SiteNav() {
 
       <div className="site-nav-right">
         <div className={`site-nav-links${open ? " open" : ""}`}>
+          <Link href="/check" onClick={close}>
+            Check
+          </Link>
           <Link href="/pricing" onClick={close}>
             Pricing
           </Link>

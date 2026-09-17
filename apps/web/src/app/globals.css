@@ -742,3 +742,123 @@ footer.site-footer { padding: 40px 0; color: var(--muted); font-size: 13px; }
   align-items: center;
   justify-content: space-between;
 }
+
+/* /check - the hosted web checker. Same visual language as the rest of
+   the site (.card, --brand/--border/--muted), sized for a full page
+   rather than the extension's narrow 280-380px side panel - a wider
+   textarea, roomier padding, larger type. Class names are check-page-*
+   prefixed/local to this page's own elements (label row, upload button,
+   textarea wrap, counter, clear button, hints) - the extension has its
+   own separate copies of these same concepts in its own stylesheet;
+   this is not meant to be a literal CSS port. */
+.check-page-status {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  margin: 20px 0;
+  padding: 12px 16px;
+  border-radius: 10px;
+  background: var(--brand-soft);
+  font-size: 14px;
+}
+.check-page-status strong { color: var(--fg); }
+
+.check-page-label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+.check-page-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--muted);
+}
+.check-page-upload-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--fg);
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.check-page-upload-btn:hover { border-color: var(--brand); color: var(--brand-dark); }
+.check-page-upload-btn:disabled { cursor: default; opacity: 0.6; }
+
+.check-page-upload-error { font-size: 13px; color: #b91c1c; margin: 0 0 8px; }
+
+.check-page-textarea-wrap { position: relative; }
+.check-page-textarea-wrap.drag-active textarea {
+  border-color: var(--brand);
+  background: var(--brand-soft);
+}
+.check-page-textarea-wrap textarea {
+  width: 100%;
+  min-height: 320px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 36px 14px 14px;
+  font: inherit;
+  font-size: 15px;
+  color: var(--fg);
+  resize: vertical;
+}
+.check-page-textarea-wrap textarea:focus { outline: none; border-color: var(--brand); }
+.check-page-textarea-counter {
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--brand);
+  background: var(--bg);
+  padding: 3px 8px;
+  border-radius: 999px;
+  pointer-events: none;
+}
+.check-page-clear-btn {
+  all: unset;
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  background: #f3f4f6;
+  color: var(--muted);
+  cursor: pointer;
+}
+.check-page-clear-btn:hover { color: var(--fg); }
+.check-page-clear-btn svg { width: 15px; height: 15px; }
+
+.check-page-hint { font-size: 13px; color: var(--brand); margin: 8px 0 0; }
+.check-page-trial-exhausted { font-size: 14px; font-weight: 700; color: #b91c1c; margin: 16px 0 0; }
+.check-page-error { font-size: 14px; color: var(--muted); margin: 16px 0 0; }
+
+.check-page-submit {
+  width: 100%;
+  margin-top: 16px;
+  padding: 13px;
+  border: none;
+  border-radius: 10px;
+  background: var(--brand);
+  color: white;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.check-page-submit:disabled { background: var(--border); color: var(--muted); cursor: not-allowed; }
+.check-page-submit:hover:not(:disabled) { background: var(--brand-dark); }

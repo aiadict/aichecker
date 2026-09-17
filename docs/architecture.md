@@ -819,3 +819,96 @@ harmless no-op on pages that don't use `SectionNav`.
 section-heavy help/reference page needs in-page navigation, reuse `SectionNav` rather than
 building a new one-off — don't hand-roll another static jump-nav or a different sticky
 implementation.
+
+## Hosted web checker at /check (2026-09-18)
+
+**What it is**: a real, hosted `werida.io/check` page (`apps/web/src/app/check/page.tsx`)
+replicating the extension's "paste text, check it, see the result" flow — usable directly on
+the web, no extension required. Planned via a full plan-mode pass (two research agents mapping
+the extension's panel and the web app's routes/nav/auth, one design agent stress-testing the
+approach) before any code was written — see the git history around this date for the full
+rationale if it's ever needed again.
+
+**Why it exists**: the extension's "Open web checker" link (`PanelSectionHeader.tsx`) used to
+just open the extension's own bundled page in a full tab
+(`chrome-extension://<id>/src/panel/index.html?standalone=1`) — not a real website page at all.
+There was no web-hosted checking experience anywhere on werida.io; `/dashboard`/`/dashboard/history`
+were (and remain) read-only views of past checks, both literally telling the user to go use the
+extension.
+
+**Zero backend changes.** `/check` calls the exact same `POST /api/checks` /
+`POST /api/parse-file` the extension always has — both already fully supported an anonymous
+path (`X-Device-Id` → `anonymous_trials`/`consume_trial_credit`) and already sent
+`Access-Control-Allow-Origin: *` (`next.config.js`), specifically because auth here is a Bearer
+token verified per-request (`getAuthenticatedUser` in `lib/auth.ts`), not an origin/cookie trust
+model — a plain werida.io page calling these is exactly as legitimate a caller as the extension
+always has been.
+
+**New pieces**:
+- `apps/web/src/lib/device-id.ts` — a `localStorage`-based `getOrCreateDeviceId()`, the web
+  equivalent of the extension's `chrome.storage.local`-based one
+  (`apps/extension/src/lib/storage.ts`). `chrome.storage` is extension-sandboxed and
+  unreachable from a normal page, so this is necessarily a **separate anonymous-trial pool**
+  from the extension's own — a visitor using both gets two independent 2-credit trials, not a
+  shared one. Accepted platform limitation, not a bug to chase.
+- `apps/web/src/app/check/page.tsx` — the form itself (textarea, word/credit counter, file
+  upload w/ drag-drop, submit, loading/error/trial-exhausted states), a web-native port of
+  `apps/extension/src/panel/tabs/CheckForAiTab.tsx`'s logic. Grabs the current cookie-based
+  Supabase session client-side (`getSupabaseBrowserClient().auth.getSession()`) and forwards
+  `session.access_token` as a manual `Authorization: Bearer` header on a plain `fetch()` — this
+  is *new* usage of that existing client primitive, not a literal copy of an existing pattern
+  elsewhere (e.g. `reset-password/page.tsx` only ever calls SDK methods directly, never attaches
+  a Bearer header to a raw fetch itself).
+- `apps/web/src/app/history/[slug]/components/CheckResultView.tsx` — the verdict/%/confidence
+  badge/breakdown-bar/legend/insight/`PositionalBar`/highlighted-text block, extracted out of
+  `/history/[slug]/page.tsx` (which had it all inlined) into a pure presentational component
+  taking `CheckResult`'s own fields directly. Used by both `/history/[slug]` (DB-row-backed) and
+  `/check` (the `CheckResult` object `/api/checks` already returns directly, no row-mapping
+  needed) — same result rendering wherever a check is viewed, one implementation instead of two.
+
+**Navigation**: `Check` added to `SiteNav.tsx` (first, before Pricing) — the "Add to Chrome"
+CTA is untouched, extension install stays the primary funnel goal, `/check` is additive. Homepage
+gained a secondary "Or try it now in your browser →" link under the existing hero CTA (also
+untouched). `/dashboard` gained a "Run a new check" link (previously had *no* way to start a new
+check at all); both `/dashboard` and `/dashboard/history`'s empty-states now mention it too.
+Also fixed while in `page.tsx`: the homepage's "Free plan includes 10 checks a month" line was
+stale (the actual free-plan allowance became 25,000 words/25 credits back in the 2026-08-09
+pass) — corrected to match.
+
+**Product framing, stated plainly, not glossed over**: yes, this lets someone check text with
+zero install. But the extension's differentiated value was never the checking UI — it's the
+in-page trigger (select text anywhere, right-click, the floating icon), which a paste-and-submit
+web form structurally cannot replicate. `/check` is a complementary top-of-funnel surface: try
+real detection quality with no friction, then convert to the extension for the frictionless
+in-page flow.
+
+**Sequencing — deliberately staged, not big-bang**: this pass shipped `/check` itself plus the
+`CheckResultView` extraction and nav additions — **the extension's `PanelSectionHeader.tsx`
+was deliberately NOT touched yet**; "Open web checker" still opens the old internal
+`?standalone=1` page for now. That repoint, and the follow-up removal of the extension's
+now-dead standalone-mode code (`isStandalone` in `App.tsx`, `.panel-root.standalone`/
+`.standalone-brand*` CSS, the `standalone` prop threaded through `Header`/`CheckForAiTab`/
+`PanelSectionHeader`/`ResultCard`), are separate, later changes — kept small, independently
+verifiable, and reversible rather than shipping a brand-new feature and deleting working
+extension code in the same change.
+
+**Abuse-surface note**: `/check` doesn't expose anything technically new (see "zero backend
+changes" above), but it does turn "reachable via curl if you know the shape" into "one click
+from the homepage," meaningfully raising realistic traffic against the existing shared
+`DAILY_ANON_CREDIT_CAP = 200` credits/day (`apps/web/src/lib/anonymous-trial.ts`). Worth
+watching `api_usage_log`'s anonymous spend in the weeks after launch and raising/splitting that
+cap if `/check` traffic starts crowding out the extension's own anonymous users.
+
+**Verified live** (2026-09-18, real preview deployment, real anonymous device): ran an actual
+check with no session — trial correctly decremented 2 → 1, result rendered correctly via
+`CheckResultView` (verdict/breakdown/highlighted text all present and styled correctly), file
+upload (`.txt`) correctly populated the textarea, mobile viewport (390px) rendered cleanly with
+no overflow. **Not independently re-verified live**: `/history/[slug]`'s post-extraction
+rendering specifically — every existing check in the database is private, and flipping one
+public (or creating/deleting a throwaway test account) to check it live was blocked by this
+environment's own safety guard against mutating production auth/data without explicit sign-off.
+Confidence here instead comes from: the extraction changed no logic, only moved existing,
+already-proven JSX into a component with matching prop types (`tsc`+`next build` both clean),
+and `/check` renders the literal same `CheckResultView` component with the same prop shape,
+proven live above. Worth a human spot-check of any real `/history/[slug]` link next time one's
+handy.

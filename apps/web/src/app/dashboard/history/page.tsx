@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import Link from "next/link";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import ClickableRow from "./components/ClickableRow";
 
@@ -34,7 +35,9 @@ export default async function HistoryPage() {
     <div className="container">
       <h1>All Checks</h1>
       {checks.length === 0 ? (
-        <p className="muted">No checks yet. Run one from the AI Checker extension to see it here.</p>
+        <p className="muted">
+          No checks yet. Run one from the AI Checker extension, or <Link href="/check">right here on the web</Link>.
+        </p>
       ) : (
         <table>
           <thead>

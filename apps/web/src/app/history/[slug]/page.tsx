@@ -1,16 +1,9 @@
 import { notFound } from "next/navigation";
-import {
-  buildHighlightSegments,
-  synthesizeInsight,
-  overallConfidence,
-  confidenceLabel,
-  type CheckWindow,
-  type Prediction,
-} from "@ai-checker/shared-types";
+import { type CheckWindow, type Prediction } from "@ai-checker/shared-types";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import DeleteCheckButton from "./components/DeleteCheckButton";
 import ShareResultButton from "./components/ShareResultButton";
-import PositionalBar from "./components/PositionalBar";
+import CheckResultView from "./components/CheckResultView";
 
 interface WindowRow {
   label: string;
@@ -70,7 +63,6 @@ export default async function SharedCheckPage({ params }: { params: Promise<{ sl
   if (!check) notFound();
 
   const isOwner = userData.user?.id === check.user_id;
-  const aiInvolvement = Math.round((check.fraction_ai + check.fraction_ai_assisted) * 100);
 
   // Fetched after we have check.id — RLS already covers owner-or-public
   // read here (see "users can read windows of own checks" policy), same
@@ -83,74 +75,27 @@ export default async function SharedCheckPage({ params }: { params: Promise<{ sl
     .returns<WindowRow[]>();
 
   const windows = (windowRows ?? []).map(mapWindow);
-  const segments = buildHighlightSegments(check.full_text, windows);
-  const insight = synthesizeInsight(windows);
-  const confidence = overallConfidence(windows);
-  const confLabel = confidenceLabel(confidence);
 
   return (
     <div className="container">
       <h1>Check result</h1>
-      <div className="card">
-        <p className={`pill ${check.prediction_short}`}>{check.prediction}</p>
-
-        <div style={{ fontSize: 28, fontWeight: 800, margin: "8px 0 0", display: "flex", alignItems: "baseline", gap: 8 }}>
-          {aiInvolvement}%
-          <span className={`confidence-badge ${confLabel.toLowerCase()}`}>{confLabel} confidence</span>
-        </div>
-        <p className="muted" style={{ margin: 0 }}>
-          of this text shows AI involvement
-        </p>
-
-        <div className="breakdown-bar">
-          <div className="seg ai" style={{ width: `${check.fraction_ai * 100}%` }} />
-          <div className="seg assisted" style={{ width: `${check.fraction_ai_assisted * 100}%` }} />
-          <div className="seg human" style={{ width: `${check.fraction_human * 100}%` }} />
-        </div>
-        <div className="breakdown-legend">
-          <span>
-            <i className="dot ai" />
-            AI {Math.round(check.fraction_ai * 100)}%
-          </span>
-          <span>
-            <i className="dot assisted" />
-            Assisted {Math.round(check.fraction_ai_assisted * 100)}%
-          </span>
-          <span>
-            <i className="dot human" />
-            Human {Math.round(check.fraction_human * 100)}%
-          </span>
-        </div>
-
-        {insight && (
-          <p className="muted" style={{ marginTop: 12 }}>
-            {insight}
-          </p>
-        )}
-
-        <PositionalBar windows={windows} totalWords={check.word_count} />
-
-        <p className="muted" style={{ marginTop: 16 }}>
-          {check.word_count} words
-        </p>
-        <div className="checked-text">
-          {segments.map((seg, i) =>
-            seg.label && seg.label !== "human" ? (
-              <mark key={i} className={`hl-${seg.label}`}>
-                {seg.text}
-              </mark>
-            ) : (
-              <span key={i}>{seg.text}</span>
-            )
-          )}
-        </div>
-
-        {!check.is_public && (
-          <p className="muted" style={{ marginTop: 12 }}>
-            This result is private - only you can see this link.
-          </p>
-        )}
-      </div>
+      <CheckResultView
+        fullText={check.full_text}
+        wordCount={check.word_count}
+        prediction={check.prediction}
+        predictionShort={check.prediction_short as Prediction}
+        fractionAi={check.fraction_ai}
+        fractionHuman={check.fraction_human}
+        fractionAiAssisted={check.fraction_ai_assisted}
+        windows={windows}
+        footerNote={
+          !check.is_public && (
+            <p className="muted" style={{ marginTop: 12 }}>
+              This result is private - only you can see this link.
+            </p>
+          )
+        }
+      />
 
       {isOwner && (
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
