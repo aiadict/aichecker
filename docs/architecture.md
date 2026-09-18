@@ -772,44 +772,42 @@ always has.
   developer dashboard home page, and items staged to publish later expire 30 days after passing
   review. Archive at `apps/extension/releases/v1.2.0/ai-checker-extension-v1.2.0.zip`.
   **The Chrome Web Store listing's own "What's new" / description field was never updated for
-  this version** — the submission on 2026-09-13 went out without release notes. Still
-  outstanding as of v1.2.1; see the note below.
-- **v1.2.1** — **packaged for Chrome Web Store submission on 2026-09-18**
-  (`apps/extension/releases/v1.2.1/ai-checker-extension-v1.2.1.zip`, 128 files, no secrets/junk
-  in the bundle, `manifest.json` confirmed reading `1.2.1`, no new permissions needed). Not yet
-  submitted — that's still a manual step on the Chrome Web Store dashboard. Fourth change
-  (2026-09-18, after the three below): the resize-hint banner repositioned (directly under
-  "Check for AI" instead of below the star-rating prompt) with new copy ("Need more space?" /
-  "Drag the panel's left edge to make it wider.") and a clearer icon (arrows splayed off a
-  vertical bar, gently animated side-to-side, `prefers-reduced-motion`-respecting) — the old
-  version was easy to skim past entirely. First fix: the
-  trial-exhausted message in `CheckForAiTab.tsx` ("You've used your 2 free checks - sign in to
-  keep going.") was easy to miss — plain `.muted` gray text, the only signal after the
-  Check-for-AI button silently goes back to its resting state. Now its own bold, warning-red
-  `.trial-exhausted-notice` class (same red already used for `badge.ai` /
-  `confidence-badge.low`). Second change: `SettingsTab.tsx` redesigned to match the rest of the
-  panel's card-based visual language (bordered/rounded `.settings-card`s, a filled
-  `.settings-card-account` card, a real `.credits-badge` pill, a proper `.switch` toggle instead
-  of a bare checkbox) instead of its old plain stacked-rows layout — same underlying data and
-  copy throughout, no hardcoded values. Extracted `lib/useAccountStatus.ts` out of `Header.tsx`
-  so both it and the new Account card's credits badge read from one shared fetch instead of two
-  independent (and driftable) copies of the same logic. Third change (2026-09-18): "Open web
-  checker" (`PanelSectionHeader.tsx`) now opens the real, hosted `werida.io/check` instead of
-  the extension's own internal `?standalone=1` page — see "Hosted web checker at /check" below
-  for the full story. This also removed the standalone-mode code it made dead: `isStandalone`
-  in `App.tsx`, `.panel-root.standalone`/`.standalone-brand*` CSS, and the `standalone` prop
-  previously threaded through `Header`/`CheckForAiTab`/`PanelSectionHeader`/`ResultCard`.
-  Verified live: a loaded unpacked copy's "Open web checker" opens `https://werida.io/check` in
-  a new tab.
+  this version** — the submission on 2026-09-13 went out without release notes.
+- **v1.2.1** — packaged (`apps/extension/releases/v1.2.1/ai-checker-extension-v1.2.1.zip`, 128
+  files, no secrets/junk in the bundle, `manifest.json` confirmed reading `1.2.1`, no new
+  permissions needed) and **submitted to the Chrome Web Store for review on 2026-09-18**.
+  Changes in this release, in order:
+  1. Trial-exhausted message in `CheckForAiTab.tsx` ("You've used your 2 free checks - sign in
+     to keep going.") was easy to miss — plain `.muted` gray text, the only signal after the
+     Check-for-AI button silently goes back to its resting state. Now its own bold, warning-red
+     `.trial-exhausted-notice` class (same red already used for `badge.ai` /
+     `confidence-badge.low`).
+  2. `SettingsTab.tsx` redesigned to match the rest of the panel's card-based visual language
+     (bordered/rounded `.settings-card`s, a filled `.settings-card-account` card, a real
+     `.credits-badge` pill, a proper `.switch` toggle instead of a bare checkbox) instead of its
+     old plain stacked-rows layout — same underlying data and copy throughout, no hardcoded
+     values. Extracted `lib/useAccountStatus.ts` out of `Header.tsx` so both it and the new
+     Account card's credits badge read from one shared fetch instead of two independent (and
+     driftable) copies of the same logic.
+  3. "Open web checker" (`PanelSectionHeader.tsx`) now opens the real, hosted `werida.io/check`
+     instead of the extension's own internal `?standalone=1` page — see "Hosted web checker at
+     /check" below for the full story. This also removed the standalone-mode code it made dead:
+     `isStandalone` in `App.tsx`, `.panel-root.standalone`/`.standalone-brand*` CSS, and the
+     `standalone` prop previously threaded through
+     `Header`/`CheckForAiTab`/`PanelSectionHeader`/`ResultCard`. Verified live: a loaded unpacked
+     copy's "Open web checker" opens `https://werida.io/check` in a new tab.
+  4. Resize-hint banner repositioned (directly under "Check for AI" instead of below the
+     star-rating prompt) with new copy ("Need more space?" / "Drag the panel's left edge to
+     make it wider.") and a clearer icon (arrows splayed off a vertical bar, gently animated
+     side-to-side, `prefers-reduced-motion`-respecting) — the old version was easy to skim past
+     entirely.
 
-**STILL OUTSTANDING — do this before actually submitting v1.2.1 on the dashboard: update the
-Chrome Web Store listing's "What's new" / description field for BOTH versions at once** —
-v1.2.0's release notes were never written (see above), so this submission is also the first
-chance to cover v1.2.0's changes (confidence badge + collapsible highlighted text, History tab
-sign-in prompt, `/resultsupport` link) alongside v1.2.1's own (bold red trial-exhausted notice,
-Settings tab redesign, "Open web checker" now pointing at the real werida.io/check, the
-resize-hint banner rework). The zip is packaged and ready; this copy is the one remaining step
-before clicking submit.
+**"What's new" / listing description: deliberately left unchanged for this submission** — the
+user's own explicit call (2026-09-18): the existing description is working, and editing it
+wasn't worth the risk of touching something that's fine as-is. Applies retroactively to v1.2.0's
+missing notes too — not an oversight to fix next time, a decision. This section (the numbered
+list above, and v1.2.0's own entry) is the durable record of what actually shipped in each
+version instead.
 
 ## UI conventions: sticky, scroll-spied section nav (2026-09-17)
 
