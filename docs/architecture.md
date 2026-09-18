@@ -774,9 +774,15 @@ always has.
   **The Chrome Web Store listing's own "What's new" / description field was never updated for
   this version** — the submission on 2026-09-13 went out without release notes. Still
   outstanding as of v1.2.1; see the note below.
-- **v1.2.1** — in progress (2026-09-17), `package.json` bumped, **no release zip yet** —
-  explicit user instruction: more fixes may land before packaging, so
-  `apps/extension/releases/v1.2.1/` doesn't exist until asked for. First fix: the
+- **v1.2.1** — **packaged for Chrome Web Store submission on 2026-09-18**
+  (`apps/extension/releases/v1.2.1/ai-checker-extension-v1.2.1.zip`, 128 files, no secrets/junk
+  in the bundle, `manifest.json` confirmed reading `1.2.1`, no new permissions needed). Not yet
+  submitted — that's still a manual step on the Chrome Web Store dashboard. Fourth change
+  (2026-09-18, after the three below): the resize-hint banner repositioned (directly under
+  "Check for AI" instead of below the star-rating prompt) with new copy ("Need more space?" /
+  "Drag the panel's left edge to make it wider.") and a clearer icon (arrows splayed off a
+  vertical bar, gently animated side-to-side, `prefers-reduced-motion`-respecting) — the old
+  version was easy to skim past entirely. First fix: the
   trial-exhausted message in `CheckForAiTab.tsx` ("You've used your 2 free checks - sign in to
   keep going.") was easy to miss — plain `.muted` gray text, the only signal after the
   Check-for-AI button silently goes back to its resting state. Now its own bold, warning-red
@@ -796,13 +802,14 @@ always has.
   Verified live: a loaded unpacked copy's "Open web checker" opens `https://werida.io/check` in
   a new tab.
 
-**TODO when v1.2.1 is submitted: update the Chrome Web Store listing's "What's new" /
-description field for BOTH versions at once** — v1.2.0's release notes were never written
-(see above), so v1.2.1's submission is also the first chance to cover v1.2.0's changes
-(confidence badge + collapsible highlighted text, History tab sign-in prompt, `/resultsupport`
-link) alongside v1.2.1's own (bold red trial-exhausted notice, Settings tab redesign, "Open web
-checker" now pointing at the real werida.io/check, plus whatever else lands before packaging).
-Don't submit v1.2.1 without covering both.
+**STILL OUTSTANDING — do this before actually submitting v1.2.1 on the dashboard: update the
+Chrome Web Store listing's "What's new" / description field for BOTH versions at once** —
+v1.2.0's release notes were never written (see above), so this submission is also the first
+chance to cover v1.2.0's changes (confidence badge + collapsible highlighted text, History tab
+sign-in prompt, `/resultsupport` link) alongside v1.2.1's own (bold red trial-exhausted notice,
+Settings tab redesign, "Open web checker" now pointing at the real werida.io/check, the
+resize-hint banner rework). The zip is packaged and ready; this copy is the one remaining step
+before clicking submit.
 
 ## UI conventions: sticky, scroll-spied section nav (2026-09-17)
 
