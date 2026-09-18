@@ -42,7 +42,7 @@ export default function HistoryTab() {
   }
 
   if (loaded && items.length === 0) {
-    return <p className="muted">No checks yet. Run one from the "Check for AI" tab.</p>;
+    return <p className="muted">No checks yet. Run one from the &quot;Check for AI&quot; tab.</p>;
   }
 
   return (
