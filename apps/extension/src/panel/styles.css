@@ -73,6 +73,21 @@ body {
 }
 .resize-hint-banner svg { flex-shrink: 0; margin-top: 1px; }
 .resize-hint-banner span { flex: 1; }
+
+/* Gentle, continuous side-to-side nudge - a static icon next to a
+   sentence is easy to skim straight past; this is trying to actually
+   draw the eye toward the panel's physical left edge, not just
+   decorate the text. Small amplitude and slow on purpose - a hint, not
+   an alarm. */
+.resize-hint-icon { animation: resize-hint-nudge 1.8s ease-in-out infinite; }
+@keyframes resize-hint-nudge {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-2px); }
+  75% { transform: translateX(2px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .resize-hint-icon { animation: none; }
+}
 .resize-hint-banner button {
   background: none;
   border: none;

@@ -272,8 +272,8 @@ export default function CheckForAiTab({
         {loading ? "Checking…" : "Check for AI"}
       </button>
 
-      <RateUsPrompt />
       <ResizeHintBanner />
+      <RateUsPrompt />
     </div>
   );
 }
