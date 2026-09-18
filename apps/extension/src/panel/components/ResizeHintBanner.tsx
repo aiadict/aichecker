@@ -43,7 +43,7 @@ export default function ResizeHintBanner() {
         <path d="M17 9l3 3-3 3" strokeLinecap="round" strokeLinejoin="round" />
       </svg>
       <span>
-        <strong style={{ display: "block" }}>Need more space</strong>
+        <strong style={{ display: "block" }}>Need more space?</strong>
         Drag the panel&apos;s left edge to make it wider.
       </span>
       <button
