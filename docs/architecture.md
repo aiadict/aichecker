@@ -1045,3 +1045,39 @@ Not touched by any of this: `plans.key` (`"free"`/`"pro"`/`"business"`) is a sta
 used throughout the codebase (webhook plan matching, checkout's `planKey` validation,
 `credit_balances` references) — entirely separate from price, never changes as part of a price
 update.
+
+### Price cut executed (2026-09-20)
+
+Following the Pangram → TruthScan cost reduction, prices were cut roughly in half+ (Premium
+$19.99 → $7.48/mo, Professional $32.99 → $9.78/mo, annual discount 10% → 20% for both). Margin
+analysis (`npm run estimate-margin`, updated with real TruthScan rates) showed healthy margins
+even at worst-case 100% usage and after Stripe fees (Premium ~53%, Professional ~43% monthly;
+~46%/~33% annual) — full numbers and the underlying cost assumption's caveat (actual usage at
+the time was only ~1.3% of the 40k-scan volume the $0.01/credit rate assumes — this is a
+deliberate growth bet, not a guaranteed already-banked saving) are in the script's own comments.
+
+**Executed via the safe procedure documented above**, with one real near-miss worth recording:
+partway through, the account owner nearly completed a real $19.99/mo charge to their own card —
+a Stripe price's dashboard page has a "preview" action that opens the *actual* live customer
+checkout for that price, not a read-only view. Caught before confirming payment. **Lesson for
+next time: when inspecting an existing live Price in the Stripe Dashboard, never click through
+a checkout/payment preview link — copy the price ID from its detail page/URL instead.**
+
+Also resolved during this pass: confirmed (by asking the user to check the Stripe Dashboard's
+own "switch to sandbox" menu wording, and by an exact price-ID string match against the
+production database) that "Live mode" and "Test mode" were correctly distinguished before any
+price was created — an earlier assumption (that a product ID match against a known test-mode
+object meant the dashboard was showing test data) turned out to be wrong; direct confirmation
+against the real production DB value settled it unambiguously. Also fixed: the pricing page's
+"Save 10%" annual-discount badge was a hardcoded string (`PricingPlans.tsx`) — now computed
+live from `price_cents`/`price_cents_annual`, so it can't silently go stale the next time the
+discount changes. Also fixed: `supabase/seed.sql`'s `price_cents`/`price_cents_annual` were
+updated to match reality; its `stripe_price_id`/`_annual` were deliberately left as their
+existing test-mode values (this file pairs with the `rk_test_` key in local `.env.local` — a
+live price ID there would break local dev, not fix it), with a comment added explaining this
+so it doesn't look like an oversight next time, plus a warning that re-applying this seed file
+against production would silently overwrite the real live price IDs.
+
+New live Stripe Price IDs (Premium monthly/annual, Professional monthly/annual) are recorded
+only in the production `plans` table, not in git, per the established pattern of never
+committing production Stripe price IDs to the repo.

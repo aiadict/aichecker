@@ -34,7 +34,26 @@
 -- 500,000 words. Both gained a monthly/annual toggle — price_cents /
 -- stripe_price_id are always the MONTHLY price; price_cents_annual /
 -- stripe_price_id_annual are the annual price, billed as one yearly
--- charge (not 12x the monthly price — annual is discounted ~10%).
+-- charge (not 12x the monthly price — annual is discounted ~20% as of
+-- 2026-09-20, previously ~10%).
+--
+-- IMPORTANT: the stripe_price_id/_annual values below are TEST-MODE
+-- Stripe price IDs, deliberately — this file pairs with the rk_test_
+-- key in apps/web/.env.local for local development, and a live-mode
+-- price ID can't be used with a test-mode secret key (Stripe rejects
+-- it outright). They are NOT expected to match production's real
+-- stripe_price_id values, which live only in the production Supabase
+-- database (never in a file checked into git) and were last updated
+-- 2026-09-20 — see docs/architecture.md's pricing section for the real
+-- current live IDs and the procedure for changing them. price_cents/
+-- price_cents_annual below ARE kept matching real production, purely
+-- for display-data accuracy in local dev.
+--
+-- DANGER: this file's `on conflict (key) do update` means re-running it
+-- against the PRODUCTION database would overwrite plans.stripe_price_id
+-- with these test-mode values, silently breaking live checkout. This
+-- file must only ever be applied to local/dev Supabase instances, never
+-- to production.
 insert into public.plans (
   key, name, monthly_credits, daily_cap, price_cents, price_cents_annual,
   billing_interval, seats_included, stripe_price_id, stripe_price_id_annual,
@@ -43,10 +62,10 @@ insert into public.plans (
 values
   ('free', 'Free', 25, null, 0, null, 'month', 1, null, null, false,
     '{"history": true, "shareable_links": true, "floating_icon": true, "google_docs_widget": false, "feed_scanning": false}'::jsonb),
-  ('pro', 'Premium', 300, null, 1999, 21588, 'month', 1,
+  ('pro', 'Premium', 300, null, 748, 7176, 'month', 1,
     'price_1U2Xt7RouUhCdZVMx6GM1j2v', 'price_1U2XtERouUhCdZVM2gqWpLE1', true,
     '{"history": true, "shareable_links": true, "floating_icon": true, "google_docs_widget": false, "feed_scanning": false, "priority_support": true}'::jsonb),
-  ('business', 'Professional', 500, null, 3299, 35988, 'month', 3,
+  ('business', 'Professional', 500, null, 978, 9384, 'month', 3,
     'price_1U2XtIRouUhCdZVM8VNKEtDP', 'price_1U2XtLRouUhCdZVMpsvI7FUX', false,
     '{"history": true, "shareable_links": true, "floating_icon": true, "google_docs_widget": false, "feed_scanning": false, "priority_support": true, "seat_pooling": true, "admin_controls": true}'::jsonb)
 on conflict (key) do update set

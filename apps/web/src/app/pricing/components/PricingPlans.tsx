@@ -39,6 +39,18 @@ function formatDollars(cents: number): string {
 export default function PricingPlans({ plans }: { plans: PlanRow[] }) {
   const [billingInterval, setBillingInterval] = useState<"month" | "year">("month");
 
+  // Computed from the real price_cents/price_cents_annual, not hardcoded -
+  // a literal "Save 10%" string here silently went stale the last time
+  // the annual discount actually changed. Uses whichever paid plan comes
+  // first as the representative rate; today every paid plan shares the
+  // same ~20% discount by design, so any one of them gives the same
+  // answer.
+  const annualDiscountPct = (() => {
+    const p = plans.find((pl) => pl.price_cents > 0 && pl.price_cents_annual != null);
+    if (!p || !p.price_cents_annual) return null;
+    return Math.round((1 - p.price_cents_annual / 12 / p.price_cents) * 100);
+  })();
+
   return (
     <>
       <div className="billing-toggle" role="tablist" aria-label="Billing interval">
@@ -58,7 +70,10 @@ export default function PricingPlans({ plans }: { plans: PlanRow[] }) {
           className={billingInterval === "year" ? "active" : ""}
           onClick={() => setBillingInterval("year")}
         >
-          Annual <span className="save-badge">Save 10%</span>
+          Annual{" "}
+          {annualDiscountPct != null && (
+            <span className="save-badge">Save {annualDiscountPct}%</span>
+          )}
         </button>
       </div>
 
