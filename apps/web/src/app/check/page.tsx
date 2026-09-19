@@ -190,8 +190,7 @@ export default function CheckPage() {
     <div className="container" style={{ paddingBottom: 64 }}>
       <h1>Check your text for AI</h1>
       <p className="muted" style={{ maxWidth: 640 }}>
-        Paste any text below - articles, essays, emails, and more - and see exactly how much of
-        it reads as AI-generated, with a sentence-level breakdown.
+        Paste your text or upload a file to check for signs of AI-generated writing.
         {!signedIn && (
           <>
             {" "}
@@ -204,13 +203,15 @@ export default function CheckPage() {
 
       <div className="check-page-status">
         {signedIn && me ? (
-          <span>
-            Signed in as {me.email} ·{" "}
-            <strong>
-              {me.creditsRemaining}/{me.plan.monthlyCredits}
-            </strong>{" "}
-            credits
-          </span>
+          <>
+            <span>Signed in as {me.email}</span>
+            <span>
+              <strong>
+                {me.creditsRemaining}/{me.plan.monthlyCredits}
+              </strong>{" "}
+              credits
+            </span>
+          </>
         ) : signedIn ? (
           <span className="muted">Loading your account…</span>
         ) : (
@@ -356,15 +357,34 @@ export default function CheckPage() {
         />
       )}
 
-      <div className="card" style={{ marginTop: 24 }}>
-        <h3>How this works</h3>
-        <p className="muted">
-          AI Checker analyzes patterns in word choice, sentence structure, and how ideas connect
-          to estimate how much of a text reads as AI-generated versus human-written. Every plan
-          includes the same detection quality - see{" "}
-          <Link href="/resultsupport">how to read your result</Link> for a full walkthrough, or{" "}
-          <Link href="/pricing">pricing</Link> for credits and limits.
-        </p>
+      <div className="card check-page-guide-card" style={{ marginTop: 24 }}>
+        <svg
+          className="check-page-guide-icon"
+          viewBox="0 0 24 24"
+          width="20"
+          height="20"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.8"
+          aria-hidden="true"
+        >
+          <circle cx="12" cy="12" r="10" />
+          <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" strokeLinecap="round" />
+          <line x1="12" y1="17" x2="12.01" y2="17" strokeLinecap="round" />
+        </svg>
+        <div className="check-page-guide-text">
+          <h3>What does your AI score mean?</h3>
+          <p className="muted">
+            Your score estimates how much of your text reads as AI-generated. Learn what the
+            percentages mean and how to interpret your results.
+          </p>
+        </div>
+        <Link href="/resultsupport" className="check-page-guide-link">
+          Read the results guide
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+            <path d="M5 12h14M13 6l6 6-6 6" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </Link>
       </div>
     </div>
   );

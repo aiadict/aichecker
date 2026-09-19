@@ -933,3 +933,28 @@ footer.site-footer { padding: 40px 0; color: var(--muted); font-size: 13px; }
 }
 .check-page-submit:disabled { background: var(--border); color: var(--muted); cursor: not-allowed; }
 .check-page-submit:hover:not(:disabled) { background: var(--brand-dark); }
+
+.check-page-guide-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.check-page-guide-icon { flex-shrink: 0; color: var(--brand); }
+.check-page-guide-text { flex: 1; min-width: 0; }
+.check-page-guide-text h3 { margin: 0 0 4px; font-size: 15px; }
+.check-page-guide-text p { margin: 0; font-size: 13.5px; }
+.check-page-guide-link {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--brand);
+  white-space: nowrap;
+}
+.check-page-guide-link:hover { color: var(--brand-dark); }
+@media (max-width: 640px) {
+  .check-page-guide-card { flex-wrap: wrap; }
+  .check-page-guide-link { margin-left: 34px; }
+}
