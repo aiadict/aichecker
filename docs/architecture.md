@@ -1099,3 +1099,13 @@ above stayed `status: active`, `cancel_at_period_end: false`, with a real
 if left alone. Anyone doing a real live-mode test checkout like this needs to explicitly cancel
 the subscription afterward (Customer Portal / `/dashboard` → Manage billing) — a refund alone
 leaves it running.
+
+**Deliberately left running to test renewal billing too**: rather than cancel immediately, the
+account owner is intentionally leaving the test subscription active until its real renewal date
+(**2026-10-19**) to also verify that the automatic monthly recharge actually works — a
+genuinely different code path from the initial purchase (`handleInvoicePaid` in
+`api/billing/webhook/route.ts` is shared by both, but a renewal's `invoice.paid` event carries
+no `checkout.session.completed` alongside it, unlike a fresh signup). When that date arrives,
+verify the same way as above: confirm a new `invoice.paid` fired, `credit_balances` reset back
+to 300 (not additively stacked), and `current_period_end` rolled forward another month — then
+cancel for real via Manage billing once confirmed.
