@@ -1081,3 +1081,21 @@ against production would silently overwrite the real live price IDs.
 New live Stripe Price IDs (Premium monthly/annual, Professional monthly/annual) are recorded
 only in the production `plans` table, not in git, per the established pattern of never
 committing production Stripe price IDs to the repo.
+
+### Real end-to-end checkout test (2026-09-20)
+
+The one piece step 5 couldn't cover without spending real money: the account owner ran an
+actual live checkout for Premium at the new $7.48/mo price, with a real card, then refunded the
+charge in Stripe. Verified server-side afterward (direct query against production):
+`checkout.session.completed` + `invoice.paid` fired and processed correctly — the account
+landed on `plan: pro`, `credits_remaining: 300`, `status: active`, confirming the whole chain
+(new Stripe price → Checkout Session → webhook → `plans`/`credit_balances` update) works
+correctly at the new price.
+
+**Real gotcha worth remembering**: refunding a Stripe charge does **not** cancel the
+subscription it belongs to — it's purely a reversal of that one payment. The test subscription
+above stayed `status: active`, `cancel_at_period_end: false`, with a real
+`current_period_end`/next-renewal date, and would have auto-billed again the following month
+if left alone. Anyone doing a real live-mode test checkout like this needs to explicitly cancel
+the subscription afterward (Customer Portal / `/dashboard` → Manage billing) — a refund alone
+leaves it running.
