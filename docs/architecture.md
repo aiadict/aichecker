@@ -973,3 +973,75 @@ Verified live on a real preview deployment: accordion items confirmed genuinely 
 default (`0` open on load) and expand correctly on click; nav restyle and content changes
 screenshotted at both desktop and mobile (390px) width; `/support` re-checked to confirm the
 shared nav restyle didn't break its own (larger, ungrouped) 9-item list.
+
+## Pricing: where the numbers actually live, and how to change them safely (2026-09-19)
+
+Investigated ahead of an actual price change (in progress) so the change itself can't
+accidentally desync display copy from what Stripe really charges.
+
+**There are two separate, independently-editable value pairs on the `plans` table — not one
+source of truth:**
+
+| Column | What it actually controls | Who reads it |
+|---|---|---|
+| `stripe_price_id` / `stripe_price_id_annual` | The **real** Stripe Price object — this is what actually gets charged | `apps/web/src/app/api/billing/checkout/route.ts` (passed straight to Stripe as the Checkout line item) and the `invoice.paid` webhook handler in `api/billing/webhook/route.ts` (matches the invoice's price id back to a `plans` row to know which plan's `monthly_credits` to grant) |
+| `price_cents` / `price_cents_annual` | Plain integer cents, used **only** to render `$19.99/mo` on `/pricing` | `apps/web/src/app/pricing/components/PricingPlans.tsx` — display only |
+
+**Nothing in the code links these two pairs together.** They're independently stored and
+currently agree by coincidence of careful editing, not by any enforced relationship. Verified
+live by querying Stripe's actual API for all four price IDs seeded in `supabase/seed.sql`
+(2026-09-19):
+
+| Plan | our `price_cents` | Stripe's real `unit_amount` |
+|---|---|---|
+| Premium (`pro`) monthly | 1999 | 1999 ✅ |
+| Premium annual | 21588 | 21588 ✅ |
+| Professional (`business`) monthly | 3299 | 3299 ✅ |
+| Professional annual | 35988 | 35988 ✅ |
+
+In sync today — but editing `price_cents` alone changes only what `/pricing` *displays*;
+editing/repointing `stripe_price_id` alone changes only what checkout *charges*. Either one
+done without the other silently desyncs the advertised price from the real one.
+
+**Stripe Prices are immutable** — Stripe deliberately does not allow changing an existing
+Price object's `unit_amount` (so historical invoices stay accurate). There is no "edit the
+price" action for an existing Price ID. Changing a price always means creating a *new* Price
+object and repointing to it.
+
+**Repointing `stripe_price_id` only affects new checkouts.** Existing subscribers stay on
+whatever Price they originally checked out with — Stripe does not retroactively move active
+subscriptions to a newly-pointed price. Migrating existing subscribers to a new price is a
+separate, deliberate action (a Stripe subscription update with an explicit proration choice),
+never a side effect of step 2 below.
+
+**Dead env vars found while investigating, not currently a risk since nothing reads them but
+worth deleting eventually**: `apps/web/.env.local` has `STRIPE_PRICE_ID_PRO` /
+`STRIPE_PRICE_ID_BUSINESS`, referenced nowhere in the codebase (confirmed via full-repo grep),
+holding *different, older* price IDs than what's actually live in `plans.stripe_price_id`.
+Leftover from an earlier design, before checkout was refactored to read price IDs from the DB
+instead. Harmless as long as nobody mistakes them for the real switch.
+
+### The safe procedure to actually change a price
+
+1. Create a new Price object in Stripe (dashboard or API) on the **same** Product — never try
+   to edit the existing Price's amount, and don't delete/archive the old one (active
+   subscriptions still reference it).
+2. Update `plans.stripe_price_id` / `stripe_price_id_annual` in Supabase to the new Price ID.
+   This is the step that changes what gets charged, and only for checkouts created from this
+   point on.
+3. Update `plans.price_cents` / `price_cents_annual` in the **same row**, to the same new
+   amount, so `/pricing` displays what will actually be charged. Steps 2 and 3 must land
+   together — a gap between them (even briefly, in production) means the page and the charge
+   disagree.
+4. Decide *separately* — this is not automatic and not implied by steps 2-3 — whether existing
+   subscribers should be migrated to the new price. If yes, that's its own explicit Stripe
+   subscription-update action with a chosen proration behavior, done deliberately, not as a
+   default.
+5. Verify with a real test checkout (Stripe test mode, or a real low-stakes live check) before
+   considering the change done — confirm the Checkout Session actually uses the new price, and
+   that `/pricing` shows the matching number.
+
+Not touched by any of this: `plans.key` (`"free"`/`"pro"`/`"business"`) is a stable identifier
+used throughout the codebase (webhook plan matching, checkout's `planKey` validation,
+`credit_balances` references) — entirely separate from price, never changes as part of a price
+update.
