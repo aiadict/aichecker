@@ -5,9 +5,10 @@ import { useEffect, useRef, useState } from "react";
 // Sticky, scroll-spied in-page navigation for long single-page help
 // content (see docs/architecture.md's "UI conventions" section). Stays
 // pinned under the (non-sticky) site header once scrolled to, and
-// highlights whichever section is currently in view — modeled on a
-// reference page the user liked, adapted to our own pill-nav visual
-// style rather than its tab-underline look.
+// highlights whichever section is currently in view — the tab-underline
+// visual style directly matches a reference page the user liked
+// (2026-09-19 update; originally we'd adapted it to a pill style instead,
+// now matching it exactly since the user asked for it specifically).
 export default function SectionNav({ sections }: { sections: { id: string; label: string }[] }) {
   const [activeId, setActiveId] = useState(sections[0]?.id ?? "");
   const navRef = useRef<HTMLElement>(null);

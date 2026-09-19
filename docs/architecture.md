@@ -812,19 +812,31 @@ version instead.
 ## UI conventions: sticky, scroll-spied section nav (2026-09-17)
 
 **Standard component for in-page navigation on long single-page content: `apps/web/src/app/components/SectionNav.tsx`.**
-Renders a pill-style nav (same visual language as the old static `support-jumpnav` links) that
-goes `position: sticky` under the site header once scrolled to, and highlights whichever
+Goes `position: sticky` under the site header once scrolled to, and highlights whichever
 section is currently in view as the reader scrolls — no page reload, no separate route per
 section. In use on `/support` and `/resultsupport`.
 
-Modeled on a reference help-page the user liked (`AI_Checker_Understanding_Results.html`,
-supplied 2026-09-17) for the sticky + scroll-spy *behavior* specifically — the visual style
-(pill nav, brand colors) stayed ours rather than adopting that page's tab-underline look, to
-keep it consistent with the rest of the site.
+Originally a pill-nav (2026-09-17), **restyled to a tab-underline look on 2026-09-19** (flat
+text, active item gets a bottom border + brand color) at the user's explicit request, matching
+a reference page (`AI_Checker_Understanding_Results.html`) exactly rather than just borrowing
+its scroll-spy behavior. Applied site-wide (both `/support` and `/resultsupport`), not forked
+per-page, keeping one nav look across both help pages. `.section-nav-links` scrolls
+horizontally rather than wrapping if it doesn't fit one line — verified live on mobile
+(390px): `/support`'s 9 items and `/resultsupport`'s 5 grouped items both degrade to
+horizontal scroll gracefully rather than wrapping to a second line.
+
+**One nav item can represent a whole stretch of the page** — `/resultsupport` deliberately
+collapsed what used to be 11 individually-anchored nav items down to 5 broad groups ("Your
+result," "Improve your text," "I wrote it myself," "How it works," "Common questions") so the
+nav fits on one line at typical widths. Each group's `id` is just the *first* section in that
+stretch; the underlying `.card` ids for every section still exist and are still directly
+linkable (e.g. from within FAQ answers), scroll-spy just doesn't have a separate nav entry for
+each one anymore.
 
 **Usage**: pass `sections={[{ id, label }, ...]}` matching `id`s already present on the
 page's own `.card` elements (or any element with that `id`) — the component does the sticky
-positioning and active-section tracking, the page just needs the anchors to exist. `.card`'s
+positioning and active-section tracking, the page just needs the anchors to exist. Prefer a
+small number of broad groups over one nav item per card, per the above. `.card`'s
 `scroll-margin-top` is set globally (84px) so an anchor jump clears the sticky bar; this is a
 harmless no-op on pages that don't use `SectionNav`.
 
@@ -926,3 +938,38 @@ already-proven JSX into a component with matching prop types (`tsc`+`next build`
 and `/check` renders the literal same `CheckResultView` component with the same prop shape,
 proven live above. Worth a human spot-check of any real `/history/[slug]` link next time one's
 handy.
+
+## /resultsupport content expansion, round 2 (2026-09-19)
+
+Following a direct side-by-side comparison against the reference page
+(`AI_Checker_Understanding_Results.html`) at the user's request, three specific ideas from it
+were pulled into `/resultsupport` (the nav restyle is covered above):
+
+- **Percentage equation graphic** (`.equation-example`/`.equation` in `globals.css`) — a visual
+  `29% AI + 12% Assisted = 41% AI involvement` breakdown in the `#percentage` section. Reuses
+  the exact illustrative numbers already threaded through the page's own prose elsewhere (the
+  `#percentage` section's own "e.g. 41%" and `#breakdown`'s "e.g. AI 29% · Assisted 12% · Human
+  59%") rather than introducing a fourth one-off example number.
+- **Color-pill category table** in `#breakdown` — replaced a bulleted list with a real
+  `<table>`, reusing the `.pill`/`.pill.ai`/`.pill.human`/`.pill.mixed` classes already defined
+  in `globals.css` for the dashboard/history tables (`.pill.mixed` used for "Assisted," matching
+  how `predictionShort` already treats "mixed" as this same category elsewhere in the data
+  model) — no new colors invented. Wrapped in a new `.table-shell` bordered container, also
+  applied to the pre-existing rewrite-examples table in `#what-to-do` for consistency.
+- **New `#how-it-works` section** — a short methodology paragraph, generic about the detection
+  approach (no vendor named, matching the site's established convention elsewhere).
+- **FAQ accordion, `#faqs`** (native `<details>`/`<summary>`, no JS needed for the fold itself)
+  replacing the old always-open `#more-questions` card. Six items, **folded by default**
+  (verified live): the reference's own 6 FAQ questions, consolidated rather than duplicated —
+  two of them ("why is my result X when some text is highlighted," "why did results change
+  after editing") already have full, deeper standalone sections on our page (`#verdict`,
+  `#rechecking`), so their accordion entries are short answers + a link down to the fuller
+  section instead of a second full copy of that content. The other four (grammar tools,
+  cross-detector agreement, humanizer tools, plagiarism) are full answers directly in the
+  accordion, three of them carried over from the old `#more-questions` card with unchanged
+  wording.
+
+Verified live on a real preview deployment: accordion items confirmed genuinely closed by
+default (`0` open on load) and expand correctly on click; nav restyle and content changes
+screenshotted at both desktop and mobile (390px) width; `/support` re-checked to confirm the
+shared nav restyle didn't break its own (larger, ungrouped) 9-item list.

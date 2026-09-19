@@ -160,38 +160,43 @@ nav.site-nav .brand img { border-radius: 5px; flex-shrink: 0; }
 }
 
 /* Sticky, scroll-spied section nav - see components/SectionNav.tsx.
-   Same pill look as the old static support-jumpnav, now sticky with an
-   .active state instead of just being a one-time set of jump links. */
+   Tab-underline style (flat text + a bottom border on the active item),
+   matching a reference page directly rather than our own earlier pill
+   design. One line by design - callers should pass a small number of
+   broad section groups (not one per card) so this doesn't wrap; on a
+   viewport too narrow even for that, it scrolls horizontally rather
+   than wrapping, same as the reference. */
 .section-nav {
   position: sticky;
   top: 0;
   z-index: 20;
   background: var(--bg);
-  padding: 12px 0;
   margin: 20px 0 28px;
   border-bottom: 1px solid var(--border);
 }
 .section-nav-links {
   display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
+  align-items: stretch;
+  gap: 28px;
+  overflow-x: auto;
+  scrollbar-width: thin;
 }
 .section-nav-links a {
-  display: inline-block;
-  padding: 5px 12px;
-  border-radius: 999px;
-  background: var(--brand-soft);
-  color: var(--brand-dark);
-  font-size: 13px;
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  min-height: 52px;
+  padding: 14px 0 12px;
+  border-bottom: 2px solid transparent;
+  color: var(--muted);
+  font-size: 14px;
   font-weight: 600;
   text-decoration: none;
-  transition: background 0.15s ease, color 0.15s ease;
+  white-space: nowrap;
+  transition: color 0.15s ease, border-color 0.15s ease;
 }
-.section-nav-links a:hover,
-.section-nav-links a.active {
-  background: var(--brand);
-  color: white;
-}
+.section-nav-links a:hover { color: var(--brand-dark); }
+.section-nav-links a.active { color: var(--brand-dark); border-bottom-color: var(--brand); }
 
 .billing-toggle {
   display: flex;
@@ -322,6 +327,72 @@ nav.site-nav .brand img { border-radius: 5px; flex-shrink: 0; }
 .checked-text mark { padding: 0 1px; border-radius: 2px; }
 .checked-text mark.hl-ai { background: #fecaca; }
 .checked-text mark.hl-mixed { background: #fde68a; }
+
+/* Illustrative percentage-math graphic on /resultsupport - same AI/
+   Assisted colors as .breakdown-bar/.breakdown-legend above, so the
+   worked example reads as the same categories, not a fourth color
+   scheme. */
+.equation-example {
+  margin-top: 14px;
+  padding: 20px;
+  border-radius: 10px;
+  background: var(--brand-soft);
+  text-align: center;
+}
+.equation {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: center;
+  gap: 6px 12px;
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+.equation-term { white-space: nowrap; }
+.equation-term.ai { color: #c2410c; }
+.equation-term.assisted { color: #b45309; }
+.equation-term.total { color: var(--fg); }
+.equation-op { color: var(--muted); font-weight: 700; }
+
+/* Bordered wrapper for a plain <table> - the category-breakdown and
+   rewrite-example tables on /resultsupport use this so they read as a
+   contained shell instead of a bare table floating on the page. */
+.table-shell {
+  margin-top: 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+}
+.table-shell table { margin: 0; }
+.table-shell th, .table-shell td { padding: 12px 16px; }
+.table-shell thead { background: #f8fafc; }
+.table-shell tbody tr:last-child td { border-bottom: none; }
+
+/* FAQ accordion (native <details>/<summary>, no JS needed for the fold
+   itself) - folded by default, one open at a time is NOT enforced
+   (each <details> is independent, matching standard FAQ behavior). */
+.faq-list { display: flex; flex-direction: column; gap: 8px; margin-top: 14px; }
+.faq-item { border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+.faq-item summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 16px;
+  font-weight: 700;
+  color: var(--fg);
+  cursor: pointer;
+  list-style: none;
+}
+.faq-item summary::-webkit-details-marker { display: none; }
+.faq-item summary::marker { content: ""; }
+.faq-item summary:hover { background: #f9fafb; }
+.faq-item .faq-chevron { flex-shrink: 0; color: var(--muted); transition: transform 0.15s ease; }
+.faq-item[open] .faq-chevron { transform: rotate(180deg); }
+.faq-item[open] summary { border-bottom: 1px solid var(--border); }
+.faq-answer { padding: 4px 16px 16px; }
+.faq-answer p { margin: 0; color: var(--muted); }
 
 /* Same colors/naming as apps/extension's confidence badge — a check should
    read identically whether viewed in the panel or on this shared page. */
