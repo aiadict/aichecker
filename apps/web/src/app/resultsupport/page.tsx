@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { CHROME_STORE_URL } from "@/lib/constants";
 import SectionNav from "../components/SectionNav";
 
 // Five broad groups, not one per card - each id below is just the first
@@ -435,9 +434,6 @@ export default function ResultSupportPage() {
           one) and we&apos;ll take a look. For everything else, see the main{" "}
           <Link href="/support">Support</Link> page.
         </p>
-        <a className="cta-button" href={CHROME_STORE_URL} target="_blank" rel="noreferrer" style={{ marginTop: 0 }}>
-          Add to Chrome - it&apos;s free
-        </a>
       </div>
     </div>
   );
