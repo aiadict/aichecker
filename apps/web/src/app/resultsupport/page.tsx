@@ -123,7 +123,7 @@ export default function ResultSupportPage() {
       </div>
 
       <div className="card" id="confidence">
-        <h3>The confidence badge</h3>
+        <h3>What does the confidence badge mean?</h3>
         <p>
           Next to the percentage, a small badge reads <strong>High</strong>,{" "}
           <strong>Medium</strong>, or <strong>Low</strong> confidence. This is a separate
@@ -132,59 +132,52 @@ export default function ResultSupportPage() {
         </p>
         <ul style={{ paddingLeft: 20, lineHeight: 1.9 }}>
           <li>
-            <strong>High confidence</strong> - the model&apos;s scoring was decisive throughout;
-            the result is unlikely to flip on a re-check of the same text.
+            <strong>High confidence</strong> - the model&apos;s scoring was decisive throughout.
           </li>
           <li>
             <strong>Medium confidence</strong> - some parts of the text scored closer to the
-            boundary between categories. The overall verdict is still a reasonable read, but treat
-            it as a somewhat softer signal.
+            boundary between categories. Treat it as a somewhat softer signal.
           </li>
           <li>
             <strong>Low confidence</strong> - a meaningful portion of the text was genuinely
             ambiguous to the model. This can happen with short texts, very formal or
             old-fashioned-sounding prose, heavily quoted material, or text in an unusual style.
-            Weigh a low-confidence result more lightly, and consider it alongside other context
-            you have about where the text came from.
+            Consider it alongside other context you have about where the text came from.
           </li>
         </ul>
       </div>
 
       <div className="card" id="positional-bar">
-        <h3>Where in the text (the positional bar)</h3>
+        <h3>Where in the text?</h3>
         <p>
-          Below the breakdown, a sentence like <em>&quot;AI involvement is concentrated in the
-          later part of this text&quot;</em> and a second, softer-colored bar show{" "}
-          <strong>where</strong> in the document the AI/Assisted/Human stretches actually fall -
-          left to right, matching the text&apos;s own reading order from start to end. Hover over
-          any colored block to see its exact label and confidence.
+          A second, paler bar below the breakdown shows <strong>where</strong> in the document
+          the AI/Assisted/Human stretches fall, left to right in reading order. Hover any block
+          to see its exact label and confidence.
         </p>
         <p className="muted">
-          This bar is intentionally a different, paler color palette from the bold breakdown bar
-          above it - the breakdown bar always reads AI→Assisted→Human by proportion, while this one
-          reads by actual position in the text, which is very often a different order. They&apos;re
-          answering two different questions (&quot;how much&quot; vs. &quot;where&quot;), not
-          contradicting each other.
+          It&apos;s deliberately a different, softer color palette from the bold breakdown bar
+          above it - that one shows <em>how much</em> of each category there is, this one shows{" "}
+          <em>where</em>, which is often a different order. They&apos;re answering two different
+          questions, not contradicting each other.
         </p>
       </div>
 
       <div className="card" id="highlighted-text">
-        <h3>The highlighted text itself</h3>
+        <h3>What does the highlighted text show?</h3>
         <p>
           The full text you submitted, with the exact stretches that scored AI or Assisted marked
-          directly in red or yellow. This is the most precise view available - rather than a
-          single number for the whole document, you can see <strong>exactly which sentences</strong>{" "}
-          drove that number.
+          in red or yellow - so you can see <strong>exactly which sentences</strong> drove the
+          result, not just a single number.
         </p>
         <p>
-          In the extension, this view is collapsed behind a <strong>&quot;Show highlighted
-          text&quot;</strong> toggle by default (the same text is already visible, editable, in the
-          box below it) - click it to expand. On a shared result page it&apos;s shown directly.
+          In the extension it&apos;s collapsed behind a{" "}
+          <strong>&quot;Show highlighted text&quot;</strong> toggle by default; on a shared result
+          page it&apos;s shown directly.
         </p>
       </div>
 
       <div className="card" id="what-to-do">
-        <h3>What to do with a mixed or AI-flagged result</h3>
+        <h3>What to do with a mixed or AI-flagged result?</h3>
         <p>
           If your goal is to move a result toward &quot;human-written&quot; - for a student
           revising an essay, or anyone wanting their own voice to come through clearly - the
@@ -193,18 +186,20 @@ export default function ResultSupportPage() {
         <ol style={{ paddingLeft: 20, lineHeight: 1.9 }}>
           <li>Expand the highlighted text and find the red and yellow stretches.</li>
           <li>
-            Rewrite those specific sentences in your own words - don&apos;t just swap a few words
-            for synonyms, actually re-draft the idea the way you&apos;d naturally say it.
+            Rewrite those specific sentences in your own words - start from your own notes or
+            main point, add specific details you can back up, and explain your reasoning. Don&apos;t
+            just swap a few words for synonyms; actually re-draft the idea the way you&apos;d
+            naturally say it.
           </li>
           <li>Leave the unhighlighted (human) parts alone - they&apos;re not the problem.</li>
-          <li>Paste the revised text back in and check again.</li>
+          <li>Edit for clarity, read it aloud, then paste the revised text back in and check again.</li>
         </ol>
         <p className="muted">
           This is exactly why editing and re-checking both happen in the same panel, right next to
           each other, instead of being two separate steps.
         </p>
 
-        <h3 style={{ marginTop: 24 }}>What a useful rewrite actually looks like</h3>
+        <h3 style={{ marginTop: 24 }}>What does a useful rewrite look like?</h3>
         <p className="muted" style={{ marginBottom: 12 }}>
           The pattern that tends to get flagged is generic, safe-sounding phrasing that could apply
           to almost anything. Swapping in specific, true details about your own situation is what
@@ -241,8 +236,7 @@ export default function ResultSupportPage() {
           </table>
         </div>
         <p className="muted" style={{ marginTop: 10 }}>
-          These are illustrations of the pattern, not a guarantee - use details only when
-          they&apos;re actually true for your situation.
+          These are writing examples, not detector test results.
         </p>
       </div>
 
@@ -250,53 +244,44 @@ export default function ResultSupportPage() {
         <h3>Why did my percentage or highlights change after I edited the text?</h3>
         <p>
           Sentences aren&apos;t scored in isolation - the model reads each one together with the
-          text around it. That means editing or removing one sentence can shift the score of a
-          neighboring sentence too, even if that neighbor&apos;s own wording didn&apos;t change at
-          all, because the context it&apos;s being read alongside changed.
+          surrounding text. Editing one sentence can shift a neighbor&apos;s score too, even if
+          that neighbor&apos;s own wording never changed.
         </p>
         <p className="muted">
-          Practically: always recheck the <strong>complete</strong> passage after an edit, not just
-          the sentence you changed. And when comparing two versions of the same document, compare
-          them whole rather than pulling out a single sentence from each - a sentence in isolation
-          scores less reliably than the same sentence read in context.
+          Always recheck the <strong>complete</strong> passage after an edit, not just the
+          sentence you changed - comparing isolated sentences is less reliable than comparing
+          full passages.
         </p>
       </div>
 
       <div className="card" id="false-positive">
-        <h3>I&apos;m confident I wrote every word myself - why was it flagged?</h3>
-        <p>
-          No detector, ours included, is right 100% of the time in both directions - text can score
-          higher than it should without actually being AI-written. Before assuming the tool got it
-          wrong, it&apos;s worth checking a few things:
-        </p>
+        <h3>I wrote it myself. Why was it flagged?</h3>
+        <p>No detector, ours included, is always right. Before assuming the tool got it wrong, check a few things:</p>
         <ul style={{ paddingLeft: 20, lineHeight: 1.9 }}>
           <li>
-            Review the complete passage with its surrounding context, not a single sentence pulled
-            out on its own - see <Link href="#rechecking">why results change</Link> above.
+            Review the complete passage in context, not a single sentence on its own - see{" "}
+            <Link href="#rechecking">why results change</Link> above.
           </li>
           <li>
-            Check for paste artifacts. Text copied from a PDF, Google Docs, or a CMS sometimes
-            carries broken paragraph breaks or stray formatting that can distort scoring - try
-            re-pasting as plain text and checking again.
+            Check for paste artifacts - text copied from a PDF, Google Docs, or a CMS can carry
+            broken formatting that distorts scoring. Try re-pasting as plain text.
           </li>
           <li>
-            Think about whether you ran the text through a grammar or rewriting tool. Suggestion-
-            based editors and &quot;improve my writing&quot; features can shift word-choice patterns
-            enough to read as AI-influenced, even with no full AI draft involved anywhere.
+            Think about whether you used a grammar or rewriting tool - even suggestion-based
+            editors can shift word-choice patterns enough to read as AI-influenced.
           </li>
           <li>
-            Very formal, repetitive, or old-fashioned prose - a heavily revised abstract, a legal
-            document, non-native-English phrasing - occasionally reads as more AI-like than it
-            should. This is a known limitation of statistical detectors generally, not unique to us.
+            Very formal, repetitive, or old-fashioned prose occasionally reads as more AI-like
+            than it should - a known limitation of statistical detectors generally, not unique to
+            us.
           </li>
           <li>
-            Keep your drafts, notes, and version history. If this result matters for something with
-            real stakes - a grade, a job - your own working history is stronger evidence than
-            arguing with any single tool&apos;s score.
+            Keep your drafts and version history - for anything with real stakes, your own
+            working history is stronger evidence than any single tool&apos;s score.
           </li>
         </ul>
         <p className="muted">
-          Checked all of that and still think the result is simply wrong? Email{" "}
+          Still think the result is wrong? Email{" "}
           <a href="mailto:support@werida.io">support@werida.io</a> with a link to the result - we
           do look at these individually.
         </p>
@@ -306,14 +291,13 @@ export default function ResultSupportPage() {
         <h3>How does AI Checker check my text?</h3>
         <p>
           AI Checker analyzes patterns in word choice, sentence structure, and how ideas connect
-          to estimate how much of a text reads as AI-generated versus human-written. Every plan
-          uses the same underlying detection quality - see <Link href="/pricing">pricing</Link>{" "}
-          for what actually changes between plans (credits and monthly word allowance, not
-          accuracy).
+          to estimate how much of a text reads as AI-generated versus human-written - see{" "}
+          <Link href="/pricing">pricing</Link> for what actually changes between plans (credits,
+          not accuracy).
         </p>
         <p className="muted" style={{ marginTop: 8 }}>
-          Results are estimates based on those patterns, not a definitive record of how a text was
-          written - see <Link href="#limits">what this can&apos;t tell you</Link> and{" "}
+          Results are estimates, not a definitive record of how something was written - see{" "}
+          <Link href="#limits">what this can&apos;t tell you</Link> and{" "}
           <Link href="#faqs">common questions</Link> below for the caveats that matter most.
         </p>
       </div>
@@ -321,14 +305,12 @@ export default function ResultSupportPage() {
       <div className="card" id="limits">
         <h3>What this result can&apos;t tell you</h3>
         <p>
-          This is a strong statistical signal, not a certainty and not legal proof. It cannot tell
-          you <em>which</em> AI tool (if any) was used, and it cannot distinguish &quot;written by
-          AI&quot; from &quot;happens to read in a very formal or generic style&quot; with perfect
-          reliability - unusually formal, repetitive, or old-fashioned human writing occasionally
-          scores as more AI-like than it should, which is part of why the confidence badge exists.
-          Treat every result as one input among several, especially for anything with real
-          consequences for someone - grading, hiring, publishing decisions, and so on - rather than
-          the sole basis for a decision.
+          This is a strong statistical signal, not a certainty or legal proof. It can&apos;t tell
+          you <em>which</em> AI tool (if any) was used, and formal or old-fashioned human writing
+          can occasionally score as more AI-like than it should - part of why the confidence
+          badge exists. Treat every result as one input among several, especially for anything
+          with real consequences - grading, hiring, publishing - rather than the sole basis for a
+          decision.
         </p>
       </div>
 
