@@ -46,6 +46,9 @@ export default function SiteNav() {
           <Link href="/check" onClick={close}>
             AI Check
           </Link>
+          <Link href="/resultsupport" onClick={close}>
+            Result
+          </Link>
           {signedIn && (
             <Link href="/dashboard/history" onClick={close}>
               History
