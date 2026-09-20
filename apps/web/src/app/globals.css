@@ -1195,13 +1195,12 @@ footer.site-footer p { margin: 0; }
 .ext-help-mock-ext-icon {
   width: 18px;
   height: 18px;
-  border-radius: 5px;
-  background: var(--brand-soft);
-  color: var(--brand);
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
 }
+.ext-help-mock-ext-icon svg { border-radius: 5px; }
 .ext-help-mock-ext-name { flex: 1; font-weight: 600; }
 .ext-help-mock-dropdown-row svg:last-child { color: var(--muted); }
 .ext-help-mock-dropdown-footer {

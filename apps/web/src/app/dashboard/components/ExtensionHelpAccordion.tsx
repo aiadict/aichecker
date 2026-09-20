@@ -1,3 +1,5 @@
+import { LogoBadge, PinIcon, PuzzlePieceIcon } from "../../components/ChromeIcons";
+
 // Native <details>/<summary> - no JS needed, same CSS-only toggle pattern
 // as /resultsupport's FAQ accordion. Replaces the old permanent one-line
 // "you're logged in here" nudge with an actually-actionable explainer:
@@ -8,12 +10,7 @@ export default function ExtensionHelpAccordion() {
     <details className="ext-help">
       <summary className="ext-help-summary">
         <span className="ext-help-icon" aria-hidden="true">
-          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8">
-            <path
-              d="M7 4h4a1 1 0 0 1 1 1v1.5a1.5 1.5 0 0 0 3 0V5a1 1 0 0 1 1-1h1a2 2 0 0 1 2 2v3a1 1 0 0 1-1 1h-1.5a1.5 1.5 0 0 0 0 3H19a1 1 0 0 1 1 1v3a2 2 0 0 1-2 2h-3a1 1 0 0 1-1-1v-1.5a1.5 1.5 0 0 0-3 0V19a1 1 0 0 1-1 1H6a2 2 0 0 1-2-2v-4a1 1 0 0 1 1-1h1.5a1.5 1.5 0 0 0 0-3H5a1 1 0 0 1-1-1V6a2 2 0 0 1 2-2Z"
-              strokeLinejoin="round"
-            />
-          </svg>
+          <PuzzlePieceIcon size={18} />
         </span>
         <span className="ext-help-text">
           <strong>You&apos;re signed in on the website</strong>
@@ -47,10 +44,7 @@ export default function ExtensionHelpAccordion() {
               <span className="ext-help-step-num">1</span>
               <div>
                 <strong>
-                  Click the puzzle-piece icon{" "}
-                  <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.8" style={{ verticalAlign: -2 }}>
-                    <path d="M7 4h4a1 1 0 0 1 1 1v1.5a1.5 1.5 0 0 0 3 0V5a1 1 0 0 1 1-1h1a2 2 0 0 1 2 2v3a1 1 0 0 1-1 1h-1.5a1.5 1.5 0 0 0 0 3H19a1 1 0 0 1 1 1v3a2 2 0 0 1-2 2h-3a1 1 0 0 1-1-1v-1.5a1.5 1.5 0 0 0-3 0V19a1 1 0 0 1-1 1H6a2 2 0 0 1-2-2v-4a1 1 0 0 1 1-1h1.5a1.5 1.5 0 0 0 0-3H5a1 1 0 0 1-1-1V6a2 2 0 0 1 2-2Z" strokeLinejoin="round" />
-                  </svg>
+                  Click the puzzle-piece icon <PuzzlePieceIcon size={14} />
                 </strong>
                 <p className="muted">Look at the top-right corner of Chrome, next to the address bar.</p>
               </div>
@@ -79,9 +73,7 @@ export default function ExtensionHelpAccordion() {
                 </svg>
               </span>
               <span className="ext-help-mock-btn ext-help-mock-puzzle">
-                <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="1.8">
-                  <path d="M7 4h4a1 1 0 0 1 1 1v1.5a1.5 1.5 0 0 0 3 0V5a1 1 0 0 1 1-1h1a2 2 0 0 1 2 2v3a1 1 0 0 1-1 1h-1.5a1.5 1.5 0 0 0 0 3H19a1 1 0 0 1 1 1v3a2 2 0 0 1-2 2h-3a1 1 0 0 1-1-1v-1.5a1.5 1.5 0 0 0-3 0V19a1 1 0 0 1-1 1H6a2 2 0 0 1-2-2v-4a1 1 0 0 1 1-1h1.5a1.5 1.5 0 0 0 0-3H5a1 1 0 0 1-1-1V6a2 2 0 0 1 2-2Z" strokeLinejoin="round" />
-                </svg>
+                <PuzzlePieceIcon size={15} />
                 <span className="ext-help-mock-badge">1</span>
               </span>
               <span className="ext-help-mock-btn">
@@ -104,15 +96,10 @@ export default function ExtensionHelpAccordion() {
               <div className="ext-help-mock-dropdown-row">
                 <span className="ext-help-mock-badge ext-help-mock-badge-row">2</span>
                 <span className="ext-help-mock-ext-icon">
-                  <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2">
-                    <circle cx="11" cy="11" r="6.5" />
-                    <path d="m20 20-3.5-3.5" strokeLinecap="round" />
-                  </svg>
+                  <LogoBadge size={18} />
                 </span>
                 <span className="ext-help-mock-ext-name">AI Checker</span>
-                <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="1.8">
-                  <path d="m12 3 2.6 5.6 6.1.6-4.6 4.1 1.3 6-5.4-3.2-5.4 3.2 1.3-6-4.6-4.1 6.1-.6Z" strokeLinejoin="round" />
-                </svg>
+                <PinIcon size={13} />
                 <svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor">
                   <circle cx="2" cy="2" r="2" />
                   <circle cx="2" cy="7.5" r="2" />

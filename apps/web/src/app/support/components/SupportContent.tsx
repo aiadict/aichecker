@@ -2,6 +2,7 @@
 
 import { useMemo, useRef, useState } from "react";
 import Link from "next/link";
+import { LogoBadge, PinIcon, PuzzlePieceIcon } from "../../components/ChromeIcons";
 
 type Topic = "extension" | "results" | "plans" | "account";
 type TopicFilter = "all" | Topic;
@@ -29,19 +30,6 @@ const TOPIC_HEADINGS: Record<TopicFilter, string> = {
   plans: "Plans & credits",
   account: "Account & privacy",
 };
-
-// Puzzle-piece icon reused across a few answers below - Chrome's own
-// "Extensions" glyph, not something we drew from scratch.
-function PuzzleIcon({ size = 14 }: { size?: number }) {
-  return (
-    <svg viewBox="0 0 24 24" width={size} height={size} fill="none" stroke="currentColor" strokeWidth="1.8" style={{ verticalAlign: -2 }} aria-hidden="true">
-      <path
-        d="M7 4h4a1 1 0 0 1 1 1v1.5a1.5 1.5 0 0 0 3 0V5a1 1 0 0 1 1-1h1a2 2 0 0 1 2 2v3a1 1 0 0 1-1 1h-1.5a1.5 1.5 0 0 0 0 3H19a1 1 0 0 1 1 1v3a2 2 0 0 1-2 2h-3a1 1 0 0 1-1-1v-1.5a1.5 1.5 0 0 0-3 0V19a1 1 0 0 1-1 1H6a2 2 0 0 1-2-2v-4a1 1 0 0 1 1-1h1.5a1.5 1.5 0 0 0 0-3H5a1 1 0 0 1-1-1V6a2 2 0 0 1 2-2Z"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
 
 function ArrowIcon() {
   return (
@@ -113,7 +101,7 @@ export default function SupportContent() {
           <>
             <ol className="support-steps">
               <li>
-                Click the <strong>puzzle-piece icon</strong> <PuzzleIcon /> in the top-right corner of
+                Click the <strong>puzzle-piece icon</strong> <PuzzlePieceIcon /> in the top-right corner of
                 Chrome, next to the address bar.
               </li>
               <li>
@@ -133,25 +121,17 @@ export default function SupportContent() {
                   Address bar
                 </span>
                 <span className="ext-help-mock-btn ext-help-mock-puzzle">
-                  <PuzzleIcon size={15} />
+                  <PuzzlePieceIcon size={15} />
                 </span>
               </div>
               <div className="ext-help-mock-dropdown">
                 <div className="ext-help-mock-dropdown-header">Extensions</div>
                 <div className="ext-help-mock-dropdown-row">
                   <span className="ext-help-mock-ext-icon">
-                    <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2">
-                      <circle cx="11" cy="11" r="6.5" />
-                      <path d="m20 20-3.5-3.5" strokeLinecap="round" />
-                    </svg>
+                    <LogoBadge size={18} />
                   </span>
                   <span className="ext-help-mock-ext-name">AI Checker</span>
-                  <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="1.8">
-                    <path
-                      d="m12 3 2.6 5.6 6.1.6-4.6 4.1 1.3 6-5.4-3.2-5.4 3.2 1.3-6-4.6-4.1 6.1-.6Z"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
+                  <PinIcon size={13} />
                 </div>
               </div>
             </div>
