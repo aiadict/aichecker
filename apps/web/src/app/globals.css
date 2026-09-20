@@ -1568,7 +1568,7 @@ footer.site-footer p { margin: 0; }
 .rs-info-note { display: flex; align-items: flex-start; gap: 9px; margin-top: 13px; font-size: 0.875rem; color: var(--rs-text); }
 .rs-info-note svg { color: #283e85; margin-top: 3px; width: 18px; height: 18px; flex-shrink: 0; }
 
-.rs-result-notes { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 19px; }
+.rs-result-notes { display: grid; grid-template-columns: 1fr; gap: 14px; margin-top: 19px; }
 .rs-note-card { padding: 19px 21px; border-radius: 8px; background: var(--rs-pale-blue); }
 .rs-note-card h3 { font-size: 1rem; letter-spacing: -0.01em; margin-bottom: 7px; }
 .rs-note-card p { font-size: 0.9375rem; line-height: 1.6; margin-top: 0; color: var(--rs-text); }
@@ -1631,7 +1631,7 @@ footer.site-footer p { margin: 0; }
   .rs-percentage-example { padding: 20px 13px; }
   .rs-equation { font-size: 1.25rem; gap: 4px 10px; }
   .rs-equation .rs-total { flex-basis: 100%; }
-  .rs-result-notes { grid-template-columns: 1fr; gap: 10px; }
+  .rs-result-notes { gap: 10px; }
   .rs-note-card { padding: 18px; }
   .rs-table-shell thead { display: none; }
   .rs-table-shell table, .rs-table-shell tbody { display: block; width: 100%; }
