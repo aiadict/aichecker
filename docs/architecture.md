@@ -1139,3 +1139,156 @@ that it's aspirational for now.
 Whichever gets built, update this note and the pricing-page bullet (or the checkout flow) so the
 two stay in sync — the same "single source of truth" discipline as the rest of this pricing
 section.
+
+## `/dashboard/account` redesign (2026-09-20)
+
+Reworked to match a supplied mockup: "Back to dashboard" moved above the page title (was a
+bottom-of-page link); each section (Your account / Export your data / Delete account) is now an
+icon + text + action-button row instead of a plain heading/paragraph/link-button stack. The
+"Your account" icon is a generic person silhouette, not an email-initial avatar circle
+(explicitly requested — no "M" badge). `SignOutButton`, `ExportDataButton`, and
+`DeleteAccountButton` were restyled from bare underlined `.link-button`s into real buttons
+(`.account-btn` + `-outline`/`-primary`/`-danger-outline` variants in `globals.css`) — `SignOutButton`
+gained an optional `className`/`icon` prop pair so its plain-link appearance on `/dashboard`
+itself (next to the page's own `<h1>`) is unaffected. The delete-account card now always shows a
+"cancel your paid plan via Manage billing first" reminder in its own footer row, rather than only
+surfacing that guidance reactively after a failed delete attempt.
+
+## `/dashboard` redesign (2026-09-20)
+
+- Removed the "Sign out" link entirely — it now lives only on `/dashboard/account`.
+- Header line changed from a bare email address to "Welcome back, {email}".
+- Deleted the permanent one-line "you're logged in here — click Sign in in the extension too"
+  nudge, replacing it with a real, actionable disclosure: `components/ExtensionHelpAccordion.tsx`,
+  a native `<details>`/`<summary>` (CSS-only toggle, same technique as `/resultsupport`'s FAQ
+  accordion — no JS) that expands into numbered steps plus a mocked Chrome-toolbar illustration.
+  Real bug caught before shipping: the closed-state summary row's title/subtitle text was
+  collapsing to one word per line on mobile — root cause was `min-width: 0` on the flex text
+  column combined with `flex-wrap: wrap` on the row, which let the browser squeeze the text
+  column to near-zero width instead of properly wrapping the sibling toggle label onto its own
+  line. Fixed by giving the text column a real `min-width` (180px) instead of 0 — the same fix
+  was later needed again on `/check`'s guide card (see below), so treat `flex: 1; min-width: 0`
+  next to a flex-wrap sibling as a recurring footgun on this codebase, not a one-off.
+- Plan/credits card rebuilt as three columns (`.dashboard-plan-card`): current plan + Upgrade/
+  Manage billing actions, credits remaining with a progress bar (filled portion =
+  `credits_remaining / monthly_credits`), and checks today.
+- Recent-checks list rebuilt as a table-style layout (file icon + truncated text, result pill,
+  explicit "View result ↗" affordance) instead of a bare list of rows; "View all" gained an arrow.
+  The whole row stays a single `<Link>` as before (a real `<tr><a>` nesting would be invalid
+  HTML) — the "View result" text is intentionally inside that same link, redundant with the
+  row's own click target by design, not a bug.
+- Site-wide footer (`layout.tsx`) redesigned: added a top divider, an "Account settings" link
+  (shown unconditionally, same precedent as "Dashboard" always appearing in the header nav
+  regardless of sign-in state — clicking it while signed out just redirects to `/login`), and
+  moved the copyright onto the same row as the links instead of stacked below.
+
+## `/check` tweaks (2026-09-20)
+
+- Intro paragraph shortened to lead with the two actions ("Paste your text or upload a file...")
+  instead of a longer marketing sentence.
+- "How this works" replaced with a focused "What does your AI score mean?" card (icon + short
+  explainer + an explicit "Read the results guide" link to `/resultsupport`).
+- Signed-in status row split into two flex children (email left-aligned, credits right-aligned)
+  instead of one run-on sentence.
+- Mobile fix: the new guide card had the same squeeze bug described above under `/dashboard` —
+  fixed by wrapping the icon+text in their own `.check-page-guide-main` row so the guide link can
+  drop to its own full-width row at the bottom on narrow viewports instead of squeezing the text.
+
+## `/support` full rebuild (2026-09-20)
+
+Replaced the old static "Get in touch" + "Getting started" + flat FAQ list with a searchable,
+filterable FAQ (`support/components/SupportContent.tsx`, client component): a live search box
+that matches question text + a `data-keywords`-equivalent index and auto-expands exactly the
+matching questions (restoring prior open/closed state when the search is cleared — mirrors a
+supplied mockup's own `filterSupport()` snapshot logic, reimplemented as derived render state
+instead of imperative DOM snapshotting), topic filter pills (Extension / Results / Plans & credits
+/ Account & privacy), an 11-question accordion, and a right-hand sidebar (contact card + Useful
+links).
+
+**Real correction, not just a redesign**: the "How do I check a piece of text?" answer used to
+say (and the supplied reference mockup also said) that all three ways of starting a check —
+floating icon, right-click menu, and pasting into the panel — require clicking "Check for AI"
+before anything is sent. Verified against the actual extension code
+(`apps/extension/src/panel/App.tsx`'s `autoRunToken`, consumed by `CheckForAiTab.tsx`) that this
+is wrong: the floating-icon and right-click flows auto-run the check immediately once a
+selection lands in the panel; only the paste/type/upload flow waits for a manual button click.
+Fixed the copy to reflect the real behavior rather than copying the mockup's (incorrect) claim
+verbatim.
+
+## Header nav: "Result" renamed to "Results guide" (2026-09-20)
+
+The `/resultsupport` nav link's label ("Result") read as a typo/orphaned noun on its own in the
+header — renamed to "Results guide" (most natural English of the options considered; no
+apostrophe needed, same pattern as "style guide"/"user guide") and moved to sit immediately
+before "Support" in `SiteNav.tsx`'s link order (was between "AI Check" and "History").
+
+## `/resultsupport` full content+style replacement (2026-09-20)
+
+Deleted the entire previous page body and replaced it with the content and styling of a supplied
+reference file, keeping only the site's own header/nav (`SiteNav`) and footer — nothing from the
+reference's own header/footer/dialog-simulation markup was ported (that file was a standalone
+demo with its own fake "open the app" modal for routes it didn't have; our real site already has
+real routes for all of those). The reference's sticky scroll-spied section nav was **not**
+reimplemented from scratch — the existing `SectionNav` component already does exactly that
+(sticky, scroll-spy, tab-underline), so the section id/label list was just updated to match.
+
+Scoped entirely under a new `.rs-page` wrapper class with its own `--rs-*` color palette
+(`#0866ff` blue, `#101447` navy, etc.) — deliberately a different, slightly different blue than
+the site's shared `--brand` token, matching the reference file exactly per an explicit "content
+AND style" instruction, not an inconsistency to fix later. All reference class names were
+prefixed `rs-` (`.rs-pill`, `.rs-table-shell`, `.rs-faq`, ...) specifically so they can't collide
+with or override the site-wide `.pill`/`.table-shell`/etc. classes used on every other page.
+
+Follow-up fix same day: the confidence-badge and "where does AI involvement appear" note-cards
+were a 2-column grid, which left the second, much shorter card floating with a lot of empty
+space beside it on desktop — changed to a single-column stack (both breakpoints), per a
+follow-up screenshot comparison.
+
+## Chrome puzzle-piece / pin icon accuracy fix (2026-09-20)
+
+The "find the extension" illustrations on both `/support` and `/dashboard` were originally built
+with a hand-approximated puzzle-piece SVG (wrong silhouette) and, worse, a **star** icon standing
+in for the pin-to-toolbar icon in the mocked Extensions dropdown row. Fixed by extracting the
+real vendor icons into a new shared `components/ChromeIcons.tsx`:
+- `PuzzlePieceIcon` — Chromium's own `chrome_extension` vector icon (BSD-3-Clause, decoded from a
+  base64 SVG mask found in a supplied reference mockup file — this is the literal glyph Chrome
+  itself renders for the Extensions toolbar button, not an approximation).
+- `PinIcon` — Lucide's real "pin" icon (matches the reference's `data-lucide="pin"`).
+- `LogoBadge` — the real logo (identical markup to `apps/web/public/logo.svg`), replacing a
+  placeholder magnifying-glass icon that had been standing in for "AI Checker" in the mocked
+  Extensions row.
+
+Both illustration components (`ExtensionHelpAccordion.tsx` for `/dashboard`,
+`SupportContent.tsx` for `/support`) now import from this one shared file instead of each
+carrying its own hand-copied version of the same icons — avoids the two drifting out of sync
+again.
+
+## Auth email templates: logo doesn't render reliably as inline SVG (2026-09-20, not yet fixed)
+
+The Confirm-signup and Reset-password email templates (configured directly in Supabase
+Dashboard → Authentication → Email Templates — **not** version-controlled, no local file to
+edit) render their "AI Checker" wordmark next to a hand-drawn inline `<svg>...</svg>` icon.
+Inline SVG is unreliably supported in HTML email (Outlook desktop's Word rendering engine
+doesn't support it at all). Recommended fix, not yet applied (user chose to edit the dashboard
+directly rather than have it applied via the Supabase Management API): replace the inline `<svg>`
+with `<img src="https://werida.io/logo.svg" width="26" height="26" alt="AI Checker" style="display:block;border:0;">` —
+points at the same real, already-hosted logo file the site itself uses.
+
+**Two more email-specific rendering gotchas found while iterating on this, worth remembering for
+any future email HTML work**:
+- Flexbox `gap` is not reliably supported in email clients — a `display:flex;gap:8px` wrapper
+  silently drops the gap in some clients, leaving elements flush against each other.
+- Even `margin-right` directly on an `<img>` isn't reliably honored by Gmail specifically (likely
+  related to Gmail's own image-proxying/sanitizing of inline image tags). The one genuinely
+  reliable way to add horizontal spacing between two inline elements across Gmail/Outlook/Apple
+  Mail is old-school table-cell padding: a small `<table role="presentation">` with the spacing
+  as `padding-right` on a `<td>`, not CSS margin/gap on the elements themselves.
+
+## `/dashboard`'s "Checks today" reset: confirmed midnight-to-midnight, not rolling 24h (2026-09-20)
+
+Verified directly in `consume_credit()`
+(`supabase/migrations/20260729000008_consume_credit_no_paid_autotopup.sql`): `day_reset_at :=
+date_trunc('day', now()) + interval '1 day'` — this truncates to the start of the current day
+(server clock, UTC on Supabase) then adds one day, i.e. a true midnight-to-midnight reset. Not a
+rolling 24-hour window from each individual check. No code change was needed; this was purely a
+verification pass in response to a direct question about the mechanism.
