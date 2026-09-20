@@ -958,3 +958,92 @@ footer.site-footer { padding: 40px 0; color: var(--muted); font-size: 13px; }
   .check-page-guide-card { flex-wrap: wrap; }
   .check-page-guide-link { margin-left: 34px; }
 }
+
+/* /dashboard/account. Same .card/token language as the rest of the
+   site - each row is icon + text (flex:1) + a right-aligned action
+   button, with the delete-account card getting its own danger palette
+   and a second footer row for the "cancel your subscription first"
+   reminder + the Delete button itself. */
+.account-back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 18px;
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+}
+.account-back-link:hover { text-decoration: underline; }
+
+.account-card { padding: 20px; }
+.account-row { display: flex; align-items: flex-start; gap: 14px; }
+.account-row-text { flex: 1; min-width: 0; }
+.account-row-text h3 { margin: 0; }
+
+.account-icon {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--brand-soft);
+  color: var(--brand);
+}
+.account-icon-danger { background: #fee2e2; color: #b91c1c; }
+
+.account-card-danger { border-color: #fecaca; }
+.account-danger-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+.account-billing-note {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-size: 13.5px;
+}
+.account-billing-note svg { flex-shrink: 0; }
+
+.account-btn {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.account-btn:disabled { cursor: not-allowed; opacity: 0.6; }
+.account-btn-outline {
+  background: var(--bg);
+  color: var(--fg);
+  border: 1.5px solid var(--border);
+}
+.account-btn-outline:hover:not(:disabled) { border-color: var(--brand); color: var(--brand-dark); }
+.account-btn-primary { background: var(--brand); color: white; border: none; }
+.account-btn-primary:hover:not(:disabled) { background: var(--brand-dark); }
+.account-btn-danger-outline {
+  background: var(--bg);
+  color: #b91c1c;
+  border: 1.5px solid #fecaca;
+}
+.account-btn-danger-outline:hover:not(:disabled) { background: #fef2f2; border-color: #b91c1c; }
+
+@media (max-width: 560px) {
+  .account-row { flex-wrap: wrap; }
+  .account-row .account-btn { margin-left: 54px; }
+  .account-danger-footer { flex-direction: column; align-items: stretch; }
+  .account-danger-footer .account-btn { justify-content: center; }
+}

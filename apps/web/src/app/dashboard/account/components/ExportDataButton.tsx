@@ -42,7 +42,12 @@ export default function ExportDataButton() {
   }
 
   return (
-    <button className="link-button" onClick={handleExport} disabled={busy}>
+    <button className="account-btn account-btn-primary" onClick={handleExport} disabled={busy}>
+      <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+        <path d="M12 4v11" strokeLinecap="round" />
+        <path d="M7 11l5 5 5-5" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M4 19h16" strokeLinecap="round" />
+      </svg>
       {busy ? "Preparing…" : "Export my data"}
     </button>
   );

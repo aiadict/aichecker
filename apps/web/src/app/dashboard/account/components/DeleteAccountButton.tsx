@@ -50,7 +50,7 @@ export default function DeleteAccountButton() {
   }
 
   return (
-    <button className="link-button" onClick={handleDelete} disabled={busy} style={{ color: "#b91c1c" }}>
+    <button className="account-btn account-btn-danger-outline" onClick={handleDelete} disabled={busy}>
       {busy ? "Deleting…" : "Delete my account"}
     </button>
   );
