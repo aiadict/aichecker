@@ -25,11 +25,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <div className="container">
           <footer className="site-footer">
             <div className="site-footer-links">
+              <Link href="/dashboard/account">Account settings</Link>
               <Link href="/support">Support</Link>
               <Link href="/privacy">Privacy Policy</Link>
               <Link href="/terms">Terms of Service</Link>
             </div>
-            <p>© {new Date().getFullYear()} AI Checker.</p>
+            <p>© {new Date().getFullYear()} AI Checker</p>
           </footer>
         </div>
       </body>

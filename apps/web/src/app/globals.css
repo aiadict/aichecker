@@ -485,10 +485,22 @@ tr.clickable-row:hover { background: #f9fafb; }
   cursor: pointer;
   font: inherit;
 }
-footer.site-footer { padding: 40px 0; color: var(--muted); font-size: 13px; }
-.site-footer-links { display: flex; gap: 20px; margin-bottom: 10px; }
+footer.site-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+  padding: 24px 0;
+  margin-top: 16px;
+  border-top: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 13px;
+}
+.site-footer-links { display: flex; gap: 20px; }
 .site-footer-links a { color: var(--muted); text-decoration: none; font-weight: 500; }
 .site-footer-links a:hover { color: var(--brand); text-decoration: underline; }
+footer.site-footer p { margin: 0; }
 
 .welcome-page { padding: 56px 0 72px; }
 .welcome-hero { text-align: center; max-width: 520px; margin: 0 auto 48px; }
@@ -570,11 +582,6 @@ footer.site-footer { padding: 40px 0; color: var(--muted); font-size: 13px; }
 }
 .dashboard-recent-row:last-child { border-bottom: none; }
 .dashboard-recent-row:hover { background: #f9fafb; }
-.dashboard-recent-row span:first-child {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
 
 /* Top-anchored, not vertically centered — /login's content height changes
    with the mode (Sign in has a "Forgot password?" link and a taller
@@ -1046,4 +1053,243 @@ footer.site-footer { padding: 40px 0; color: var(--muted); font-size: 13px; }
   .account-row .account-btn { margin-left: 54px; }
   .account-danger-footer { flex-direction: column; align-items: stretch; }
   .account-danger-footer .account-btn { justify-content: center; }
+}
+
+/* /dashboard - "find the extension" accordion. Native <details>, CSS-only
+   toggle (no JS) - same technique as /resultsupport's FAQ accordion, but
+   the summary row itself has three parts (icon, title+subtitle, toggle
+   label) instead of one line of question text, so it needs its own
+   layout rather than reusing .faq-item directly. */
+.ext-help {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  margin: 20px 0;
+  background: var(--brand-soft);
+}
+.ext-help-summary {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 16px 18px;
+  cursor: pointer;
+  list-style: none;
+}
+.ext-help-summary::-webkit-details-marker { display: none; }
+.ext-help-icon {
+  flex-shrink: 0;
+  color: var(--brand);
+  margin-top: 1px;
+}
+.ext-help-text { flex: 1; min-width: 180px; display: flex; flex-direction: column; gap: 2px; }
+.ext-help-text .muted { font-size: 13.5px; }
+.ext-help-toggle {
+  flex-shrink: 0;
+  color: var(--brand);
+  font-size: 13.5px;
+  font-weight: 600;
+  white-space: nowrap;
+  margin-top: 2px;
+}
+.ext-help-toggle-closed,
+.ext-help-toggle-open {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.ext-help[open] .ext-help-toggle-closed { display: none; }
+.ext-help:not([open]) .ext-help-toggle-open { display: none; }
+.ext-help-chevron { transition: transform 0.15s; }
+.ext-help[open] .ext-help-chevron { transform: rotate(180deg); }
+
+.ext-help-body { padding: 4px 18px 20px; border-top: 1px solid var(--border); margin-top: 2px; padding-top: 18px; }
+.ext-help-body h4 { margin: 0 0 16px; font-size: 14px; }
+
+.ext-help-content { display: flex; gap: 32px; flex-wrap: wrap; }
+.ext-help-steps { flex: 1; min-width: 220px; display: flex; flex-direction: column; gap: 18px; }
+.ext-help-step { display: flex; gap: 12px; }
+.ext-help-step-num {
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  background: var(--brand);
+  color: white;
+  font-size: 12px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 1px;
+}
+.ext-help-step strong { display: block; font-size: 14px; }
+.ext-help-step p { margin: 3px 0 0; font-size: 13.5px; }
+
+.ext-help-mock {
+  flex-shrink: 0;
+  width: 300px;
+  max-width: 100%;
+}
+.ext-help-mock-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 10px;
+}
+.ext-help-mock-addressbar {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--brand-soft);
+  border-radius: 6px;
+  padding: 5px 8px;
+  font-size: 12px;
+  color: var(--muted);
+}
+.ext-help-mock-addressbar svg:last-child { margin-left: auto; }
+.ext-help-mock-btn { position: relative; flex-shrink: 0; color: var(--muted); display: flex; }
+.ext-help-mock-puzzle { color: var(--brand); }
+.ext-help-mock-badge {
+  position: absolute;
+  top: -5px;
+  right: -6px;
+  width: 13px;
+  height: 13px;
+  border-radius: 999px;
+  background: var(--brand);
+  color: white;
+  font-size: 9px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.ext-help-mock-dropdown {
+  margin-top: 8px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px;
+}
+.ext-help-mock-dropdown-header { font-size: 11.5px; font-weight: 700; color: var(--muted); margin-bottom: 8px; }
+.ext-help-mock-dropdown-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 8px;
+  border: 1.5px solid var(--brand);
+  border-radius: 6px;
+  font-size: 12px;
+}
+.ext-help-mock-badge-row { position: static; margin-right: -2px; }
+.ext-help-mock-ext-icon {
+  width: 18px;
+  height: 18px;
+  border-radius: 5px;
+  background: var(--brand-soft);
+  color: var(--brand);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.ext-help-mock-ext-name { flex: 1; font-weight: 600; }
+.ext-help-mock-dropdown-row svg:last-child { color: var(--muted); }
+.ext-help-mock-dropdown-footer {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+  font-size: 12px;
+  color: var(--muted);
+}
+.ext-help-caption { margin: 10px 0 0; font-size: 12px; text-align: center; }
+
+.ext-help-final {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+  color: var(--brand);
+}
+.ext-help-final svg { flex-shrink: 0; margin-top: 2px; }
+.ext-help-final p { margin: 0; font-size: 13.5px; color: var(--fg); }
+
+@media (max-width: 640px) {
+  .ext-help-summary { flex-wrap: wrap; }
+  .ext-help-toggle { margin-left: 30px; }
+}
+
+/* /dashboard - plan-status card, three-column layout (plan / credits /
+   checks-today) replacing the old stacked paragraphs. */
+.dashboard-plan-card {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 24px;
+}
+.dashboard-plan-col { min-width: 0; }
+.dashboard-plan-col:not(:first-child) { padding-left: 24px; border-left: 1px solid var(--border); }
+.dashboard-plan-label { margin: 0 0 6px; font-size: 12.5px; color: var(--muted); }
+.dashboard-plan-name { margin: 0 0 4px; font-size: 20px; font-weight: 800; }
+.dashboard-plan-sub { margin: 0; font-size: 13px; color: var(--muted); }
+.dashboard-plan-actions { display: flex; align-items: center; gap: 14px; margin-top: 14px; flex-wrap: wrap; }
+
+.dashboard-credit-value { font-size: 26px; font-weight: 800; color: var(--brand); }
+.dashboard-credit-of { margin-left: 4px; font-size: 13px; color: var(--muted); }
+.dashboard-progress-track {
+  height: 6px;
+  background: var(--border);
+  border-radius: 999px;
+  margin: 12px 0 6px;
+  overflow: hidden;
+}
+.dashboard-progress-fill { height: 100%; background: var(--brand); border-radius: 999px; }
+.dashboard-progress-labels { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); }
+
+.dashboard-checks-value { font-size: 26px; font-weight: 800; }
+
+@media (max-width: 720px) {
+  .dashboard-plan-card { grid-template-columns: 1fr; gap: 18px; }
+  .dashboard-plan-col:not(:first-child) { padding-left: 0; padding-top: 18px; border-left: none; border-top: 1px solid var(--border); }
+}
+
+/* /dashboard - "Recent checks", styled as a table (header row + rows)
+   without an actual <table> element, so each row can stay a single
+   <Link> (a real <tr>/<a> nesting would be invalid HTML). */
+.dashboard-view-all { display: inline-flex; align-items: center; gap: 4px; color: var(--brand); font-weight: 600; font-size: 13.5px; }
+.dashboard-recent-table { padding: 0; }
+.dashboard-recent-head {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 20px;
+  font-size: 12.5px;
+  color: var(--muted);
+  border-bottom: 1px solid var(--border);
+}
+.dashboard-recent-preview { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; }
+.dashboard-recent-icon {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: 7px;
+  background: var(--brand-soft);
+  color: var(--brand);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.dashboard-recent-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dashboard-recent-result { display: flex; align-items: center; gap: 16px; flex-shrink: 0; margin-left: 12px; }
+.dashboard-recent-view { display: flex; align-items: center; gap: 4px; font-size: 13px; font-weight: 600; color: var(--brand); }
+@media (max-width: 560px) {
+  .dashboard-recent-head span:last-child { display: none; }
+  .dashboard-recent-view-label { display: none; }
 }
