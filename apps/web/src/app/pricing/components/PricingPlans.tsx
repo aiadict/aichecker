@@ -27,7 +27,7 @@ export interface PlanRow {
 const FEATURES: Record<PlanRow["key"], string[]> = {
   free: ["Check for AI (paste, right-click, floating icon)", "Check history", "Shareable result links"],
   pro: ["Everything in Free", "12× the free plan's monthly words", "Priority support"],
-  business: ["Everything in Premium"],
+  business: ["Everything in Premium", "Additional credits: $0.02/1,000 words"],
 };
 
 const NOTES: Partial<Record<PlanRow["key"], string>> = {};

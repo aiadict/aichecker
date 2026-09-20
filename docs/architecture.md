@@ -1109,3 +1109,33 @@ no `checkout.session.completed` alongside it, unlike a fresh signup). When that 
 verify the same way as above: confirm a new `invoice.paid` fired, `credit_balances` reset back
 to 300 (not additively stacked), and `current_period_end` rolled forward another month — then
 cancel for real via Manage billing once confirmed.
+
+### Professional plan advertises overage credits ($0.02/1,000 words) — not yet built (2026-09-20)
+
+The Professional (`business`) plan's pricing-page bullet list now includes "Additional credits:
+$0.02/1,000 words" (`apps/web/src/app/pricing/components/PricingPlans.tsx`'s `FEATURES.business`).
+**This is advertised, but there is no backend mechanism to actually deliver it yet** —
+`consume_credit()` (`supabase/migrations/20260729000008_consume_credit_no_paid_autotopup.sql`)
+hard-stops with `insufficient_credits` once a plan's monthly credits run out; there is no Stripe
+metered/usage-based billing wired up, and no "buy more credits" flow anywhere in the app.
+
+**Why this bullet shipped anyway**: there are zero paying users as of 2026-09-20, so the gap
+between "advertised" and "built" has no real customer impact yet. The plan is to build the real
+mechanism only once a paying user actually needs it — build cost deferred deliberately, not an
+oversight. The interface itself does **not** say "coming soon" anywhere; only this doc tracks
+that it's aspirational for now.
+
+**Confirmed feasible when it's actually needed**, two reasonable paths, either fits the existing
+`plans`/`credit_balances`/webhook architecture without a redesign:
+- **Stripe usage-based billing** — report metered usage via the Stripe API against the existing
+  subscription; Stripe bills the overage automatically at the next invoice. Closest match to the
+  advertised per-word rate, but is real integration work (usage reporting call, a new price
+  object, webhook handling for the extra invoice line).
+- **Manual credit top-up** — a simple admin action (or an internal endpoint) that adds credits
+  directly to a user's `credit_balances.credits_remaining` row, invoiced/charged outside the
+  automated flow (e.g. a one-off Stripe invoice or charge). Much less work, no new Stripe
+  wiring, viable as a stopgap for the first few users who actually hit this.
+
+Whichever gets built, update this note and the pricing-page bullet (or the checkout flow) so the
+two stay in sync — the same "single source of truth" discipline as the rest of this pricing
+section.

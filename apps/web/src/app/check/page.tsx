@@ -358,26 +358,28 @@ export default function CheckPage() {
       )}
 
       <div className="card check-page-guide-card" style={{ marginTop: 24 }}>
-        <svg
-          className="check-page-guide-icon"
-          viewBox="0 0 24 24"
-          width="20"
-          height="20"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="1.8"
-          aria-hidden="true"
-        >
-          <circle cx="12" cy="12" r="10" />
-          <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" strokeLinecap="round" />
-          <line x1="12" y1="17" x2="12.01" y2="17" strokeLinecap="round" />
-        </svg>
-        <div className="check-page-guide-text">
-          <h3>What does your AI score mean?</h3>
-          <p className="muted">
-            Your score estimates how much of your text reads as AI-generated. Learn what the
-            percentages mean and how to interpret your results.
-          </p>
+        <div className="check-page-guide-main">
+          <svg
+            className="check-page-guide-icon"
+            viewBox="0 0 24 24"
+            width="20"
+            height="20"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            aria-hidden="true"
+          >
+            <circle cx="12" cy="12" r="10" />
+            <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" strokeLinecap="round" />
+            <line x1="12" y1="17" x2="12.01" y2="17" strokeLinecap="round" />
+          </svg>
+          <div className="check-page-guide-text">
+            <h3>What does your AI score mean?</h3>
+            <p className="muted">
+              Your score estimates how much of your text reads as AI-generated. Learn what the
+              percentages mean and how to interpret your results.
+            </p>
+          </div>
         </div>
         <Link href="/resultsupport" className="check-page-guide-link">
           Read the results guide
