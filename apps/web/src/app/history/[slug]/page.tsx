@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { type CheckWindow, type Prediction } from "@ai-checker/shared-types";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -38,6 +39,13 @@ interface CheckRow {
   is_public: boolean;
   share_slug: string;
 }
+
+// Shared results carry the owner's full text — open to anyone with the
+// link, but not something to surface in search results (see robots.ts for
+// why this is a noindex tag rather than a robots.txt block).
+export const metadata: Metadata = {
+  robots: { index: false },
+};
 
 // Public, read-only shared result page — mirrors Pangram's
 // pangram.com/history/<uuid> pattern. Uses the cookie-scoped SSR client
